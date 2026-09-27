@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="qc_barangays">
+        <item>Alicia</item>
+        <item>Amihan</item>
+        <item>Apolonio Samson</item>
+        <item>Bagbag</item>
+        <item>Bagong Lipunan ng Crame</item>
+        <item>Bagong Pag-asa</item>
+        <item>Bagong Silangan</item>
+        <item>Bagumbayan</item>
+        <item>Bagumbuhay</item>
+        <item>Bahay Toro</item>
+        <item>Baesa</item>
+        <item>Balingasa</item>
+        <item>Balong Bato</item>
+        <item>Batasan Hills</item>
+        <item>Bayanihan</item>
+        <item>Blue Ridge A</item>
+        <item>Blue Ridge B</item>
+        <item>Botocan</item>
+        <item>Bungad</item>
+        <item>Camp Aguinaldo</item>
+        <item>Capri</item>
+        <item>Central</item>
+        <item>Claro</item>
+        <item>Commonwealth</item>
+        <item>Culiat</item>
+        <item>Damar</item>
+        <item>Damayan</item>
+        <item>Damayang Lagi</item>
+        <item>Del Monte</item>
+        <item>Dioquino Zobel</item>
+        <item>Doña Aurora</item>
+        <item>Doña Imelda</item>
+        <item>Doña Josefa</item>
+        <item>Don Manuel</item>
+        <item>Duyan-Duyan</item>
+        <item>E. Rodriguez</item>
+        <item>East Kamias</item>
+        <item>Escopa I</item>
+        <item>Escopa II</item>
+        <item>Escopa III</item>
+        <item>Escopa IV</item>
+        <item>Fairview</item>
+        <item>Greater Lagro</item>
+        <item>Gulod</item>
+        <item>Holy Spirit</item>
+        <item>Horseshoe</item>
+        <item>Immaculate Concepcion</item>
+        <item>Kaligayahan</item>
+        <item>Kalusugan</item>
+        <item>Kamuning</item>
+        <item>Katipunan</item>
+        <item>Kaunlaran</item>
+        <item>Kristong Hari</item>
+        <item>Krus na Ligas</item>
+        <item>Laging Handa</item>
+        <item>Libis</item>
+        <item>Lourdes</item>
+        <item>Loyola Heights</item>
+        <item>Maharlika</item>
+        <item>Malaya</item>
+        <item>Mangga</item>
+        <item>Manresa</item>
+        <item>Mariblo</item>
+        <item>Mariana</item>
+        <item>Marilag</item>
+        <item>Masagana</item>
+        <item>Masambong</item>
+        <item>Matandang Balara</item>
+        <item>Milagrosa</item>
+        <item>N.S. Amoranto (Gintong Silahis)</item>
+        <item>Nagkaisang Nayon</item>
+        <item>Nayong Kanluran</item>
+        <item>New Era</item>
+        <item>North Fairview</item>
+        <item>Novaliches Proper</item>
+        <item>Obrero</item>
+        <item>Paang Bundok</item>
+        <item>Pag-ibig sa Nayon</item>
+        <item>Paligsahan</item>
+        <item>Paltok</item>
+        <item>Pansol</item>
+        <item>Paraiso</item>
+        <item>Pasong Putik Proper</item>
+        <item>Pasong Tamo</item>
+        <item>Payatas</item>
+        <item>Phil-Am</item>
+        <item>Pinagkaisahan</item>
+        <item>Project 6</item>
+        <item>Quirino 2-A</item>
+        <item>Quirino 2-B</item>
+        <item>Quirino 2-C</item>
+        <item>Quirino 3-A</item>
+        <item>Quirino 3-B (Claro)</item>
+        <item>Ramon Magsaysay</item>
+        <item>Saint Peter</item>
+        <item>Salvacion</item>
+        <item>San Agustin</item>
+        <item>San Antonio</item>
+        <item>San Isidro</item>
+        <item>San Isidro Labrador</item>
+        <item>San Jose</item>
+        <item>San Roque</item>
+        <item>San Vicente</item>
+        <item>Sangandaan</item>
+        <item>Santa Cruz</item>
+        <item>Santa Lucia</item>
+        <item>Santa Mesa Heights</item>
+        <item>Santa Monica</item>
+        <item>Santa Teresita</item>
+        <item>Santo Cristo</item>
+        <item>Santo Domingo</item>
+        <item>Sauyo</item>
+        <item>Siena</item>
+        <item>Sikatuna Village</item>
+        <item>Silangan</item>
+        <item>Socorro</item>
+        <item>St. Ignatius</item>
+        <item>Tagumpay</item>
+        <item>Talayan</item>
+        <item>Talipapa</item>
+        <item>Tandang Sora</item>
+        <item>Unang Sigaw</item>
+        <item>Ugong Norte</item>
+        <item>Vasra</item>
+        <item>Veterans Village</item>
+        <item>Villa Maria Clara</item>
+        <item>West Kamias</item>
+        <item>West Triangle</item>
+        <item>White Plains</item>
+    </string-array>
+</resources>

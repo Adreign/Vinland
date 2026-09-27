@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "883116866803",
+    "project_id": "vinland-b6e0b",
+    "storage_bucket": "vinland-b6e0b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:883116866803:android:464cfbd421c721a5e38b86",
+        "android_client_info": {
+          "package_name": "com.vinland.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeFq6Z5vgxYxtuNPONB_4lqpds_1wZ2Hg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
