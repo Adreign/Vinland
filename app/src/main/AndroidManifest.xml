@@ -16,7 +16,7 @@
         android:theme="@style/Theme.Vinland">
 
         <activity
-            android:name=".LoginActivity"
+            android:name=".auth.LoginActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
 
@@ -29,38 +29,32 @@
         </activity>
 
         <activity
-            android:name=".RegisterActivity"
+            android:name=".auth.RegisterActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".DashboardActivity"
+            android:name=".dashboard.DashboardActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".weather.WeatherActivity" android:exported="false" />
 
-        <activity android:name=".WeatherActivity" android:exported="false" />
+        <activity android:name=".recommendation.RecommendationActivity" android:exported="false" />
 
-        <activity android:name=".RecommendationActivity" android:exported="false" />
+        <activity android:name=".profile.ProfileActivity" android:exported="false" />
 
-        <activity android:name=".ProfileActivity" android:exported="false" />
+        <activity android:name=".calendar.PlantingCalendarActivity" android:exported="false" />
 
-        <activity android:name=".PlantingCalendarActivity" android:exported="false" />
-
-        <activity android:name=".ReportsActivity" android:exported="false" />
+        <activity android:name=".reports.ReportsActivity" android:exported="false" />
 
         <service
-            android:name=".VinlandFirebaseMessagingService"
+            android:name=".notifications.VinlandFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
 
     </application>
 
