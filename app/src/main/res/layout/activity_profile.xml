@@ -43,7 +43,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="743dp"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -52,10 +52,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-24dp"
+                app:cardBackgroundColor="#FFFFFF"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="4dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:strokeWidth="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -112,6 +112,24 @@
                             android:layout_height="55dp"
                             android:completionThreshold="1"
                             android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- ESP32 Sensor Device ID -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:hint="ESP32 Sensor Device ID"
+                        app:boxStrokeColor="#2E7D32"
+                        app:helperText="e.g. VINLAND-ESP32-01"
+                        app:hintTextColor="#2E7D32">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etSensorDeviceId"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapCharacters" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Garden Type -->

@@ -33,7 +33,7 @@ import java.util.Map;
 public class ProfileActivity extends AppCompatActivity {
 
     private TextView tvEmail, tvError, tvSuccess;
-    private TextInputEditText etFullName;
+    private TextInputEditText etFullName, etSensorDeviceId;
     private AutoCompleteTextView actvBarangay;
     private RadioGroup rgGardenType;
     private LinearLayout layoutCropsContainer;
@@ -58,6 +58,7 @@ public class ProfileActivity extends AppCompatActivity {
         tvError = findViewById(R.id.tvError);
         tvSuccess = findViewById(R.id.tvSuccess);
         etFullName = findViewById(R.id.etFullName);
+        etSensorDeviceId = findViewById(R.id.etSensorDeviceId);
         actvBarangay = findViewById(R.id.actvBarangay);
         rgGardenType = findViewById(R.id.rgGardenType);
         layoutCropsContainer = findViewById(R.id.layoutCropsContainer);
@@ -125,6 +126,9 @@ public class ProfileActivity extends AppCompatActivity {
         if (!document.exists()) return;
 
         etFullName.setText(document.getString("fullName"));
+        if (document.contains("sensorDeviceId") && etSensorDeviceId != null) {
+            etSensorDeviceId.setText(document.getString("sensorDeviceId"));
+        }
         actvBarangay.setText(document.getString("barangay"), false);
 
         String gardenType = document.getString("gardenType");
@@ -193,12 +197,14 @@ public class ProfileActivity extends AppCompatActivity {
         setLoading(true);
 
         String gardenType = ((RadioButton) findViewById(selectedGardenTypeId)).getText().toString();
+        String sensorDeviceId = getText(etSensorDeviceId);
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("fullName", name);
         updates.put("barangay", barangay);
         updates.put("gardenType", gardenType);
         updates.put("crops", selectedCrops);
+        updates.put("sensorDeviceId", sensorDeviceId);
 
         db.collection("users").document(mAuth.getCurrentUser().getUid())
                 .update(updates)

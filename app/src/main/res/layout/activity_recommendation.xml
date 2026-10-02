@@ -64,6 +64,7 @@
                     android:padding="20dp">
 
                     <TextView
+                        android:id="@+id/tvInputHeader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Enter Your Soil Readings"
@@ -73,12 +74,111 @@
                         android:layout_marginBottom="4dp" />
 
                     <TextView
+                        android:id="@+id/tvInputSubheader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="No sensor? Use a manual test kit or your best estimate."
+                        android:text="Select mode: Manual test kit or live ESP32 wireless sensor."
                         android:textColor="#9E9E9E"
                         android:textSize="12sp"
                         android:layout_marginBottom="12dp" />
+
+                    <!-- Mode Toggle Group -->
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/toggleGroupMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:singleSelection="true"
+                        app:selectionRequired="true"
+                        app:checkedButton="@id/btnModeManual">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeManual"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="✋ Manual"
+                            android:textAllCaps="false"
+                            android:textSize="12sp"
+                            app:strokeColor="#2E7D32" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeAuto"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="📡 ESP32 Live"
+                            android:textAllCaps="false"
+                            android:textSize="12sp"
+                            app:strokeColor="#2E7D32" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                    <!-- Live Sensor Status Banner -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardLiveSensorBanner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="14dp"
+                        android:visibility="gone"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="#81C784"
+                        app:cardBackgroundColor="#E8F5E9">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+
+                                <TextView
+                                    android:id="@+id/tvLiveStatusDot"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="🟡"
+                                    android:textSize="14sp"
+                                    android:layout_marginEnd="6dp" />
+
+                                <TextView
+                                    android:id="@+id/tvLiveStatusText"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="Listening to VINLAND-ESP32-01..."
+                                    android:textColor="#2E7D32"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvChangeDevice"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Change ID"
+                                    android:textColor="#1B5E20"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold"
+                                    android:padding="4dp" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tvLiveLastUpdated"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Waiting for sensor telemetry..."
+                                android:textColor="#486B4A"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
                     <!-- Moisture -->
                     <com.google.android.material.textfield.TextInputLayout

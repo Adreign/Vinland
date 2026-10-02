@@ -4,11 +4,13 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
@@ -16,11 +18,13 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.vinland.app.R;
 import com.vinland.app.data.Crop;
 import com.vinland.app.data.CropDatabaseSeeder;
@@ -31,22 +35,32 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class RecommendationActivity extends AppCompatActivity {
 
     private TextView tvBack, tvInputError, tvAiAdvice;
+    private TextView tvLiveStatusDot, tvLiveStatusText, tvLiveLastUpdated, tvChangeDevice;
     private TextInputEditText etMoisture, etPh, etNitrogen, etPhosphorus, etPotassium;
     private MaterialButton btnAnalyze, btnSaveToHistory;
+    private MaterialButtonToggleGroup toggleGroupMode;
+    private MaterialCardView cardLiveSensorBanner;
     private LinearLayout layoutResults, layoutParameterResults, layoutRecommendedCrops;
     private ProgressBar progressAiLoading;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private RequestQueue requestQueue;
+
+    private ListenerRegistration sensorListenerRegistration;
+    private String activeSensorDeviceId = "VINLAND-ESP32-01";
+    private boolean isAutoMode = false;
 
     private final Map<String, Crop> cropMap = new HashMap<>();
     private Crop topRecommendedCrop = null;
@@ -71,6 +85,12 @@ public class RecommendationActivity extends AppCompatActivity {
         etPotassium = findViewById(R.id.etPotassium);
         btnAnalyze = findViewById(R.id.btnAnalyze);
         btnSaveToHistory = findViewById(R.id.btnSaveToHistory);
+        toggleGroupMode = findViewById(R.id.toggleGroupMode);
+        cardLiveSensorBanner = findViewById(R.id.cardLiveSensorBanner);
+        tvLiveStatusDot = findViewById(R.id.tvLiveStatusDot);
+        tvLiveStatusText = findViewById(R.id.tvLiveStatusText);
+        tvLiveLastUpdated = findViewById(R.id.tvLiveLastUpdated);
+        tvChangeDevice = findViewById(R.id.tvChangeDevice);
         layoutResults = findViewById(R.id.layoutResults);
         layoutParameterResults = findViewById(R.id.layoutParameterResults);
         layoutRecommendedCrops = findViewById(R.id.layoutRecommendedCrops);
@@ -80,8 +100,170 @@ public class RecommendationActivity extends AppCompatActivity {
         tvBack.setOnClickListener(v -> finish());
         btnAnalyze.setOnClickListener(v -> analyzeSoil());
         btnSaveToHistory.setOnClickListener(v -> saveReadingToHistory());
+        tvChangeDevice.setOnClickListener(v -> showChangeDeviceDialog());
 
+        toggleGroupMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                if (checkedId == R.id.btnModeAuto) {
+                    switchToAutoMode();
+                } else {
+                    switchToManualMode();
+                }
+            }
+        });
+
+        loadUserSavedDeviceId();
         CropDatabaseSeeder.seedIfEmpty(db, this::loadCropsFromFirestore);
+    }
+
+    private void loadUserSavedDeviceId() {
+        if (mAuth.getCurrentUser() == null) return;
+        db.collection("users").document(mAuth.getCurrentUser().getUid())
+                .get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists() && document.contains("sensorDeviceId")) {
+                        String savedId = document.getString("sensorDeviceId");
+                        if (!TextUtils.isEmpty(savedId)) {
+                            activeSensorDeviceId = savedId;
+                        }
+                    }
+                });
+    }
+
+    private void switchToAutoMode() {
+        isAutoMode = true;
+        cardLiveSensorBanner.setVisibility(View.VISIBLE);
+        setFieldsEditable(false);
+        btnAnalyze.setText("🔄 Refresh Analysis from Live Sensor");
+        listenToLiveSensorData();
+    }
+
+    private void switchToManualMode() {
+        isAutoMode = false;
+        cardLiveSensorBanner.setVisibility(View.GONE);
+        detachSensorListener();
+        setFieldsEditable(true);
+        btnAnalyze.setText("Analyze Soil");
+    }
+
+    private void setFieldsEditable(boolean editable) {
+        etMoisture.setFocusable(editable);
+        etMoisture.setFocusableInTouchMode(editable);
+        etPh.setFocusable(editable);
+        etPh.setFocusableInTouchMode(editable);
+        etNitrogen.setFocusable(editable);
+        etNitrogen.setFocusableInTouchMode(editable);
+        etPhosphorus.setFocusable(editable);
+        etPhosphorus.setFocusableInTouchMode(editable);
+        etPotassium.setFocusable(editable);
+        etPotassium.setFocusableInTouchMode(editable);
+    }
+
+    private void listenToLiveSensorData() {
+        detachSensorListener();
+        tvLiveStatusDot.setText("🟡");
+        tvLiveStatusText.setText("Connecting to " + activeSensorDeviceId + "...");
+        tvLiveLastUpdated.setText("Waiting for sensor telemetry...");
+
+        sensorListenerRegistration = db.collection("sensor_devices")
+                .document(activeSensorDeviceId)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (!isAutoMode) return;
+
+                    if (error != null) {
+                        tvLiveStatusDot.setText("🔴");
+                        tvLiveStatusText.setText("Connection Error: " + error.getMessage());
+                        return;
+                    }
+
+                    if (snapshot != null && snapshot.exists()) {
+                        tvLiveStatusDot.setText("🟢");
+                        tvLiveStatusText.setText("Connected: " + activeSensorDeviceId);
+
+                        Double m = snapshot.getDouble("moisture");
+                        Double ph = snapshot.getDouble("ph");
+                        Double n = snapshot.getDouble("nitrogen");
+                        Double p = snapshot.getDouble("phosphorus");
+                        Double k = snapshot.getDouble("potassium");
+                        Long ts = snapshot.getLong("timestamp");
+
+                        if (m != null && ph != null && n != null && p != null && k != null) {
+                            etMoisture.setText(String.valueOf(m));
+                            etPh.setText(String.valueOf(ph));
+                            etNitrogen.setText(String.valueOf(n));
+                            etPhosphorus.setText(String.valueOf(p));
+                            etPotassium.setText(String.valueOf(k));
+
+                            String timeStr = ts != null ? new SimpleDateFormat("MMM dd, hh:mm:ss a", Locale.US).format(new Date(ts)) : "Just now";
+                            tvLiveLastUpdated.setText("Last update: " + timeStr);
+
+                            analyzeSoil();
+                        } else {
+                            tvLiveLastUpdated.setText("Sensor record missing NPK/pH payload values");
+                        }
+                    } else {
+                        tvLiveStatusDot.setText("🟡");
+                        tvLiveStatusText.setText("Initializing " + activeSensorDeviceId + "...");
+                        tvLiveLastUpdated.setText("Creating default sensor document in Firestore...");
+                        seedDefaultSensorDevice(activeSensorDeviceId);
+                    }
+                });
+    }
+
+    private void seedDefaultSensorDevice(String deviceId) {
+        Map<String, Object> initialReading = new HashMap<>();
+        initialReading.put("moisture", 52.0);
+        initialReading.put("ph", 6.6);
+        initialReading.put("nitrogen", 35.0);
+        initialReading.put("phosphorus", 22.0);
+        initialReading.put("potassium", 145.0);
+        initialReading.put("timestamp", System.currentTimeMillis());
+
+        db.collection("sensor_devices").document(deviceId)
+                .set(initialReading)
+                .addOnSuccessListener(unused -> Toast.makeText(this, "Created initial sensor record for " + deviceId, Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> {
+                    tvLiveStatusDot.setText("🔴");
+                    tvLiveStatusText.setText("Could not initialize " + deviceId);
+                    tvLiveLastUpdated.setText("Error: " + e.getMessage());
+                });
+    }
+
+    private void detachSensorListener() {
+        if (sensorListenerRegistration != null) {
+            sensorListenerRegistration.remove();
+            sensorListenerRegistration = null;
+        }
+    }
+
+    private void showChangeDeviceDialog() {
+        final EditText input = new EditText(this);
+        input.setHint("e.g. VINLAND-ESP32-01");
+        input.setText(activeSensorDeviceId);
+        input.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
+
+        new AlertDialog.Builder(this)
+                .setTitle("Pair ESP32 Device ID")
+                .setMessage("Enter the device ID programmed into your ESP32 microcontroller:")
+                .setView(input)
+                .setPositiveButton("Pair Device", (dialog, which) -> {
+                    String newId = input.getText().toString().trim();
+                    if (!TextUtils.isEmpty(newId)) {
+                        activeSensorDeviceId = newId;
+                        Toast.makeText(this, "Paired with device: " + activeSensorDeviceId, Toast.LENGTH_SHORT).show();
+                        if (isAutoMode) {
+                            listenToLiveSensorData();
+                        }
+                    }
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        detachSensorListener();
     }
 
     private void loadCropsFromFirestore() {

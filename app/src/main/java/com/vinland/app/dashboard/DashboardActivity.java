@@ -58,6 +58,8 @@ public class DashboardActivity extends AppCompatActivity {
         navCalendar = findViewById(R.id.navCalendar);
         navReports = findViewById(R.id.navReports);
 
+        com.vinland.app.data.CropDatabaseSeeder.seedIfEmpty(db, null);
+
         loadGardenerProfile();
         requestNotificationPermission();
         scheduleWeatherAlertWorker();

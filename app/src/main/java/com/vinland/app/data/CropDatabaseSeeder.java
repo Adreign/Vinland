@@ -47,6 +47,28 @@ public class CropDatabaseSeeder {
             if (task.isSuccessful() && task.getResult() != null && task.getResult().isEmpty()) {
                 seedInitialCrops(db, callback);
             } else {
+                seedDefaultSensorDeviceIfMissing(db, callback);
+            }
+        });
+    }
+
+    private static void seedDefaultSensorDeviceIfMissing(FirebaseFirestore db, OnSeedingCompleteListener callback) {
+        db.collection("sensor_devices").document("VINLAND-ESP32-01").get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && !task.getResult().exists()) {
+                java.util.Map<String, Object> defaultSensor = new java.util.HashMap<>();
+                defaultSensor.put("moisture", 52.0);
+                defaultSensor.put("ph", 6.6);
+                defaultSensor.put("nitrogen", 35.0);
+                defaultSensor.put("phosphorus", 22.0);
+                defaultSensor.put("potassium", 145.0);
+                defaultSensor.put("timestamp", System.currentTimeMillis());
+
+                db.collection("sensor_devices").document("VINLAND-ESP32-01")
+                        .set(defaultSensor)
+                        .addOnCompleteListener(t -> {
+                            if (callback != null) callback.onComplete();
+                        });
+            } else {
                 if (callback != null) callback.onComplete();
             }
         });
@@ -89,7 +111,7 @@ public class CropDatabaseSeeder {
         batch.set(db.collection("crops").document(pepper.getId()), pepper);
 
         batch.commit().addOnCompleteListener(task -> {
-            if (callback != null) callback.onComplete();
+            seedDefaultSensorDeviceIfMissing(db, callback);
         });
     }
 }
