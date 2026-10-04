@@ -441,10 +441,18 @@ public class RecommendationActivity extends AppCompatActivity {
         progressAiLoading.setVisibility(View.VISIBLE);
         tvAiAdvice.setText("Consulting Gemini AI for crop recommendations based on your soil...");
 
-        String prompt = "You are an expert AI agricultural agronomist for urban gardening in Quezon City, Philippines. "
-                + "A gardener tested their soil with these NPK sensor readings: "
-                + "Soil Moisture: " + moisture + "%, pH: " + ph + ", Nitrogen (N): " + n + " ppm, Phosphorus (P): " + p + " ppm, Potassium (K): " + k + " ppm. "
-                + "Recommend 2 to 3 best crops to plant in these soil conditions and give brief practical advice on watering or soil amendments for Quezon City.";
+        String prompt = "You are an expert AI agricultural agronomist and master urban gardener in Quezon City, Philippines. "
+                + "A local gardener tested their soil and provided these exact sensor readings: "
+                + "• Soil Moisture: " + moisture + "% "
+                + "• Soil pH: " + ph + " "
+                + "• Nitrogen (N): " + n + " ppm "
+                + "• Phosphorus (P): " + p + " ppm "
+                + "• Potassium (K): " + k + " ppm. "
+                + "Please provide a detailed, comprehensive agronomist report structured as follows:\n"
+                + "1. **Soil Health Breakdown**: Analyze each parameter (moisture, pH, N, P, K) and explain what it means for plant growth in tropical Quezon City conditions.\n"
+                + "2. **Top Crop Recommendations**: Recommend 2 to 3 specific crops that thrive under these exact conditions, explaining why they are a good match.\n"
+                + "3. **Actionable Soil Amendments & Fertilizers**: Provide specific, practical steps on what organic amendments, fertilizers, compost, or pH balancers to add.\n"
+                + "4. **Watering & Container Advice**: Give practical watering schedules and container/drainage management tips tailored for urban gardeners in Quezon City (handling wet and dry seasons).";
 
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + WeatherConfig.GEMINI_API_KEY;
 

@@ -33,7 +33,7 @@ import java.util.Map;
 public class ProfileActivity extends AppCompatActivity {
 
     private TextView tvEmail, tvError, tvSuccess;
-    private TextInputEditText etFullName, etSensorDeviceId;
+    private TextInputEditText etFirstName, etLastName, etSensorDeviceId;
     private AutoCompleteTextView actvBarangay;
     private RadioGroup rgGardenType;
     private LinearLayout layoutCropsContainer;
@@ -57,7 +57,8 @@ public class ProfileActivity extends AppCompatActivity {
         tvEmail = findViewById(R.id.tvEmail);
         tvError = findViewById(R.id.tvError);
         tvSuccess = findViewById(R.id.tvSuccess);
-        etFullName = findViewById(R.id.etFullName);
+        etFirstName = findViewById(R.id.etFirstName);
+        etLastName = findViewById(R.id.etLastName);
         etSensorDeviceId = findViewById(R.id.etSensorDeviceId);
         actvBarangay = findViewById(R.id.actvBarangay);
         rgGardenType = findViewById(R.id.rgGardenType);
@@ -125,7 +126,24 @@ public class ProfileActivity extends AppCompatActivity {
     private void populateForm(DocumentSnapshot document) {
         if (!document.exists()) return;
 
-        etFullName.setText(document.getString("fullName"));
+        String firstName = document.getString("firstName");
+        String lastName = document.getString("lastName");
+        if (TextUtils.isEmpty(firstName) && TextUtils.isEmpty(lastName)) {
+            String fullName = document.getString("fullName");
+            if (fullName != null) {
+                int spaceIdx = fullName.indexOf(' ');
+                if (spaceIdx != -1) {
+                    firstName = fullName.substring(0, spaceIdx);
+                    lastName = fullName.substring(spaceIdx + 1);
+                } else {
+                    firstName = fullName;
+                    lastName = "";
+                }
+            }
+        }
+        etFirstName.setText(firstName != null ? firstName : "");
+        etLastName.setText(lastName != null ? lastName : "");
+
         if (document.contains("sensorDeviceId") && etSensorDeviceId != null) {
             etSensorDeviceId.setText(document.getString("sensorDeviceId"));
         }
@@ -160,11 +178,16 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void saveChanges() {
-        String name = getText(etFullName);
+        String firstName = getText(etFirstName);
+        String lastName = getText(etLastName);
         String barangay = actvBarangay.getText().toString().trim();
 
-        if (TextUtils.isEmpty(name)) {
-            showError("Please enter your full name.");
+        if (TextUtils.isEmpty(firstName)) {
+            showError("Please enter your first name.");
+            return;
+        }
+        if (TextUtils.isEmpty(lastName)) {
+            showError("Please enter your last name.");
             return;
         }
 
@@ -200,7 +223,9 @@ public class ProfileActivity extends AppCompatActivity {
         String sensorDeviceId = getText(etSensorDeviceId);
 
         Map<String, Object> updates = new HashMap<>();
-        updates.put("fullName", name);
+        updates.put("firstName", firstName);
+        updates.put("lastName", lastName);
+        updates.put("fullName", firstName + " " + lastName);
         updates.put("barangay", barangay);
         updates.put("gardenType", gardenType);
         updates.put("crops", selectedCrops);
