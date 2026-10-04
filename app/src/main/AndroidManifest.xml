@@ -48,6 +48,8 @@
 
         <activity android:name=".reports.ReportsActivity" android:exported="false" />
 
+        <activity android:name=".notifications.NotificationHistoryActivity" android:exported="false" />
+
         <service
             android:name=".notifications.VinlandFirebaseMessagingService"
             android:exported="false">

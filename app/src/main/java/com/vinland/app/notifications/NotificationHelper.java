@@ -13,8 +13,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.vinland.app.R;
 import com.vinland.app.weather.WeatherActivity;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class NotificationHelper {
 
@@ -39,8 +44,27 @@ public class NotificationHelper {
         }
     }
 
+    public static void saveNotificationToFirestore(String title, String message) {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth.getCurrentUser() != null) {
+            String uid = auth.getCurrentUser().getUid();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            String id = db.collection("users").document(uid).collection("notifications").document().getId();
+
+            Map<String, Object> notif = new HashMap<>();
+            notif.put("id", id);
+            notif.put("title", title);
+            notif.put("message", message);
+            notif.put("timestamp", System.currentTimeMillis());
+
+            db.collection("users").document(uid).collection("notifications").document(id)
+                    .set(notif);
+        }
+    }
+
     public static void sendNotification(Context context, String title, String message) {
         createNotificationChannel(context);
+        saveNotificationToFirestore(title, message);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {

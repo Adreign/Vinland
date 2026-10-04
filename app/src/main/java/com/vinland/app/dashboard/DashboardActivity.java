@@ -23,6 +23,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.vinland.app.R;
 import com.vinland.app.auth.LoginActivity;
 import com.vinland.app.calendar.PlantingCalendarActivity;
+import com.vinland.app.notifications.NotificationHistoryActivity;
 import com.vinland.app.notifications.VinlandFirebaseMessagingService;
 import com.vinland.app.profile.ProfileActivity;
 import com.vinland.app.recommendation.RecommendationActivity;
@@ -50,13 +51,14 @@ public class DashboardActivity extends AppCompatActivity {
 
         tvWelcome = findViewById(R.id.tvWelcome);
         tvSubtitle = findViewById(R.id.tvSubtitle);
-        TextView tvLogout = findViewById(R.id.tvLogout);
+        TextView tvHeaderNotification = findViewById(R.id.tvHeaderNotification);
         navSoil = findViewById(R.id.navSoil);
         navWeather = findViewById(R.id.navWeather);
         navRecommend = findViewById(R.id.navRecommend);
         navProfile = findViewById(R.id.navProfile);
         navCalendar = findViewById(R.id.navCalendar);
         navReports = findViewById(R.id.navReports);
+        View navLogout = findViewById(R.id.navLogout);
 
         com.vinland.app.data.CropDatabaseSeeder.seedIfEmpty(db, null);
 
@@ -65,7 +67,7 @@ public class DashboardActivity extends AppCompatActivity {
         scheduleWeatherAlertWorker();
         syncFcmToken();
 
-        tvLogout.setOnClickListener(v -> confirmLogOut());
+        tvHeaderNotification.setOnClickListener(v -> startActivity(new Intent(this, NotificationHistoryActivity.class)));
 
         navSoil.setOnClickListener(v -> startActivity(new Intent(this, RecommendationActivity.class)));
         navWeather.setOnClickListener(v -> startActivity(new Intent(this, WeatherActivity.class)));
@@ -73,6 +75,7 @@ public class DashboardActivity extends AppCompatActivity {
         navProfile.setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
         navCalendar.setOnClickListener(v -> startActivity(new Intent(this, PlantingCalendarActivity.class)));
         navReports.setOnClickListener(v -> startActivity(new Intent(this, ReportsActivity.class)));
+        navLogout.setOnClickListener(v -> confirmLogOut());
     }
 
     private void requestNotificationPermission() {
