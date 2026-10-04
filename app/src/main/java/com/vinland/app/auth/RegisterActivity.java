@@ -37,7 +37,7 @@ import java.util.Map;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private TextInputEditText etFullName, etEmail, etPassword, etConfirmPassword;
+    private TextInputEditText etFirstName, etLastName, etEmail, etPassword, etConfirmPassword;
     private AutoCompleteTextView actvBarangay;
     private RadioGroup rgGardenType;
     private LinearLayout layoutCropsContainer;
@@ -57,7 +57,8 @@ public class RegisterActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
 
         // Bind views
-        etFullName = findViewById(R.id.etFullName);
+        etFirstName = findViewById(R.id.etFirstName);
+        etLastName = findViewById(R.id.etLastName);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
@@ -89,6 +90,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private void loadCropsFromFirestore() {
         db.collection("crops").get().addOnSuccessListener(querySnapshot -> {
+            List<String> previouslyChecked = getSelectedCrops();
             layoutCropsContainer.removeAllViews();
 
             ColorStateList greenTint = ColorStateList.valueOf(Color.parseColor("#2E7D32"));
@@ -102,6 +104,10 @@ public class RegisterActivity extends AppCompatActivity {
                     cb.setTag(crop.getName());
                     cb.setButtonTintList(greenTint);
 
+                    if (previouslyChecked.contains(crop.getName())) {
+                        cb.setChecked(true);
+                    }
+
                     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                     params.rightMargin = dpToPx(16);
@@ -114,15 +120,20 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void attemptRegister() {
-        String name = getText(etFullName);
+        String firstName = getText(etFirstName);
+        String lastName = getText(etLastName);
         String email = getText(etEmail);
         String password = getText(etPassword);
         String confirmPassword = getText(etConfirmPassword);
         String barangay = actvBarangay.getText().toString().trim();
 
         // --- Validation ---
-        if (TextUtils.isEmpty(name)) {
-            showError("Please enter your full name.");
+        if (TextUtils.isEmpty(firstName)) {
+            showError("Please enter your first name.");
+            return;
+        }
+        if (TextUtils.isEmpty(lastName)) {
+            showError("Please enter your last name.");
             return;
         }
         if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
@@ -177,7 +188,7 @@ public class RegisterActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser firebaseUser = mAuth.getCurrentUser();
                         if (firebaseUser != null) {
-                            saveGardenerProfile(firebaseUser.getUid(), name, email, finalBarangay, gardenType, selectedCrops);
+                            saveGardenerProfile(firebaseUser.getUid(), firstName, lastName, email, finalBarangay, gardenType, selectedCrops);
                         }
                     } else {
                         setLoading(false);
@@ -191,22 +202,43 @@ public class RegisterActivity extends AppCompatActivity {
 
     private List<String> getSelectedCrops() {
         List<String> result = new ArrayList<>();
+
+        // Also check static XML checkboxes if present
+        CheckBox cbTomato = findViewById(R.id.cbTomato);
+        CheckBox cbGreenPepper = findViewById(R.id.cbGreenPepper);
+        if (cbTomato != null && cbTomato.isChecked()) {
+            if (!result.contains("Tomato")) {
+                result.add("Tomato");
+            }
+        }
+        if (cbGreenPepper != null && cbGreenPepper.isChecked()) {
+            if (!result.contains("Green Pepper")) {
+                result.add("Green Pepper");
+            }
+        }
+
+        // Check dynamic checkboxes in container
         for (int i = 0; i < layoutCropsContainer.getChildCount(); i++) {
             View child = layoutCropsContainer.getChildAt(i);
             if (child instanceof CheckBox) {
                 CheckBox cb = (CheckBox) child;
                 if (cb.isChecked() && cb.getTag() != null) {
-                    result.add(cb.getTag().toString());
+                    String tag = cb.getTag().toString();
+                    if (!result.contains(tag)) {
+                        result.add(tag);
+                    }
                 }
             }
         }
         return result;
     }
 
-    private void saveGardenerProfile(String uid, String name, String email, String barangay,
+    private void saveGardenerProfile(String uid, String firstName, String lastName, String email, String barangay,
                                      String gardenType, List<String> crops) {
         Map<String, Object> profile = new HashMap<>();
-        profile.put("fullName", name);
+        profile.put("firstName", firstName);
+        profile.put("lastName", lastName);
+        profile.put("fullName", firstName + " " + lastName);
         profile.put("email", email);
         profile.put("barangay", barangay);
         profile.put("gardenType", gardenType);

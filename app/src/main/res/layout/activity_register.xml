@@ -66,21 +66,39 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
-                <!-- Full Name -->
+                <!-- First Name -->
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilFullName"
+                    android:id="@+id/tilFirstName"
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Full Name"
+                    android:hint="First Name"
                     app:boxStrokeColor="#2E7D32"
                     app:hintTextColor="#2E7D32">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etFullName"
+                        android:id="@+id/etFirstName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPersonName" />
+                        android:inputType="textPersonName|textCapWords" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Last Name -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilLastName"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:hint="Last Name"
+                    app:boxStrokeColor="#2E7D32"
+                    app:hintTextColor="#2E7D32">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etLastName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPersonName|textCapWords" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Email -->
