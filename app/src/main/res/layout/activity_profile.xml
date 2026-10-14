@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F7F5"
+    android:clipToPadding="false"
     android:fillViewport="true">
 
     <LinearLayout
@@ -19,7 +20,7 @@
             android:gravity="center_vertical"
             android:background="#2E7D32"
             android:paddingTop="48dp"
-            android:paddingBottom="40dp"
+            android:paddingBottom="20dp"
             android:paddingHorizontal="16dp">
 
             <TextView
@@ -45,13 +46,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="40dp">
 
             <!-- Info card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="-24dp"
                 app:cardBackgroundColor="#FFFFFF"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="4dp"

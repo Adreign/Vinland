@@ -221,7 +221,7 @@ public class PlantingCalendarActivity extends AppCompatActivity {
 
         TextView tvTip = new TextView(this);
         tvTip.setText(tip);
-        tvTip.setTextSize(12.5f);
+        tvTip.setTextSize(13f);
         tvTip.setTextColor(isCurrent ? Color.parseColor("#E8F5E9") : Color.parseColor("#666666"));
         tvTip.setPadding(0, dpToPx(4), 0, 0);
 
