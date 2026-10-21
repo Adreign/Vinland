@@ -51,15 +51,32 @@ public class NotificationHelper {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             String id = db.collection("users").document(uid).collection("notifications").document().getId();
 
+            String category = resolveCategory(title, message);
+
             Map<String, Object> notif = new HashMap<>();
             notif.put("id", id);
             notif.put("title", title);
             notif.put("message", message);
+            notif.put("category", category);
             notif.put("timestamp", System.currentTimeMillis());
 
             db.collection("users").document(uid).collection("notifications").document(id)
                     .set(notif);
         }
+    }
+
+    public static String resolveCategory(String title, String message) {
+        String text = ((title != null ? title : "") + " " + (message != null ? message : "")).toLowerCase();
+        if (text.contains("rain") || text.contains("thunderstorm") || text.contains("drizzle") || text.contains("shower") || text.contains("☔")) {
+            return "rain";
+        }
+        if (text.contains("heat") || text.contains("temperature") || text.contains("hot") || text.contains("33°c") || text.contains("34°c") || text.contains("35°c") || text.contains("🌡️")) {
+            return "heat";
+        }
+        if (text.contains("humidity") || text.contains("humid") || text.contains("fungal") || text.contains("damp") || text.contains("🌿")) {
+            return "humidity";
+        }
+        return "general";
     }
 
     public static void sendNotification(Context context, String title, String message) {

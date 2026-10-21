@@ -47,6 +47,7 @@ public class RecommendationActivity extends AppCompatActivity {
 
     private TextView tvBack, tvInputError, tvAiAdvice;
     private TextView tvLiveStatusDot, tvLiveStatusText, tvLiveLastUpdated, tvChangeDevice;
+    private TextView tvSummaryBadge, tvSummaryKeyFindings, tvSummaryTopCropName, tvSummaryActionNeeded;
     private TextInputEditText etMoisture, etPh, etNitrogen, etPhosphorus, etPotassium;
     private MaterialButton btnAnalyze, btnSaveToHistory;
     private MaterialButtonToggleGroup toggleGroupMode;
@@ -97,6 +98,11 @@ public class RecommendationActivity extends AppCompatActivity {
         progressAiLoading = findViewById(R.id.progressAiLoading);
         tvAiAdvice = findViewById(R.id.tvAiAdvice);
 
+        tvSummaryBadge = findViewById(R.id.tvSummaryBadge);
+        tvSummaryKeyFindings = findViewById(R.id.tvSummaryKeyFindings);
+        tvSummaryTopCropName = findViewById(R.id.tvSummaryTopCropName);
+        tvSummaryActionNeeded = findViewById(R.id.tvSummaryActionNeeded);
+
         tvBack.setOnClickListener(v -> finish());
         btnAnalyze.setOnClickListener(v -> analyzeSoil());
         btnSaveToHistory.setOnClickListener(v -> saveReadingToHistory());
@@ -134,7 +140,7 @@ public class RecommendationActivity extends AppCompatActivity {
         isAutoMode = true;
         cardLiveSensorBanner.setVisibility(View.VISIBLE);
         setFieldsEditable(false);
-        btnAnalyze.setText("🔄 Refresh Analysis from Live Sensor");
+        btnAnalyze.setText("✨ Generate Recommendation");
         listenToLiveSensorData();
     }
 
@@ -143,7 +149,7 @@ public class RecommendationActivity extends AppCompatActivity {
         cardLiveSensorBanner.setVisibility(View.GONE);
         detachSensorListener();
         setFieldsEditable(true);
-        btnAnalyze.setText("Analyze Soil");
+        btnAnalyze.setText("✨ Generate Recommendation");
     }
 
     private void setFieldsEditable(boolean editable) {
@@ -201,8 +207,6 @@ public class RecommendationActivity extends AppCompatActivity {
                                 timeStr = "Just now (" + new SimpleDateFormat("hh:mm:ss a", Locale.US).format(new Date()) + ")";
                             }
                             tvLiveLastUpdated.setText("Last update: " + timeStr);
-
-                            analyzeSoil();
                         } else {
                             tvLiveLastUpdated.setText("Sensor record missing NPK/pH payload values");
                         }
@@ -311,6 +315,7 @@ public class RecommendationActivity extends AppCompatActivity {
 
         hideInputError();
         evaluateRecommendedCrops(currentMoisture, currentPh, currentN, currentP, currentK);
+        updateExecutiveSummary(currentMoisture, currentPh, currentN, currentP, currentK);
         showGeneralParameterResults(currentMoisture, currentPh, currentN, currentP, currentK);
         fetchGeminiAiRecommendation(currentMoisture, currentPh, currentN, currentP, currentK);
     }
@@ -488,7 +493,7 @@ public class RecommendationActivity extends AppCompatActivity {
                                     JSONArray resParts = content.optJSONArray("parts");
                                     if (resParts != null && resParts.length() > 0) {
                                         String aiText = resParts.getJSONObject(0).optString("text", "");
-                                        tvAiAdvice.setText(aiText.trim());
+                                        displayFormattedAiText(tvAiAdvice, aiText.trim());
                                         return;
                                     }
                                 }
@@ -510,6 +515,68 @@ public class RecommendationActivity extends AppCompatActivity {
             progressAiLoading.setVisibility(View.GONE);
             tvAiAdvice.setText("Soil and crop matches evaluated successfully.");
         }
+    }
+
+    private void updateExecutiveSummary(double moisture, double ph, double n, double p, double k) {
+        int optimalCount = 0;
+        if (moisture >= 35 && moisture <= 80) optimalCount++;
+        if (ph >= 5.5 && ph <= 7.5) optimalCount++;
+        if (n >= 100 && n <= 250) optimalCount++;
+        if (p >= 50 && p <= 150) optimalCount++;
+        if (k >= 100 && k <= 300) optimalCount++;
+
+        if (tvSummaryBadge != null) {
+            if (optimalCount >= 4) {
+                tvSummaryBadge.setText("🟢 Optimal Health (" + optimalCount + "/5)");
+                tvSummaryBadge.setBackgroundColor(android.graphics.Color.parseColor("#2E7D32"));
+            } else if (optimalCount >= 2) {
+                tvSummaryBadge.setText("🟡 Fair Condition (" + optimalCount + "/5)");
+                tvSummaryBadge.setBackgroundColor(android.graphics.Color.parseColor("#F57C00"));
+            } else {
+                tvSummaryBadge.setText("🔴 Action Needed (" + optimalCount + "/5)");
+                tvSummaryBadge.setBackgroundColor(android.graphics.Color.parseColor("#D32F2F"));
+            }
+        }
+
+        StringBuilder findings = new StringBuilder();
+        findings.append("• Moisture: ").append(moisture < 35 ? "Low (" + moisture + "%). Needs thorough watering." : moisture > 80 ? "High (" + moisture + "%). Ensure soil drainage." : "Optimal (" + moisture + "%). Healthy range.").append("\n");
+        findings.append("• Soil pH: ").append(ph < 5.5 ? "Acidic (" + ph + "). Add agricultural lime." : ph > 7.5 ? "Alkaline (" + ph + "). Add organic compost." : "Optimal neutral (" + ph + "). Ideal for crops.").append("\n");
+        findings.append("• NPK Status: ")
+                .append(n < 100 ? "N Deficient, " : n > 250 ? "N High, " : "N Optimal, ")
+                .append(p < 50 ? "P Deficient, " : p > 150 ? "P High, " : "P Optimal, ")
+                .append(k < 100 ? "K Deficient." : k > 300 ? "K High." : "K Optimal.");
+
+        if (tvSummaryKeyFindings != null) {
+            tvSummaryKeyFindings.setText(findings.toString());
+        }
+
+        if (tvSummaryTopCropName != null) {
+            String cropText = topRecommendedCrop != null ? topRecommendedCrop.getEmoji() + " " + topRecommendedCrop.getName() : "🌱 General Vegetable Crop";
+            tvSummaryTopCropName.setText(cropText);
+        }
+
+        if (tvSummaryActionNeeded != null) {
+            if (ph < 5.5) {
+                tvSummaryActionNeeded.setText("Add Agricultural Lime");
+            } else if (ph > 7.5) {
+                tvSummaryActionNeeded.setText("Add Organic Compost");
+            } else if (n < 100) {
+                tvSummaryActionNeeded.setText("Apply Organic Nitrogen");
+            } else if (moisture < 35) {
+                tvSummaryActionNeeded.setText("Increase Irrigation");
+            } else if (moisture > 80) {
+                tvSummaryActionNeeded.setText("Improve Soil Drainage");
+            } else {
+                tvSummaryActionNeeded.setText("Maintain Current Care");
+            }
+        }
+    }
+
+    private void displayFormattedAiText(TextView textView, String rawText) {
+        if (rawText == null || textView == null) return;
+        String htmlText = rawText.replaceAll("\\*\\*(.*?)\\*\\*", "<b>$1</b>")
+                                 .replace("\n", "<br/>");
+        textView.setText(android.text.Html.fromHtml(htmlText, android.text.Html.FROM_HTML_MODE_LEGACY));
     }
 
     private void saveReadingToHistory() {

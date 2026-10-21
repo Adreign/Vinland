@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 public class DashboardActivity extends AppCompatActivity {
 
     private TextView tvWelcome, tvSubtitle;
-    private View navSoil, navWeather, navRecommend, navProfile, navCalendar, navReports;
+    private View navSoil, navWeather, navProfile, navCalendar, navReports;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -54,7 +54,6 @@ public class DashboardActivity extends AppCompatActivity {
         TextView tvHeaderNotification = findViewById(R.id.tvHeaderNotification);
         navSoil = findViewById(R.id.navSoil);
         navWeather = findViewById(R.id.navWeather);
-        navRecommend = findViewById(R.id.navRecommend);
         navProfile = findViewById(R.id.navProfile);
         navCalendar = findViewById(R.id.navCalendar);
         navReports = findViewById(R.id.navReports);
@@ -71,7 +70,6 @@ public class DashboardActivity extends AppCompatActivity {
 
         navSoil.setOnClickListener(v -> startActivity(new Intent(this, RecommendationActivity.class)));
         navWeather.setOnClickListener(v -> startActivity(new Intent(this, WeatherActivity.class)));
-        navRecommend.setOnClickListener(v -> startActivity(new Intent(this, RecommendationActivity.class)));
         navProfile.setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
         navCalendar.setOnClickListener(v -> startActivity(new Intent(this, PlantingCalendarActivity.class)));
         navReports.setOnClickListener(v -> startActivity(new Intent(this, ReportsActivity.class)));

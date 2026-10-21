@@ -1,12 +1,12 @@
 #include <HardwareSerial.h>
 #include <WiFi.h>
+#include <WiFiMulti.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <time.h>
 
-// Wi-Fi Credentials
-const char* ssid = "Vinland";
-const char* password = "Vinland123";
+// WiFiMulti handles multiple Wi-Fi access points automatically
+WiFiMulti wifiMulti;
 
 // Your Firestore Live Sensor Device Endpoint
 const char* firestoreLiveEndpoint = "https://firestore.googleapis.com/v1/projects/vinland-b6e0b/databases/(default)/documents/sensor_devices/VINLAND-ESP32-01";
@@ -29,22 +29,45 @@ void setup() {
     digitalWrite(DE_RE_PIN, LOW); // Receive mode
   }
 
-  // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
+  // -------------------------------------------------------------
+  // Add your Wi-Fi networks here!
+  // ESP32 will automatically connect to whichever is available.
+  // -------------------------------------------------------------
+  wifiMulti.addAP("PLDTHOMEFIBR_XXXX", "YourPLDTPassword"); // Change to your PLDT Wi-Fi SSID & Password
+  wifiMulti.addAP("Vinland", "Vinland123");                 // Mobile Hotspot
+  wifiMulti.addAP("FarmWiFi", "FarmPassword123");           // Additional Farm/Office Wi-Fi
+
+  Serial.print("Connecting to Wi-Fi");
+  int attempts = 0;
+  while (wifiMulti.run() != WL_CONNECTED && attempts < 20) {
     delay(500);
     Serial.print(".");
+    attempts++;
   }
-  Serial.println("\nWiFi Connected!");
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWi-Fi Connected successfully!");
+    Serial.print("Connected SSID: ");
+    Serial.println(WiFi.SSID());
+    Serial.print("ESP32 IP Address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nWi-Fi not connected yet. ESP32 will keep trying in loop().");
+  }
 
   // Configure NTP time for real epoch timestamps
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
 
-  Serial.println("NPK sensor debug started");
+  Serial.println("NPK sensor monitoring started...");
 }
 
 void loop() {
+  // Check and maintain Wi-Fi connection automatically
+  if (wifiMulti.run() != WL_CONNECTED) {
+    Serial.println("Wi-Fi disconnected! Retrying connection to registered Wi-Fi networks...");
+    delay(2000);
+  }
+
   if (lockedBaud != 0) {
     readOnce(lockedBaud);
   } else {
@@ -52,7 +75,8 @@ void loop() {
       if (readOnce(bauds[i])) break;
     }
   }
-  delay(10000); // 10 seconds between readings/uploads
+
+  delay(10000); // 10 seconds delay between sensor readings
 }
 
 // Returns true if a valid reply was received at this baud rate
@@ -160,10 +184,12 @@ void uploadLiveSensorToVinland(float moisture, float ph, float n, float p, float
 
     int httpResponseCode = http.sendRequest("PATCH", jsonBody);
     if (httpResponseCode == 200 || httpResponseCode == 204) {
-      Serial.println("Successfully synced live sensor data to Vinland Android App!");
+      Serial.println("Successfully synced live sensor data to Vinland Cloud!");
     } else {
       Serial.printf("Error syncing to Vinland [HTTP %d]: %s\n", httpResponseCode, http.getString().c_str());
     }
     http.end();
+  } else {
+    Serial.println("Cannot upload: Wi-Fi is not connected.");
   }
 }
