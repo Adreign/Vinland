@@ -194,7 +194,12 @@ public class RecommendationActivity extends AppCompatActivity {
                             etPhosphorus.setText(String.valueOf(p));
                             etPotassium.setText(String.valueOf(k));
 
-                            String timeStr = ts != null ? new SimpleDateFormat("MMM dd, hh:mm:ss a", Locale.US).format(new Date(ts)) : "Just now";
+                            String timeStr;
+                            if (ts != null && ts > 100000000000L) {
+                                timeStr = new SimpleDateFormat("MMM dd, hh:mm:ss a", Locale.US).format(new Date(ts));
+                            } else {
+                                timeStr = "Just now (" + new SimpleDateFormat("hh:mm:ss a", Locale.US).format(new Date()) + ")";
+                            }
                             tvLiveLastUpdated.setText("Last update: " + timeStr);
 
                             analyzeSoil();

@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <time.h>
 
 // Wi-Fi Credentials
 const char* ssid = "Vinland";
@@ -36,6 +37,10 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("\nWiFi Connected!");
+
+  // Configure NTP time for real epoch timestamps
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
   Serial.println("NPK sensor debug started");
 }
 
@@ -119,7 +124,24 @@ size_t sendModbusRequest(const byte* query, size_t queryLen, byte* response, siz
 void uploadLiveSensorToVinland(float moisture, float ph, float n, float p, float k) {
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin(firestoreLiveEndpoint);
+
+    // Get NTP epoch timestamp in milliseconds
+    time_t now = time(nullptr);
+    unsigned long long epochMillis = (unsigned long long)now * 1000ULL;
+    if (now < 100000) { // If NTP not synced yet
+      epochMillis = (unsigned long long)millis();
+    }
+
+    // Include field mask parameters so Firestore PATCH updates the exact fields
+    String targetUrl = String(firestoreLiveEndpoint) +
+      "?updateMask.fieldPaths=moisture"
+      "&updateMask.fieldPaths=ph"
+      "&updateMask.fieldPaths=nitrogen"
+      "&updateMask.fieldPaths=phosphorus"
+      "&updateMask.fieldPaths=potassium"
+      "&updateMask.fieldPaths=timestamp";
+
+    http.begin(targetUrl);
     http.addHeader("Content-Type", "application/json");
 
     // ArduinoJson v7 syntax
@@ -131,16 +153,16 @@ void uploadLiveSensorToVinland(float moisture, float ph, float n, float p, float
     fields["nitrogen"].to<JsonObject>()["doubleValue"] = n;
     fields["phosphorus"].to<JsonObject>()["doubleValue"] = p;
     fields["potassium"].to<JsonObject>()["doubleValue"] = k;
-    fields["timestamp"].to<JsonObject>()["integerValue"] = String(millis());
+    fields["timestamp"].to<JsonObject>()["integerValue"] = String(epochMillis);
 
     String jsonBody;
     serializeJson(doc, jsonBody);
 
     int httpResponseCode = http.sendRequest("PATCH", jsonBody);
-    if (httpResponseCode > 0) {
+    if (httpResponseCode == 200 || httpResponseCode == 204) {
       Serial.println("Successfully synced live sensor data to Vinland Android App!");
     } else {
-      Serial.printf("Error syncing to Vinland: %s\n", http.errorToString(httpResponseCode).c_str());
+      Serial.printf("Error syncing to Vinland [HTTP %d]: %s\n", httpResponseCode, http.getString().c_str());
     }
     http.end();
   }
