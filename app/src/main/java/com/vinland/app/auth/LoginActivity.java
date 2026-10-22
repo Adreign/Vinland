@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.vinland.app.R;
 import com.vinland.app.dashboard.DashboardActivity;
 
@@ -80,9 +82,18 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         goToDashboard();
                     } else {
-                        String message = task.getException() != null
-                                ? task.getException().getMessage()
-                                : "Login failed. Please check your email and password.";
+                        Exception e = task.getException();
+                        String message;
+                        if (e instanceof FirebaseAuthInvalidCredentialsException || e instanceof FirebaseAuthInvalidUserException) {
+                            message = "Incorrect email or password. Tap 'Register' below if you haven't created an account yet.";
+                        } else if (e != null && e.getMessage() != null) {
+                            message = e.getMessage();
+                            if (message.contains("auth credential") || message.contains("invalid")) {
+                                message = "Incorrect password or account not found. Tap 'Register' below or 'Forgot Password?'.";
+                            }
+                        } else {
+                            message = "Login failed. Please check your email and password.";
+                        }
                         showError(message);
                     }
                 });
@@ -91,12 +102,12 @@ public class LoginActivity extends AppCompatActivity {
     private void attemptPasswordReset() {
         String email = getText(etEmail);
         if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            showError("Enter your email above first, then tap \"Forgot Password?\"");
+            showError("Enter your email address above first, then tap \"Forgot Password?\".");
             return;
         }
         mAuth.sendPasswordResetEmail(email)
                 .addOnSuccessListener(unused ->
-                        Toast.makeText(this, "Password reset email sent to " + email, Toast.LENGTH_LONG).show())
+                        Toast.makeText(this, "Password reset email sent to " + email + ". Check your inbox.", Toast.LENGTH_LONG).show())
                 .addOnFailureListener(e ->
                         showError("Could not send reset email: " + e.getMessage()));
     }
