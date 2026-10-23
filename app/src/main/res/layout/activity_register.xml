@@ -19,7 +19,7 @@
             android:orientation="vertical"
             android:gravity="center_horizontal"
             android:background="#2E7D32"
-            android:paddingTop="56dp"
+            android:paddingTop="52dp"
             android:paddingBottom="36dp"
             android:paddingHorizontal="24dp">
 
@@ -34,8 +34,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Create Your Gardener Account"
-                android:textSize="19sp"
+                android:text="Gardener Account Registration"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:textAlignment="center" />
@@ -49,7 +49,7 @@
                 android:textColor="#C8E6C9" />
         </LinearLayout>
 
-        <!-- Form card -->
+        <!-- Multi-Step Registration Form Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -67,186 +67,442 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
-                <!-- First Name -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilFirstName"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="First Name"
-                    app:boxStrokeColor="#2E7D32"
-                    app:hintTextColor="#2E7D32">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etFirstName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textPersonName|textCapWords" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Last Name -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilLastName"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:hint="Last Name"
-                    app:boxStrokeColor="#2E7D32"
-                    app:hintTextColor="#2E7D32">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etLastName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textPersonName|textCapWords" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Email -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilEmail"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:hint="Email Address"
-                    app:boxStrokeColor="#2E7D32"
-                    app:hintTextColor="#2E7D32">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etEmail"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Password -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilPassword"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:hint="Password"
-                    app:boxStrokeColor="#2E7D32"
-                    app:hintTextColor="#2E7D32"
-                    app:endIconMode="password_toggle">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPassword"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textPassword" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Confirm Password -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilConfirmPassword"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:hint="Confirm Password"
-                    app:boxStrokeColor="#2E7D32"
-                    app:hintTextColor="#2E7D32"
-                    app:endIconMode="password_toggle">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etConfirmPassword"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textPassword" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Barangay (unchanged behavior — same completionThreshold/inputType as your working version) -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tilBarangay"
-                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:hint="Type your Barangay (Quezon City)"
-                    app:boxStrokeColor="#2E7D32"
-                    app:hintTextColor="#2E7D32">
-
-                    <AutoCompleteTextView
-                        android:id="@+id/actvBarangay"
-                        android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:completionThreshold="1"
-                        android:inputType="text" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <!-- Garden Type -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="22dp"
-                    android:text="Garden Type"
-                    android:textStyle="bold"
-                    android:textColor="#212121"
-                    android:textSize="14sp" />
-
-                <RadioGroup
-                    android:id="@+id/rgGardenType"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:orientation="vertical">
-
-                    <RadioButton
-                        android:id="@+id/rbBackyard"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Backyard"
-                        android:buttonTint="#2E7D32" />
-
-                    <RadioButton
-                        android:id="@+id/rbRooftop"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Rooftop"
-                        android:buttonTint="#2E7D32" />
-
-                    <RadioButton
-                        android:id="@+id/rbCommunityPlot"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Community Plot"
-                        android:buttonTint="#2E7D32" />
-                </RadioGroup>
-
-                <!-- Crops -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="Crops You Grow"
-                    android:textStyle="bold"
-                    android:textColor="#212121"
-                    android:textSize="14sp" />
-
+                <!-- Step Progress Header -->
                 <LinearLayout
-                    android:id="@+id/layoutCropsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="4dp">
+                    android:orientation="vertical"
+                    android:layout_marginBottom="16dp">
 
-                    <CheckBox
-                        android:id="@+id/cbTomato"
+                    <TextView
+                        android:id="@+id/tvStepIndicator"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Tomato"
-                        android:buttonTint="#2E7D32" />
+                        android:text="Step 1 of 4: Account Authentication"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#2E7D32" />
 
-                    <CheckBox
-                        android:id="@+id/cbGreenPepper"
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progressStep"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:progress="25"
+                        app:indicatorColor="#2E7D32"
+                        app:trackColor="#E8F5E9"
+                        app:trackCornerRadius="4dp" />
+                </LinearLayout>
+
+                <!-- STEP 1: ACCOUNT AUTHENTICATION (Google or Email/Password) -->
+                <LinearLayout
+                    android:id="@+id/layoutStep1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+
+                    <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp"
-                        android:text="Green Pepper"
-                        android:buttonTint="#2E7D32" />
+                        android:text="1. Choose How to Register"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="14dp" />
+
+                    <!-- Google / Gmail Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnGoogleRegister"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:text="Register with Google / Gmail"
+                        android:textAllCaps="false"
+                        android:textSize="14sp"
+                        android:textColor="#2E7D32"
+                        app:strokeColor="#2E7D32"
+                        app:strokeWidth="1.5dp"
+                        app:cornerRadius="12dp" />
+
+                    <!-- Divider -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp">
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1"
+                            android:background="#E0E0E0" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=" OR REGISTER WITH EMAIL "
+                            android:textSize="11sp"
+                            android:textColor="#757575"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1"
+                            android:background="#E0E0E0" />
+                    </LinearLayout>
+
+                    <!-- First Name -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilFirstName"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="First Name"
+                        app:boxStrokeColor="#2E7D32"
+                        app:hintTextColor="#2E7D32">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etFirstName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName|textCapWords" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Last Name -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilLastName"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Last Name"
+                        app:boxStrokeColor="#2E7D32"
+                        app:hintTextColor="#2E7D32">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etLastName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName|textCapWords" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Email -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilEmail"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Email Address"
+                        app:boxStrokeColor="#2E7D32"
+                        app:hintTextColor="#2E7D32">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textEmailAddress" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Password -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPassword"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Password"
+                        app:boxStrokeColor="#2E7D32"
+                        app:hintTextColor="#2E7D32"
+                        app:endIconMode="password_toggle">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Confirm Password -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilConfirmPassword"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Confirm Password"
+                        app:boxStrokeColor="#2E7D32"
+                        app:hintTextColor="#2E7D32"
+                        app:endIconMode="password_toggle">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etConfirmPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Step 1 Next Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnNextStep1"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="20dp"
+                        android:text="Next: Choose Barangay →"
+                        android:textAllCaps="false"
+                        android:textSize="15sp"
+                        app:cornerRadius="12dp"
+                        app:backgroundTint="#2E7D32" />
+                </LinearLayout>
+
+                <!-- STEP 2: BARANGAY SELECTION -->
+                <LinearLayout
+                    android:id="@+id/layoutStep2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2. Select Your Barangay"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Where in Quezon City is your garden located?"
+                        android:textSize="13sp"
+                        android:textColor="#666666"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Barangay Dropdown -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilBarangay"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Type your Barangay (Quezon City)"
+                        app:boxStrokeColor="#2E7D32"
+                        app:hintTextColor="#2E7D32">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/actvBarangay"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:completionThreshold="1"
+                            android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Navigation Buttons Step 2 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="24dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnBackStep2"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="← Back"
+                            android:textColor="#2E7D32"
+                            app:strokeColor="#2E7D32"
+                            app:cornerRadius="12dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnNextStep2"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1.5"
+                            android:layout_marginStart="8dp"
+                            android:text="Next: Garden Type →"
+                            android:textAllCaps="false"
+                            app:cornerRadius="12dp"
+                            app:backgroundTint="#2E7D32" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- STEP 3: GARDEN TYPOLOGY -->
+                <LinearLayout
+                    android:id="@+id/layoutStep3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="3. Choose Your Garden Type"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="What type of garden setup do you cultivate?"
+                        android:textSize="13sp"
+                        android:textColor="#666666"
+                        android:layout_marginBottom="16dp" />
+
+                    <RadioGroup
+                        android:id="@+id/rgGardenType"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <RadioButton
+                            android:id="@+id/rbBackyard"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🏡 Backyard Garden"
+                            android:textSize="14sp"
+                            android:buttonTint="#2E7D32" />
+
+                        <RadioButton
+                            android:id="@+id/rbRooftop"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="🏙️ Rooftop / Balcony Garden"
+                            android:textSize="14sp"
+                            android:buttonTint="#2E7D32" />
+
+                        <RadioButton
+                            android:id="@+id/rbCommunityPlot"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="🌾 Community Plot"
+                            android:textSize="14sp"
+                            android:buttonTint="#2E7D32" />
+                    </RadioGroup>
+
+                    <!-- Navigation Buttons Step 3 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="24dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnBackStep3"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="← Back"
+                            android:textColor="#2E7D32"
+                            app:strokeColor="#2E7D32"
+                            app:cornerRadius="12dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnNextStep3"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1.5"
+                            android:layout_marginStart="8dp"
+                            android:text="Next: Choose Crops →"
+                            android:textAllCaps="false"
+                            app:cornerRadius="12dp"
+                            app:backgroundTint="#2E7D32" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- STEP 4: CROPS TO GROW -->
+                <LinearLayout
+                    android:id="@+id/layoutStep4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="4. What Crops Do You Grow?"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Select the urban vegetables in your garden:"
+                        android:textSize="13sp"
+                        android:textColor="#666666"
+                        android:layout_marginBottom="16dp" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutCropsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp">
+
+                        <CheckBox
+                            android:id="@+id/cbTomato"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🍅 Tomato"
+                            android:buttonTint="#2E7D32" />
+
+                        <CheckBox
+                            android:id="@+id/cbGreenPepper"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:text="🫑 Green Pepper"
+                            android:buttonTint="#2E7D32" />
+                    </LinearLayout>
+
+                    <!-- Navigation Buttons Step 4 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="24dp">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnBackStep4"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp"
+                            android:text="← Back"
+                            android:textColor="#2E7D32"
+                            app:strokeColor="#2E7D32"
+                            app:cornerRadius="12dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnRegister"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1.8"
+                            android:layout_marginStart="8dp"
+                            android:text="Complete Registration 🎉"
+                            android:textAllCaps="false"
+                            android:textSize="14sp"
+                            app:cornerRadius="12dp"
+                            app:backgroundTint="#2E7D32" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <!-- Error / status text -->
@@ -258,18 +514,6 @@
                     android:textColor="#D32F2F"
                     android:textSize="13sp"
                     android:visibility="gone" />
-
-                <!-- Register Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRegister"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:layout_marginTop="20dp"
-                    android:text="Register"
-                    android:textAllCaps="false"
-                    android:textSize="16sp"
-                    app:cornerRadius="12dp"
-                    app:backgroundTint="#2E7D32" />
 
                 <ProgressBar
                     android:id="@+id/progressBar"

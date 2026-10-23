@@ -1,5 +1,6 @@
 package com.vinland.app.auth;
 
+import android.accounts.AccountManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -17,6 +18,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.AccountPicker;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
@@ -46,6 +48,7 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private GoogleSignInClient mGoogleSignInClient;
     private ActivityResultLauncher<Intent> googleSignInLauncher;
+    private ActivityResultLauncher<Intent> nativeAccountPickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +74,7 @@ public class LoginActivity extends AppCompatActivity {
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
+        // 1. Google OAuth Launcher
         googleSignInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -81,15 +85,30 @@ public class LoginActivity extends AppCompatActivity {
                             if (account != null && account.getIdToken() != null) {
                                 firebaseAuthWithGoogle(account.getIdToken());
                             } else {
-                                setLoading(false);
-                                showError("Could not retrieve Google authentication token.");
+                                launchNativeDeviceAccountPicker();
                             }
                         } catch (ApiException e) {
                             setLoading(false);
-                            showError("Google Sign-In failed: " + e.getMessage());
+                            launchNativeDeviceAccountPicker();
                         }
                     } else {
                         setLoading(false);
+                        launchNativeDeviceAccountPicker();
+                    }
+                }
+        );
+
+        // 2. Native Account Picker Launcher (Fallback)
+        nativeAccountPickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    setLoading(false);
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        String accountName = result.getData().getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                        if (!TextUtils.isEmpty(accountName)) {
+                            etEmail.setText(accountName);
+                            Toast.makeText(this, "Gmail address " + accountName + " filled! Please enter your password or tap Register.", Toast.LENGTH_LONG).show();
+                        }
                     }
                 }
         );
@@ -160,8 +179,35 @@ public class LoginActivity extends AppCompatActivity {
     private void attemptGoogleSignIn() {
         hideError();
         setLoading(true);
-        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-        googleSignInLauncher.launch(signInIntent);
+        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
+            try {
+                Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+                googleSignInLauncher.launch(signInIntent);
+            } catch (Exception e) {
+                launchNativeDeviceAccountPicker();
+            }
+        });
+    }
+
+    private void launchNativeDeviceAccountPicker() {
+        try {
+            Intent intent = AccountPicker.newChooseAccountIntent(
+                    new AccountPicker.AccountChooserOptions.Builder()
+                            .setAllowableAccountsTypes(java.util.Collections.singletonList("com.google"))
+                            .build()
+            );
+            nativeAccountPickerLauncher.launch(intent);
+        } catch (Exception e) {
+            try {
+                Intent intent = AccountManager.newChooseAccountIntent(
+                        null, null, new String[]{"com.google"}, false, null, null, null, null
+                );
+                nativeAccountPickerLauncher.launch(intent);
+            } catch (Exception ex) {
+                setLoading(false);
+                showError("Please enter your email and password above.");
+            }
+        }
     }
 
     private void firebaseAuthWithGoogle(String idToken) {
@@ -171,6 +217,7 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
+                            Toast.makeText(this, "Signed in as " + user.getEmail() + "!", Toast.LENGTH_SHORT).show();
                             ensureGardenerProfileExists(user);
                         } else {
                             setLoading(false);
