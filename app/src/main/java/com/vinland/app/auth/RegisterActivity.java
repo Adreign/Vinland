@@ -36,6 +36,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -268,7 +269,7 @@ public class RegisterActivity extends AppCompatActivity {
                                 ? firebaseUser.getEmail()
                                 : (account != null ? account.getEmail() : "");
 
-                        // Stage 1: Instantly write account document to Firestore database upon Google Auth
+                        // Stage 1: Instantly write initial profile document to Firestore
                         if (firebaseUser != null) {
                             saveGardenerProfile(firebaseUser.getUid(), "Gardener", "", mail, "Quezon City", "Backyard Garden", Arrays.asList("Tomato", "Green Pepper"), false);
                         }
@@ -297,7 +298,7 @@ public class RegisterActivity extends AppCompatActivity {
             if (tilConfirmPassword != null) tilConfirmPassword.setVisibility(View.VISIBLE);
 
             showStep(1);
-            Toast.makeText(RegisterActivity.this, "✅ Gmail address " + mail + " autofilled! Enter First Name and Last Name below.", Toast.LENGTH_LONG).show();
+            Toast.makeText(RegisterActivity.this, "✅ Gmail address " + mail + " autofilled! Enter First Name, Last Name, and Password below.", Toast.LENGTH_LONG).show();
 
             if (TextUtils.isEmpty(getText(etFirstName))) {
                 etFirstName.requestFocus();
@@ -390,14 +391,12 @@ public class RegisterActivity extends AppCompatActivity {
         setLoading(true);
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (isGoogleAuthenticated && currentUser != null) {
-            // Stage 2: Save completed profile to Firestore database
-            saveGardenerProfile(currentUser.getUid(), firstName, lastName, email, barangay, gardenType, selectedCrops, true);
-        } else if (currentUser != null) {
-            // User authenticated
+
+        if (currentUser != null && (isGoogleAuthenticated || (currentUser.getEmail() != null && currentUser.getEmail().equalsIgnoreCase(email)))) {
+            // Already authenticated via Google or active user session -> Save/update profile directly in Firestore
             saveGardenerProfile(currentUser.getUid(), firstName, lastName, email, barangay, gardenType, selectedCrops, true);
         } else {
-            // Create Firebase Email/Password user
+            // Attempt Firebase Email/Password creation
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this, task -> {
                         if (task.isSuccessful()) {
@@ -406,11 +405,29 @@ public class RegisterActivity extends AppCompatActivity {
                                 saveGardenerProfile(firebaseUser.getUid(), firstName, lastName, email, barangay, gardenType, selectedCrops, true);
                             }
                         } else {
-                            setLoading(false);
-                            String message = task.getException() != null
-                                    ? task.getException().getMessage()
-                                    : "Registration failed. Please try again.";
-                            showError(message);
+                            Exception e = task.getException();
+                            if (e instanceof FirebaseAuthUserCollisionException || (e != null && e.getMessage() != null && e.getMessage().contains("already in use"))) {
+                                // Email ALREADY exists in Firebase Authentication!
+                                // Attempt sign in with password to associate profile or update Firestore doc
+                                mAuth.signInWithEmailAndPassword(email, password)
+                                        .addOnSuccessListener(authResult -> {
+                                            FirebaseUser u = authResult.getUser();
+                                            if (u != null) {
+                                                saveGardenerProfile(u.getUid(), firstName, lastName, email, barangay, gardenType, selectedCrops, true);
+                                            } else {
+                                                setLoading(false);
+                                                showError("This email is already registered. Please tap 'Log in' below to sign in.");
+                                            }
+                                        })
+                                        .addOnFailureListener(authErr -> {
+                                            setLoading(false);
+                                            showError("This email address is already registered in Vinland. Please tap 'Log in' below to sign in.");
+                                        });
+                            } else {
+                                setLoading(false);
+                                String message = e != null ? e.getMessage() : "Registration failed. Please try again.";
+                                showError(message);
+                            }
                         }
                     });
         }
@@ -476,11 +493,6 @@ public class RegisterActivity extends AppCompatActivity {
             }
         }
         return result;
-    }
-
-    private void saveGardenerProfile(String uid, String firstName, String lastName, String email, String barangay,
-                                     String gardenType, List<String> crops) {
-        saveGardenerProfile(uid, firstName, lastName, email, barangay, gardenType, crops, true);
     }
 
     private void saveGardenerProfile(String uid, String firstName, String lastName, String email, String barangay,

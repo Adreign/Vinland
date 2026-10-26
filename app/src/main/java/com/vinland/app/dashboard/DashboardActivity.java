@@ -120,13 +120,28 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void displayProfile(DocumentSnapshot document) {
-        if (document.exists()) {
-            String name = document.getString("fullName");
-            String barangay = document.getString("barangay");
-
-            tvWelcome.setText("Hello, " + (name != null ? name : "Gardener") + "!");
-            tvSubtitle.setText(barangay != null ? barangay + ", Quezon City" : "Welcome to Vinland");
+        if (!document.exists()) {
+            // Account was deleted from database! Block access & logout
+            Toast.makeText(this, "Your account has been deleted by the administrator.", Toast.LENGTH_LONG).show();
+            logOut();
+            return;
         }
+
+        String status = document.getString("status");
+        Boolean isDeleted = document.getBoolean("deleted");
+
+        if ("Suspended".equalsIgnoreCase(status) || "Deactivated".equalsIgnoreCase(status) || Boolean.TRUE.equals(isDeleted)) {
+            // Account suspended or deactivated! Block access & logout
+            Toast.makeText(this, "Your account has been suspended by the administrator.", Toast.LENGTH_LONG).show();
+            logOut();
+            return;
+        }
+
+        String name = document.getString("fullName");
+        String barangay = document.getString("barangay");
+
+        tvWelcome.setText("Hello, " + (name != null ? name : "Gardener") + "!");
+        tvSubtitle.setText(barangay != null ? barangay + ", Quezon City" : "Welcome to Vinland");
     }
 
     private void confirmLogOut() {
