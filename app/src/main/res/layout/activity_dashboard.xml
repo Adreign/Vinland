@@ -339,9 +339,9 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Log Out Card -->
+            <!-- Settings Module Card -->
             <com.google.android.material.card.MaterialCardView
-                android:id="@+id/navLogout"
+                android:id="@+id/navSettings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -360,7 +360,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="⎋"
+                        android:text="⚙️"
                         android:textSize="26sp"
                         android:layout_marginEnd="14dp" />
 
@@ -373,16 +373,16 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Log Out"
+                            android:text="Settings &amp; Preferences"
                             android:textStyle="bold"
-                            android:textColor="#D32F2F"
+                            android:textColor="#212121"
                             android:textSize="14sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Sign out of your Vinland account"
+                            android:text="Hardware pairing, push alerts &amp; system options"
                             android:textColor="#9E9E9E"
                             android:textSize="12sp" />
                     </LinearLayout>
@@ -392,9 +392,26 @@
                         android:layout_height="wrap_content"
                         android:text="→"
                         android:textSize="18sp"
-                        android:textColor="#D32F2F" />
+                        android:textColor="#2E7D32" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- Simple Log Out Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/navLogout"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:text="Log Out"
+                android:textAllCaps="false"
+                android:textColor="#D32F2F"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:strokeColor="#FFCDD2"
+                app:strokeWidth="1.5dp"
+                app:cornerRadius="12dp"
+                app:backgroundTint="#FFF5F5" />
 
             <!-- Empty state banner -->
             <com.google.android.material.card.MaterialCardView

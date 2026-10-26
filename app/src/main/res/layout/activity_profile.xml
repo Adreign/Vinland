@@ -69,7 +69,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Email"
+                        android:text="Email Address"
                         android:textColor="#9E9E9E"
                         android:textSize="12sp" />
 
@@ -80,7 +80,8 @@
                         android:layout_marginBottom="16dp"
                         android:text="loading@example.com"
                         android:textColor="#212121"
-                        android:textSize="15sp" />
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
                     <!-- First Name -->
                     <com.google.android.material.textfield.TextInputLayout
@@ -95,6 +96,7 @@
                             android:id="@+id/etFirstName"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:enabled="false"
                             android:inputType="textPersonName|textCapWords" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -112,6 +114,7 @@
                             android:id="@+id/etLastName"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:enabled="false"
                             android:inputType="textPersonName|textCapWords" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -130,6 +133,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="55dp"
                             android:completionThreshold="1"
+                            android:enabled="false"
                             android:inputType="text" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -148,6 +152,7 @@
                             android:id="@+id/etSensorDeviceId"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:enabled="false"
                             android:inputType="textCapCharacters" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -173,6 +178,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:buttonTint="#2E7D32"
+                            android:enabled="false"
                             android:text="Backyard" />
 
                         <RadioButton
@@ -180,6 +186,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:buttonTint="#2E7D32"
+                            android:enabled="false"
                             android:text="Rooftop" />
 
                         <RadioButton
@@ -187,6 +194,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:buttonTint="#2E7D32"
+                            android:enabled="false"
                             android:text="Community Plot" />
                     </RadioGroup>
 
@@ -212,6 +220,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:buttonTint="#2E7D32"
+                            android:enabled="false"
                             android:text="Tomato" />
 
                         <CheckBox
@@ -220,6 +229,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="20dp"
                             android:buttonTint="#2E7D32"
+                            android:enabled="false"
                             android:text="Green Pepper" />
                     </LinearLayout>
 
@@ -241,16 +251,51 @@
                         android:textSize="13sp"
                         android:visibility="gone" />
 
+                    <!-- View Mode Button -->
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSave"
+                        android:id="@+id/btnEditProfile"
                         android:layout_width="match_parent"
                         android:layout_height="52dp"
-                        android:layout_marginTop="18dp"
-                        android:text="Save Changes"
+                        android:layout_marginTop="20dp"
+                        android:text="Edit Profile"
                         android:textAllCaps="false"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         app:backgroundTint="#2E7D32"
                         app:cornerRadius="12dp" />
+
+                    <!-- Edit Mode Action Buttons -->
+                    <LinearLayout
+                        android:id="@+id/layoutEditButtons"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="20dp"
+                        android:visibility="gone">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnCancel"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:text="Cancel"
+                            android:textColor="#757575"
+                            app:strokeColor="#BDBDBD"
+                            app:cornerRadius="12dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSave"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1.5"
+                            android:layout_marginStart="6dp"
+                            android:text="Save Changes"
+                            android:textAllCaps="false"
+                            android:textSize="15sp"
+                            app:backgroundTint="#2E7D32"
+                            app:cornerRadius="12dp" />
+                    </LinearLayout>
 
                     <ProgressBar
                         android:id="@+id/progressBar"

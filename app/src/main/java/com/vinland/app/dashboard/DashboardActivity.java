@@ -28,6 +28,7 @@ import com.vinland.app.notifications.VinlandFirebaseMessagingService;
 import com.vinland.app.profile.ProfileActivity;
 import com.vinland.app.recommendation.RecommendationActivity;
 import com.vinland.app.reports.ReportsActivity;
+import com.vinland.app.settings.SettingsActivity;
 import com.vinland.app.weather.WeatherActivity;
 import com.vinland.app.weather.WeatherAlertWorker;
 
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class DashboardActivity extends AppCompatActivity {
 
     private TextView tvWelcome, tvSubtitle;
-    private View navSoil, navWeather, navProfile, navCalendar, navReports;
+    private View navSoil, navWeather, navProfile, navCalendar, navReports, navSettings;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -57,6 +58,7 @@ public class DashboardActivity extends AppCompatActivity {
         navProfile = findViewById(R.id.navProfile);
         navCalendar = findViewById(R.id.navCalendar);
         navReports = findViewById(R.id.navReports);
+        navSettings = findViewById(R.id.navSettings);
         View navLogout = findViewById(R.id.navLogout);
 
         com.vinland.app.data.CropDatabaseSeeder.seedIfEmpty(db, null);
@@ -73,6 +75,9 @@ public class DashboardActivity extends AppCompatActivity {
         navProfile.setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
         navCalendar.setOnClickListener(v -> startActivity(new Intent(this, PlantingCalendarActivity.class)));
         navReports.setOnClickListener(v -> startActivity(new Intent(this, ReportsActivity.class)));
+        if (navSettings != null) {
+            navSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
+        }
         navLogout.setOnClickListener(v -> confirmLogOut());
     }
 

@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -36,14 +37,15 @@ public class ProfileActivity extends AppCompatActivity {
     private TextInputEditText etFirstName, etLastName, etSensorDeviceId;
     private AutoCompleteTextView actvBarangay;
     private RadioGroup rgGardenType;
-    private LinearLayout layoutCropsContainer;
-    private MaterialButton btnSave;
+    private LinearLayout layoutCropsContainer, layoutEditButtons;
+    private MaterialButton btnEditProfile, btnCancel, btnSave;
     private ProgressBar progressBar;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
     private final List<String> loadedUserCrops = new ArrayList<>();
+    private boolean isEditMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +65,9 @@ public class ProfileActivity extends AppCompatActivity {
         actvBarangay = findViewById(R.id.actvBarangay);
         rgGardenType = findViewById(R.id.rgGardenType);
         layoutCropsContainer = findViewById(R.id.layoutCropsContainer);
+        layoutEditButtons = findViewById(R.id.layoutEditButtons);
+        btnEditProfile = findViewById(R.id.btnEditProfile);
+        btnCancel = findViewById(R.id.btnCancel);
         btnSave = findViewById(R.id.btnSave);
         progressBar = findViewById(R.id.progressBar);
 
@@ -74,9 +79,36 @@ public class ProfileActivity extends AppCompatActivity {
         actvBarangay.setAdapter(barangayAdapter);
 
         tvBack.setOnClickListener(v -> finish());
+        btnEditProfile.setOnClickListener(v -> setFieldsEditable(true));
+        btnCancel.setOnClickListener(v -> {
+            setFieldsEditable(false);
+            loadProfile(); // Reset unsaved changes
+        });
         btnSave.setOnClickListener(v -> saveChanges());
 
+        setFieldsEditable(false); // Default: View-Only Mode
         CropDatabaseSeeder.seedIfEmpty(db, this::loadCropsAndProfile);
+    }
+
+    private void setFieldsEditable(boolean editable) {
+        isEditMode = editable;
+        hideMessages();
+
+        etFirstName.setEnabled(editable);
+        etLastName.setEnabled(editable);
+        actvBarangay.setEnabled(editable);
+        etSensorDeviceId.setEnabled(editable);
+
+        for (int i = 0; i < rgGardenType.getChildCount(); i++) {
+            rgGardenType.getChildAt(i).setEnabled(editable);
+        }
+
+        for (int i = 0; i < layoutCropsContainer.getChildCount(); i++) {
+            layoutCropsContainer.getChildAt(i).setEnabled(editable);
+        }
+
+        btnEditProfile.setVisibility(editable ? View.GONE : View.VISIBLE);
+        layoutEditButtons.setVisibility(editable ? View.VISIBLE : View.GONE);
     }
 
     private void loadCropsAndProfile() {
@@ -99,6 +131,7 @@ public class ProfileActivity extends AppCompatActivity {
                     cb.setText(label);
                     cb.setTag(crop.getName());
                     cb.setButtonTintList(greenTint);
+                    cb.setEnabled(isEditMode);
 
                     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -235,6 +268,8 @@ public class ProfileActivity extends AppCompatActivity {
                 .update(updates)
                 .addOnSuccessListener(unused -> {
                     setLoading(false);
+                    setFieldsEditable(false); // Return to View-Only Mode upon success
+                    Toast.makeText(this, "✅ Profile updated successfully!", Toast.LENGTH_SHORT).show();
                     showSuccess("Profile updated successfully!");
                 })
                 .addOnFailureListener(e -> {
@@ -281,6 +316,7 @@ public class ProfileActivity extends AppCompatActivity {
     private void setLoading(boolean loading) {
         progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
         btnSave.setEnabled(!loading);
+        btnCancel.setEnabled(!loading);
     }
 
     private int dpToPx(int dp) {
