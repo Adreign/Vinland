@@ -20,7 +20,7 @@
             android:gravity="center_horizontal"
             android:background="#2E7D32"
             android:paddingTop="52dp"
-            android:paddingBottom="36dp"
+            android:paddingBottom="40dp"
             android:paddingHorizontal="24dp">
 
             <TextView
@@ -45,8 +45,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Join Vinland's urban gardening community"
-                android:textSize="12sp"
-                android:textColor="#C8E6C9" />
+                android:textSize="12.5sp"
+                android:textColor="#C8E6C9"
+                android:textAlignment="center" />
         </LinearLayout>
 
         <!-- Multi-Step Registration Form Card -->
@@ -55,7 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
-            android:layout_marginTop="-24dp"
+            android:layout_marginTop="-26dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="6dp"
             app:strokeWidth="0dp"
@@ -72,14 +73,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="20dp">
 
                     <TextView
                         android:id="@+id/tvStepIndicator"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Step 1 of 4: Account Authentication"
-                        android:textSize="12sp"
+                        android:textSize="12.5sp"
                         android:textStyle="bold"
                         android:textColor="#2E7D32" />
 
@@ -87,7 +88,7 @@
                         android:id="@+id/progressStep"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_marginTop="8dp"
                         android:progress="25"
                         app:indicatorColor="#2E7D32"
                         app:trackColor="#E8F5E9"
@@ -106,7 +107,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="1. Choose How to Register"
-                        android:textSize="16sp"
+                        android:textSize="15.5sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginBottom="14dp" />
@@ -121,6 +122,8 @@
                         android:textAllCaps="false"
                         android:textSize="14sp"
                         android:textColor="#2E7D32"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         app:strokeColor="#2E7D32"
                         app:strokeWidth="1.5dp"
                         app:cornerRadius="12dp" />
@@ -130,9 +133,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="16dp">
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="18dp"
+                        android:layout_marginBottom="18dp">
 
                         <View
                             android:layout_width="0dp"
@@ -143,7 +146,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text=" OR REGISTER WITH EMAIL "
+                            android:text="  OR REGISTER WITH EMAIL  "
                             android:textSize="11sp"
                             android:textColor="#757575"
                             android:textStyle="bold" />
@@ -178,7 +181,7 @@
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
                         android:hint="Last Name"
                         app:boxStrokeColor="#2E7D32"
                         app:hintTextColor="#2E7D32">
@@ -196,7 +199,7 @@
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
                         android:hint="Email Address"
                         app:boxStrokeColor="#2E7D32"
                         app:hintTextColor="#2E7D32">
@@ -214,7 +217,7 @@
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
                         android:hint="Password"
                         app:boxStrokeColor="#2E7D32"
                         app:hintTextColor="#2E7D32"
@@ -233,7 +236,7 @@
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
                         android:hint="Confirm Password"
                         app:boxStrokeColor="#2E7D32"
                         app:hintTextColor="#2E7D32"
@@ -251,10 +254,12 @@
                         android:id="@+id/btnNextStep1"
                         android:layout_width="match_parent"
                         android:layout_height="52dp"
-                        android:layout_marginTop="20dp"
+                        android:layout_marginTop="24dp"
                         android:text="Next: Choose Barangay →"
                         android:textAllCaps="false"
                         android:textSize="15sp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         app:cornerRadius="12dp"
                         app:backgroundTint="#2E7D32" />
                 </LinearLayout>
@@ -271,7 +276,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="2. Select Your Barangay"
-                        android:textSize="16sp"
+                        android:textSize="15.5sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginBottom="6dp" />
@@ -282,7 +287,7 @@
                         android:text="Where in Quezon City is your garden located?"
                         android:textSize="13sp"
                         android:textColor="#666666"
-                        android:layout_marginBottom="16dp" />
+                        android:layout_marginBottom="18dp" />
 
                     <!-- Barangay Dropdown -->
                     <com.google.android.material.textfield.TextInputLayout
@@ -297,7 +302,7 @@
                         <AutoCompleteTextView
                             android:id="@+id/actvBarangay"
                             android:layout_width="match_parent"
-                            android:layout_height="50dp"
+                            android:layout_height="52dp"
                             android:completionThreshold="1"
                             android:inputType="text" />
                     </com.google.android.material.textfield.TextInputLayout>
@@ -307,6 +312,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
+                        android:gravity="center_vertical"
                         android:layout_marginTop="24dp">
 
                         <com.google.android.material.button.MaterialButton
@@ -315,9 +321,11 @@
                             android:layout_width="0dp"
                             android:layout_height="52dp"
                             android:layout_weight="1"
-                            android:layout_marginEnd="8dp"
+                            android:layout_marginEnd="6dp"
                             android:text="← Back"
                             android:textColor="#2E7D32"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
                             app:strokeColor="#2E7D32"
                             app:cornerRadius="12dp" />
 
@@ -325,10 +333,12 @@
                             android:id="@+id/btnNextStep2"
                             android:layout_width="0dp"
                             android:layout_height="52dp"
-                            android:layout_weight="1.5"
-                            android:layout_marginStart="8dp"
+                            android:layout_weight="1.6"
+                            android:layout_marginStart="6dp"
                             android:text="Next: Garden Type →"
                             android:textAllCaps="false"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
                             app:cornerRadius="12dp"
                             app:backgroundTint="#2E7D32" />
                     </LinearLayout>
@@ -346,7 +356,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="3. Choose Your Garden Type"
-                        android:textSize="16sp"
+                        android:textSize="15.5sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginBottom="6dp" />
@@ -357,7 +367,7 @@
                         android:text="What type of garden setup do you cultivate?"
                         android:textSize="13sp"
                         android:textColor="#666666"
-                        android:layout_marginBottom="16dp" />
+                        android:layout_marginBottom="18dp" />
 
                     <RadioGroup
                         android:id="@+id/rgGardenType"
@@ -371,24 +381,27 @@
                             android:layout_height="wrap_content"
                             android:text="🏡 Backyard Garden"
                             android:textSize="14sp"
+                            android:paddingVertical="4dp"
                             android:buttonTint="#2E7D32" />
 
                         <RadioButton
                             android:id="@+id/rbRooftop"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="6dp"
                             android:text="🏙️ Rooftop / Balcony Garden"
                             android:textSize="14sp"
+                            android:paddingVertical="4dp"
                             android:buttonTint="#2E7D32" />
 
                         <RadioButton
                             android:id="@+id/rbCommunityPlot"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="6dp"
                             android:text="🌾 Community Plot"
                             android:textSize="14sp"
+                            android:paddingVertical="4dp"
                             android:buttonTint="#2E7D32" />
                     </RadioGroup>
 
@@ -397,6 +410,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
+                        android:gravity="center_vertical"
                         android:layout_marginTop="24dp">
 
                         <com.google.android.material.button.MaterialButton
@@ -405,9 +419,11 @@
                             android:layout_width="0dp"
                             android:layout_height="52dp"
                             android:layout_weight="1"
-                            android:layout_marginEnd="8dp"
+                            android:layout_marginEnd="6dp"
                             android:text="← Back"
                             android:textColor="#2E7D32"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
                             app:strokeColor="#2E7D32"
                             app:cornerRadius="12dp" />
 
@@ -415,10 +431,12 @@
                             android:id="@+id/btnNextStep3"
                             android:layout_width="0dp"
                             android:layout_height="52dp"
-                            android:layout_weight="1.5"
-                            android:layout_marginStart="8dp"
+                            android:layout_weight="1.6"
+                            android:layout_marginStart="6dp"
                             android:text="Next: Choose Crops →"
                             android:textAllCaps="false"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
                             app:cornerRadius="12dp"
                             app:backgroundTint="#2E7D32" />
                     </LinearLayout>
@@ -436,7 +454,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="4. What Crops Do You Grow?"
-                        android:textSize="16sp"
+                        android:textSize="15.5sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:layout_marginBottom="6dp" />
@@ -447,7 +465,7 @@
                         android:text="Select the urban vegetables in your garden:"
                         android:textSize="13sp"
                         android:textColor="#666666"
-                        android:layout_marginBottom="16dp" />
+                        android:layout_marginBottom="18dp" />
 
                     <LinearLayout
                         android:id="@+id/layoutCropsContainer"
@@ -461,6 +479,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="🍅 Tomato"
+                            android:paddingVertical="4dp"
                             android:buttonTint="#2E7D32" />
 
                         <CheckBox
@@ -469,6 +488,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
                             android:text="🫑 Green Pepper"
+                            android:paddingVertical="4dp"
                             android:buttonTint="#2E7D32" />
                     </LinearLayout>
 
@@ -477,6 +497,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
+                        android:gravity="center_vertical"
                         android:layout_marginTop="24dp">
 
                         <com.google.android.material.button.MaterialButton
@@ -485,9 +506,11 @@
                             android:layout_width="0dp"
                             android:layout_height="52dp"
                             android:layout_weight="1"
-                            android:layout_marginEnd="8dp"
+                            android:layout_marginEnd="6dp"
                             android:text="← Back"
                             android:textColor="#2E7D32"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
                             app:strokeColor="#2E7D32"
                             app:cornerRadius="12dp" />
 
@@ -496,10 +519,13 @@
                             android:layout_width="0dp"
                             android:layout_height="52dp"
                             android:layout_weight="1.8"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="6dp"
                             android:text="Complete Registration 🎉"
                             android:textAllCaps="false"
-                            android:textSize="14sp"
+                            android:textSize="13.5sp"
+                            android:paddingHorizontal="10dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
                             app:cornerRadius="12dp"
                             app:backgroundTint="#2E7D32" />
                     </LinearLayout>
@@ -510,9 +536,10 @@
                     android:id="@+id/tvError"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="16dp"
                     android:textColor="#D32F2F"
                     android:textSize="13sp"
+                    android:textAlignment="center"
                     android:visibility="gone" />
 
                 <ProgressBar
@@ -520,7 +547,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
                     android:visibility="gone" />
 
             </LinearLayout>
