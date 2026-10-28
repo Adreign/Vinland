@@ -11,10 +11,10 @@ import com.vinland.app.notifications.NotificationHelper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Scanner;
 
 public class WeatherAlertWorker extends Worker {
 
@@ -26,10 +26,10 @@ public class WeatherAlertWorker extends Worker {
     @Override
     public Result doWork() {
         try {
-            String urlString = "https://api.openweathermap.org/data/2.5/weather"
-                    + "?q=" + WeatherConfig.CITY_QUERY
-                    + "&appid=" + WeatherConfig.API_KEY
-                    + "&units=metric";
+            String urlString = "https://api.openweathermap.org/data/2.5/weather?q="
+                    + WeatherConfig.CITY_QUERY
+                    + "&units=metric&appid="
+                    + WeatherConfig.API_KEY;
 
             URL url = new URL(urlString);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -37,23 +37,21 @@ public class WeatherAlertWorker extends Worker {
             conn.setConnectTimeout(10000);
             conn.setReadTimeout(10000);
 
-            int responseCode = conn.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-                reader.close();
+            if (conn.getResponseCode() == 200) {
+                InputStream is = conn.getInputStream();
+                Scanner scanner = new Scanner(is).useDelimiter("\\A");
+                String responseStr = scanner.hasNext() ? scanner.next() : "";
 
-                JSONObject json = new JSONObject(response.toString());
-                JSONObject main = json.getJSONObject("main");
-                JSONArray weather = json.getJSONArray("weather");
-
+                JSONObject response = new JSONObject(responseStr);
+                JSONObject main = response.getJSONObject("main");
                 double temp = main.getDouble("temp");
                 int humidity = main.getInt("humidity");
-                String description = weather.getJSONObject(0).getString("description").toLowerCase();
+
+                JSONArray weatherArray = response.getJSONArray("weather");
+                String description = "";
+                if (weatherArray.length() > 0) {
+                    description = weatherArray.getJSONObject(0).optString("description", "").toLowerCase();
+                }
 
                 if (description.contains("rain") || description.contains("thunderstorm") || description.contains("drizzle")) {
                     NotificationHelper.sendNotification(
@@ -71,7 +69,7 @@ public class WeatherAlertWorker extends Worker {
                     NotificationHelper.sendNotification(
                             getApplicationContext(),
                             "🌿 High Humidity Alert",
-                            "High humidity detected in QC (" + humidity + "%). Check leafy crops like pechay or tomato for fungal leaf spot."
+                            "High humidity detected in QC (" + humidity + "%). Check garden crops and leafy greens for fungal leaf spot."
                     );
                 }
             }

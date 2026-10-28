@@ -50,7 +50,15 @@
 
         <activity android:name=".notifications.NotificationHistoryActivity" android:exported="false" />
 
-        <activity android:name=".settings.SettingsActivity" android:exported="false" />
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".chat.AiChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
         <service
             android:name=".notifications.VinlandFirebaseMessagingService"

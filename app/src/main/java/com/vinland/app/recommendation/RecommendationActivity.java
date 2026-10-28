@@ -1,5 +1,7 @@
 package com.vinland.app.recommendation;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -120,6 +122,15 @@ public class RecommendationActivity extends AppCompatActivity {
 
         loadUserSavedDeviceId();
         CropDatabaseSeeder.seedIfEmpty(db, this::loadCropsFromFirestore);
+    }
+
+    private String getEffectiveGeminiApiKey() {
+        SharedPreferences prefs = getSharedPreferences("VinlandPrefs", Context.MODE_PRIVATE);
+        String customKey = prefs.getString("gemini_api_key", "");
+        if (!TextUtils.isEmpty(customKey)) {
+            return customKey;
+        }
+        return WeatherConfig.GEMINI_API_KEY;
     }
 
     private void loadUserSavedDeviceId() {
@@ -451,6 +462,8 @@ public class RecommendationActivity extends AppCompatActivity {
         progressAiLoading.setVisibility(View.VISIBLE);
         tvAiAdvice.setText("Consulting Gemini AI for crop recommendations based on your soil...");
 
+        String activeApiKey = getEffectiveGeminiApiKey();
+
         String prompt = "You are an expert AI agricultural agronomist and master urban gardener in Quezon City, Philippines. "
                 + "A local gardener tested their soil and provided these exact sensor readings: "
                 + "• Soil Moisture: " + moisture + "% "
@@ -464,7 +477,7 @@ public class RecommendationActivity extends AppCompatActivity {
                 + "3. **Actionable Soil Amendments & Fertilizers**: Provide specific, practical steps on what organic amendments, fertilizers, compost, or pH balancers to add.\n"
                 + "4. **Watering & Container Advice**: Give practical watering schedules and container/drainage management tips tailored for urban gardeners in Quezon City (handling wet and dry seasons).";
 
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + WeatherConfig.GEMINI_API_KEY;
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + activeApiKey;
 
         try {
             JSONObject jsonBody = new JSONObject();
@@ -493,19 +506,21 @@ public class RecommendationActivity extends AppCompatActivity {
                                     JSONArray resParts = content.optJSONArray("parts");
                                     if (resParts != null && resParts.length() > 0) {
                                         String aiText = resParts.getJSONObject(0).optString("text", "");
-                                        displayFormattedAiText(tvAiAdvice, aiText.trim());
-                                        return;
+                                        if (!TextUtils.isEmpty(aiText)) {
+                                            displayFormattedAiText(tvAiAdvice, aiText.trim());
+                                            return;
+                                        }
                                     }
                                 }
                             }
-                            tvAiAdvice.setText("Soil and crop matches evaluated successfully.");
+                            displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
                         } catch (JSONException e) {
-                            tvAiAdvice.setText("Soil and crop matches evaluated successfully.");
+                            displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
                         }
                     },
                     error -> {
                         progressAiLoading.setVisibility(View.GONE);
-                        tvAiAdvice.setText("Soil and crop matches evaluated successfully.");
+                        displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
                     }
             );
 
@@ -513,8 +528,73 @@ public class RecommendationActivity extends AppCompatActivity {
 
         } catch (JSONException e) {
             progressAiLoading.setVisibility(View.GONE);
-            tvAiAdvice.setText("Soil and crop matches evaluated successfully.");
+            displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
         }
+    }
+
+    private String generateLocalAgronomistReport(double moisture, double ph, double n, double p, double k) {
+        StringBuilder report = new StringBuilder();
+        report.append("<b>🌿 Vinland AI Agronomist Soil Analysis Report</b><br/><br/>");
+
+        // 1. Soil Health Breakdown
+        report.append("<b>1. Soil Health Breakdown:</b><br/>");
+        report.append("• <b>Soil Moisture (").append(moisture).append("%):</b> ");
+        if (moisture < 35) {
+            report.append("Low moisture level. Your soil is dry and requires immediate deep watering.<br/>");
+        } else if (moisture > 80) {
+            report.append("High moisture level. Ensure pot drainage holes are clear to prevent root rot.<br/>");
+        } else {
+            report.append("Optimal soil moisture level for tropical urban gardening.<br/>");
+        }
+
+        report.append("• <b>Soil pH (").append(ph).append("):</b> ");
+        if (ph < 5.5) {
+            report.append("Acidic soil. Apply agricultural lime (calcium carbonate) to balance pH.<br/>");
+        } else if (ph > 7.5) {
+            report.append("Alkaline soil. Add organic vermicompost to lower pH.<br/>");
+        } else {
+            report.append("Ideal neutral pH for Quezon City vegetable crops.<br/>");
+        }
+
+        report.append("• <b>NPK Nutrients:</b> ");
+        report.append("Nitrogen ").append(n < 100 ? "Deficient" : n > 250 ? "High" : "Optimal").append(" (").append(n).append(" ppm), ");
+        report.append("Phosphorus ").append(p < 50 ? "Deficient" : p > 150 ? "High" : "Optimal").append(" (").append(p).append(" ppm), ");
+        report.append("Potassium ").append(k < 100 ? "Deficient" : k > 300 ? "High" : "Optimal").append(" (").append(k).append(" ppm).<br/><br/>");
+
+        // 2. Crop Match
+        report.append("<b>2. Top Recommended Crops:</b><br/>");
+        String topName = topRecommendedCrop != null ? topRecommendedCrop.getName() : "Tomato & Green Pepper";
+        report.append("• <b>").append(topName).append(":</b> Highly recommended for current soil and climate conditions in Quezon City.<br/><br/>");
+
+        // 3. Soil Amendments
+        report.append("<b>3. Actionable Soil Care Steps:</b><br/>");
+        if (n < 100) {
+            report.append("• Apply organic vermicompost or fermented plant juice (FPJ) to boost Nitrogen.<br/>");
+        }
+        if (p < 50) {
+            report.append("• Apply steamed bone meal or fermented fruit juice (FFJ) for root development.<br/>");
+        }
+        if (k < 100) {
+            report.append("• Apply banana peel liquid tea or wood ash to supply Potassium.<br/>");
+        }
+        if (ph < 5.5) {
+            report.append("• Top-dress 1 tablespoon of agricultural lime per pot.<br/>");
+        } else if (ph > 7.5) {
+            report.append("• Mix in rich organic compost to lower alkaline pH.<br/>");
+        } else if (n >= 100 && p >= 50 && k >= 100) {
+            report.append("• Your soil nutrient levels are well-balanced! Maintain regular organic top-dressing.<br/>");
+        }
+
+        report.append("<br/><b>4. Watering Guidance:</b><br/>");
+        if (moisture < 35) {
+            report.append("• Water twice daily in early morning (6:30 AM) and late afternoon (5:00 PM).");
+        } else if (moisture > 80) {
+            report.append("• Pause irrigation until the top 1-2 inches of soil feel dry to the touch.");
+        } else {
+            report.append("• Maintain regular morning watering schedules.");
+        }
+
+        return report.toString();
     }
 
     private void updateExecutiveSummary(double moisture, double ph, double n, double p, double k) {

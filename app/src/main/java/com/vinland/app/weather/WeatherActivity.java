@@ -14,16 +14,17 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.material.card.MaterialCardView;
 import com.vinland.app.R;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Locale;
+
 public class WeatherActivity extends AppCompatActivity {
 
-    private ProgressBar progressBar;
-    private TextView tvError;
+    private TextView tvBack, tvLocation, tvTemp, tvDescription, tvHumidity, tvWind, tvFeelsLike, tvAdvisory, tvError;
     private MaterialCardView cardCurrentWeather, cardAdvisory;
-    private TextView tvLocation, tvTemp, tvDescription, tvHumidity, tvWind, tvFeelsLike, tvAdvisory;
-
+    private ProgressBar progressBar;
     private RequestQueue requestQueue;
 
     @Override
@@ -31,10 +32,9 @@ public class WeatherActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather);
 
-        progressBar = findViewById(R.id.progressBar);
-        tvError = findViewById(R.id.tvError);
-        cardCurrentWeather = findViewById(R.id.cardCurrentWeather);
-        cardAdvisory = findViewById(R.id.cardAdvisory);
+        requestQueue = Volley.newRequestQueue(this);
+
+        tvBack = findViewById(R.id.tvBack);
         tvLocation = findViewById(R.id.tvLocation);
         tvTemp = findViewById(R.id.tvTemp);
         tvDescription = findViewById(R.id.tvDescription);
@@ -42,60 +42,76 @@ public class WeatherActivity extends AppCompatActivity {
         tvWind = findViewById(R.id.tvWind);
         tvFeelsLike = findViewById(R.id.tvFeelsLike);
         tvAdvisory = findViewById(R.id.tvAdvisory);
-        TextView tvBack = findViewById(R.id.tvBack);
+        tvError = findViewById(R.id.tvError);
+        cardCurrentWeather = findViewById(R.id.cardCurrentWeather);
+        cardAdvisory = findViewById(R.id.cardAdvisory);
+        progressBar = findViewById(R.id.progressBar);
 
         tvBack.setOnClickListener(v -> finish());
 
-        requestQueue = Volley.newRequestQueue(this);
         fetchWeather();
     }
 
     private void fetchWeather() {
-        String url = "https://api.openweathermap.org/data/2.5/weather"
-                + "?q=" + WeatherConfig.CITY_QUERY
-                + "&appid=" + WeatherConfig.API_KEY
-                + "&units=metric";
+        progressBar.setVisibility(View.VISIBLE);
+        tvError.setVisibility(View.GONE);
+
+        String url = "https://api.openweathermap.org/data/2.5/weather?q="
+                + WeatherConfig.CITY_QUERY
+                + "&units=metric&appid="
+                + WeatherConfig.API_KEY;
 
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
                 url,
                 null,
-                this::displayWeather,
-                error -> showError()
+                response -> {
+                    progressBar.setVisibility(View.GONE);
+                    parseWeatherResponse(response);
+                },
+                error -> {
+                    progressBar.setVisibility(View.GONE);
+                    tvError.setText("Could not fetch current weather for Quezon City. Check your connection.");
+                    tvError.setVisibility(View.VISIBLE);
+                }
         );
 
         requestQueue.add(request);
     }
 
-    private void displayWeather(JSONObject response) {
+    private void parseWeatherResponse(JSONObject response) {
         try {
             JSONObject main = response.getJSONObject("main");
-            JSONObject wind = response.getJSONObject("wind");
-            String description = response.getJSONArray("weather")
-                    .getJSONObject(0)
-                    .getString("description");
-
             double temp = main.getDouble("temp");
             double feelsLike = main.getDouble("feels_like");
             int humidity = main.getInt("humidity");
-            double windSpeed = wind.getDouble("speed");
 
-            tvLocation.setText("Quezon City");
-            tvTemp.setText(String.format("%.0f°C", temp));
+            double windSpeed = 0.0;
+            if (response.has("wind")) {
+                windSpeed = response.getJSONObject("wind").optDouble("speed", 0.0);
+            }
+
+            JSONArray weatherArray = response.getJSONArray("weather");
+            String description = "Clear";
+            if (weatherArray.length() > 0) {
+                description = weatherArray.getJSONObject(0).getString("description");
+            }
+
+            tvLocation.setText("Quezon City, Philippines");
+            tvTemp.setText(String.format(Locale.getDefault(), "%.1f°C", temp));
             tvDescription.setText(capitalize(description));
             tvHumidity.setText(humidity + "%");
-            tvWind.setText(String.format("%.1f m/s", windSpeed));
-            tvFeelsLike.setText(String.format("%.0f°C", feelsLike));
+            tvWind.setText(String.format(Locale.getDefault(), "%.1f m/s", windSpeed));
+            tvFeelsLike.setText(String.format(Locale.getDefault(), "%.1f°C", feelsLike));
 
             tvAdvisory.setText(buildAdvisory(temp, humidity, description));
 
-            progressBar.setVisibility(View.GONE);
-            tvError.setVisibility(View.GONE);
-            cardCurrentWeather.setVisibility(View.VISIBLE);
-            cardAdvisory.setVisibility(View.VISIBLE);
+            if (cardCurrentWeather != null) cardCurrentWeather.setVisibility(View.VISIBLE);
+            if (cardAdvisory != null) cardAdvisory.setVisibility(View.VISIBLE);
 
         } catch (JSONException e) {
-            showError();
+            tvError.setText("Error parsing weather data: " + e.getMessage());
+            tvError.setVisibility(View.VISIBLE);
         }
     }
 
@@ -109,7 +125,7 @@ public class WeatherActivity extends AppCompatActivity {
             return "High temperature today. Soil may dry out faster \u2014 check moisture levels more frequently.";
         }
         if (humidity >= 85) {
-            return "High humidity levels. Watch for fungal issues on leafy crops like pechay or tomato.";
+            return "High humidity levels. Watch for fungal leaf issues on garden crops and leafy greens.";
         }
         return "Conditions look stable for regular garden care today.";
     }
@@ -117,12 +133,5 @@ public class WeatherActivity extends AppCompatActivity {
     private String capitalize(String text) {
         if (text == null || text.isEmpty()) return text;
         return text.substring(0, 1).toUpperCase() + text.substring(1);
-    }
-
-    private void showError() {
-        progressBar.setVisibility(View.GONE);
-        cardCurrentWeather.setVisibility(View.GONE);
-        cardAdvisory.setVisibility(View.GONE);
-        tvError.setVisibility(View.VISIBLE);
     }
 }
