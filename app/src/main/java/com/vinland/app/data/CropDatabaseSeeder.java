@@ -86,9 +86,9 @@ public class CropDatabaseSeeder {
                 "Popular urban garden crop requiring full sunlight and well-draining soil.",
                 6.0, 6.8,   // phMin, phMax
                 30.0, 70.0, // moistureMin, moistureMax
-                20.0, 50.0, // nitrogenMin, nitrogenMax
-                15.0, 30.0, // phosphorusMin, phosphorusMax
-                100.0, 200.0, // potassiumMin, potassiumMax
+                5.0, 80.0,  // nitrogenMin, nitrogenMax
+                5.0, 60.0,  // phosphorusMin, phosphorusMax
+                15.0, 150.0, // potassiumMin, potassiumMax
                 TOMATO_TIPS
         );
 
@@ -101,9 +101,9 @@ public class CropDatabaseSeeder {
                 "Warm-season crop thriving in fertile, warm, moisture-retentive soil.",
                 6.0, 7.0,   // phMin, phMax
                 30.0, 70.0, // moistureMin, moistureMax
-                20.0, 50.0, // nitrogenMin, nitrogenMax
-                15.0, 30.0, // phosphorusMin, phosphorusMax
-                100.0, 200.0, // potassiumMin, potassiumMax
+                5.0, 80.0,  // nitrogenMin, nitrogenMax
+                5.0, 60.0,  // phosphorusMin, phosphorusMax
+                15.0, 150.0, // potassiumMin, potassiumMax
                 PEPPER_TIPS
         );
 

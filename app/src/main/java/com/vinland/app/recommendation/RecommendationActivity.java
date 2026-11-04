@@ -20,7 +20,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
@@ -52,8 +51,6 @@ public class RecommendationActivity extends AppCompatActivity {
     private TextView tvSummaryBadge, tvSummaryKeyFindings, tvSummaryTopCropName, tvSummaryActionNeeded;
     private TextInputEditText etMoisture, etPh, etNitrogen, etPhosphorus, etPotassium;
     private MaterialButton btnAnalyze, btnSaveToHistory;
-    private MaterialButtonToggleGroup toggleGroupMode;
-    private MaterialCardView cardLiveSensorBanner;
     private LinearLayout layoutResults, layoutParameterResults, layoutRecommendedCrops;
     private ProgressBar progressAiLoading;
 
@@ -63,7 +60,6 @@ public class RecommendationActivity extends AppCompatActivity {
 
     private ListenerRegistration sensorListenerRegistration;
     private String activeSensorDeviceId = "VINLAND-ESP32-01";
-    private boolean isAutoMode = false;
 
     private final Map<String, Crop> cropMap = new HashMap<>();
     private Crop topRecommendedCrop = null;
@@ -88,8 +84,6 @@ public class RecommendationActivity extends AppCompatActivity {
         etPotassium = findViewById(R.id.etPotassium);
         btnAnalyze = findViewById(R.id.btnAnalyze);
         btnSaveToHistory = findViewById(R.id.btnSaveToHistory);
-        toggleGroupMode = findViewById(R.id.toggleGroupMode);
-        cardLiveSensorBanner = findViewById(R.id.cardLiveSensorBanner);
         tvLiveStatusDot = findViewById(R.id.tvLiveStatusDot);
         tvLiveStatusText = findViewById(R.id.tvLiveStatusText);
         tvLiveLastUpdated = findViewById(R.id.tvLiveLastUpdated);
@@ -110,16 +104,7 @@ public class RecommendationActivity extends AppCompatActivity {
         btnSaveToHistory.setOnClickListener(v -> saveReadingToHistory());
         tvChangeDevice.setOnClickListener(v -> showChangeDeviceDialog());
 
-        toggleGroupMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (isChecked) {
-                if (checkedId == R.id.btnModeAuto) {
-                    switchToAutoMode();
-                } else {
-                    switchToManualMode();
-                }
-            }
-        });
-
+        setFieldsEditable(false);
         loadUserSavedDeviceId();
         CropDatabaseSeeder.seedIfEmpty(db, this::loadCropsFromFirestore);
     }
@@ -134,7 +119,10 @@ public class RecommendationActivity extends AppCompatActivity {
     }
 
     private void loadUserSavedDeviceId() {
-        if (mAuth.getCurrentUser() == null) return;
+        if (mAuth.getCurrentUser() == null) {
+            listenToLiveSensorData();
+            return;
+        }
         db.collection("users").document(mAuth.getCurrentUser().getUid())
                 .get()
                 .addOnSuccessListener(document -> {
@@ -144,23 +132,9 @@ public class RecommendationActivity extends AppCompatActivity {
                             activeSensorDeviceId = savedId;
                         }
                     }
-                });
-    }
-
-    private void switchToAutoMode() {
-        isAutoMode = true;
-        cardLiveSensorBanner.setVisibility(View.VISIBLE);
-        setFieldsEditable(false);
-        btnAnalyze.setText("✨ Generate Recommendation");
-        listenToLiveSensorData();
-    }
-
-    private void switchToManualMode() {
-        isAutoMode = false;
-        cardLiveSensorBanner.setVisibility(View.GONE);
-        detachSensorListener();
-        setFieldsEditable(true);
-        btnAnalyze.setText("✨ Generate Recommendation");
+                    listenToLiveSensorData();
+                })
+                .addOnFailureListener(e -> listenToLiveSensorData());
     }
 
     private void setFieldsEditable(boolean editable) {
@@ -185,8 +159,6 @@ public class RecommendationActivity extends AppCompatActivity {
         sensorListenerRegistration = db.collection("sensor_devices")
                 .document(activeSensorDeviceId)
                 .addSnapshotListener((snapshot, error) -> {
-                    if (!isAutoMode) return;
-
                     if (error != null) {
                         tvLiveStatusDot.setText("🔴");
                         tvLiveStatusText.setText("Connection Error: " + error.getMessage());
@@ -271,9 +243,7 @@ public class RecommendationActivity extends AppCompatActivity {
                     if (!TextUtils.isEmpty(newId)) {
                         activeSensorDeviceId = newId;
                         Toast.makeText(this, "Paired with device: " + activeSensorDeviceId, Toast.LENGTH_SHORT).show();
-                        if (isAutoMode) {
-                            listenToLiveSensorData();
-                        }
+                        listenToLiveSensorData();
                     }
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
@@ -309,7 +279,7 @@ public class RecommendationActivity extends AppCompatActivity {
 
         if (TextUtils.isEmpty(moistureStr) || TextUtils.isEmpty(phStr)
                 || TextUtils.isEmpty(nStr) || TextUtils.isEmpty(pStr) || TextUtils.isEmpty(kStr)) {
-            showInputError("Please fill in all five soil readings (Moisture, pH, N, P, K).");
+            showInputError("Waiting for live ESP32 soil readings...");
             return;
         }
 
@@ -320,7 +290,7 @@ public class RecommendationActivity extends AppCompatActivity {
             currentP = Double.parseDouble(pStr);
             currentK = Double.parseDouble(kStr);
         } catch (NumberFormatException e) {
-            showInputError("Please enter valid numbers only.");
+            showInputError("Invalid sensor readings format.");
             return;
         }
 
@@ -340,9 +310,9 @@ public class RecommendationActivity extends AppCompatActivity {
             int score = 0;
             if (ph >= crop.getPhMin() - 0.5 && ph <= crop.getPhMax() + 0.5) score++;
             if (moisture >= crop.getMoistureMin() - 10 && moisture <= crop.getMoistureMax() + 10) score++;
-            if (n >= crop.getNitrogenMin() * 0.6 && n <= crop.getNitrogenMax() * 1.4) score++;
-            if (p >= crop.getPhosphorusMin() * 0.6 && p <= crop.getPhosphorusMax() * 1.4) score++;
-            if (k >= crop.getPotassiumMin() * 0.6 && k <= crop.getPotassiumMax() * 1.4) score++;
+            if (n >= 5.0 && n <= 80.0) score++;
+            if (p >= 5.0 && p <= 60.0) score++;
+            if (k >= 15.0 && k <= 150.0) score++;
 
             matches.add(new CropMatch(crop, score));
         }
@@ -435,9 +405,9 @@ public class RecommendationActivity extends AppCompatActivity {
 
         addResultRow("💧 Moisture", moisture + "%", classifyGeneralMoisture(moisture));
         addResultRow("⚗️ pH Level", String.valueOf(ph), classifyGeneralPh(ph));
-        addResultRow("🌿 Nitrogen (N)", n + " ppm", classifyGeneralNutrient(n, 100, 250, "Nitrogen"));
-        addResultRow("🌿 Phosphorus (P)", p + " ppm", classifyGeneralNutrient(p, 50, 150, "Phosphorus"));
-        addResultRow("🌿 Potassium (K)", k + " ppm", classifyGeneralNutrient(k, 100, 300, "Potassium"));
+        addResultRow("🌿 Nitrogen (N)", n + " ppm", classifyGeneralNutrient(n, 5.0, 80.0, "Nitrogen"));
+        addResultRow("🌿 Phosphorus (P)", p + " ppm", classifyGeneralNutrient(p, 5.0, 60.0, "Phosphorus"));
+        addResultRow("🌿 Potassium (K)", k + " ppm", classifyGeneralNutrient(k, 15.0, 150.0, "Potassium"));
     }
 
     private String[] classifyGeneralMoisture(double m) {
@@ -459,10 +429,16 @@ public class RecommendationActivity extends AppCompatActivity {
     }
 
     private void fetchGeminiAiRecommendation(double moisture, double ph, double n, double p, double k) {
+        String activeApiKey = getEffectiveGeminiApiKey();
+
+        if (TextUtils.isEmpty(activeApiKey) || !activeApiKey.startsWith("AIzaSy")) {
+            progressAiLoading.setVisibility(View.GONE);
+            displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
+            return;
+        }
+
         progressAiLoading.setVisibility(View.VISIBLE);
         tvAiAdvice.setText("Consulting Gemini AI for crop recommendations based on your soil...");
-
-        String activeApiKey = getEffectiveGeminiApiKey();
 
         String prompt = "You are an expert AI agricultural agronomist and master urban gardener in Quezon City, Philippines. "
                 + "A local gardener tested their soil and provided these exact sensor readings: "
@@ -557,31 +533,31 @@ public class RecommendationActivity extends AppCompatActivity {
         }
 
         report.append("• <b>NPK Nutrients:</b> ");
-        report.append("Nitrogen ").append(n < 100 ? "Deficient" : n > 250 ? "High" : "Optimal").append(" (").append(n).append(" ppm), ");
-        report.append("Phosphorus ").append(p < 50 ? "Deficient" : p > 150 ? "High" : "Optimal").append(" (").append(p).append(" ppm), ");
-        report.append("Potassium ").append(k < 100 ? "Deficient" : k > 300 ? "High" : "Optimal").append(" (").append(k).append(" ppm).<br/><br/>");
+        report.append("Nitrogen ").append(n < 5.0 ? "Deficient" : n > 80.0 ? "High" : "Optimal").append(" (").append(n).append(" ppm), ");
+        report.append("Phosphorus ").append(p < 5.0 ? "Deficient" : p > 60.0 ? "High" : "Optimal").append(" (").append(p).append(" ppm), ");
+        report.append("Potassium ").append(k < 15.0 ? "Deficient" : k > 150.0 ? "High" : "Optimal").append(" (").append(k).append(" ppm).<br/><br/>");
 
         // 2. Crop Match
         report.append("<b>2. Top Recommended Crops:</b><br/>");
-        String topName = topRecommendedCrop != null ? topRecommendedCrop.getName() : "Tomato & Green Pepper";
+        String topName = topRecommendedCrop != null ? topRecommendedCrop.getName() : "Urban Vegetable Crop";
         report.append("• <b>").append(topName).append(":</b> Highly recommended for current soil and climate conditions in Quezon City.<br/><br/>");
 
         // 3. Soil Amendments
         report.append("<b>3. Actionable Soil Care Steps:</b><br/>");
-        if (n < 100) {
+        if (n < 5.0) {
             report.append("• Apply organic vermicompost or fermented plant juice (FPJ) to boost Nitrogen.<br/>");
         }
-        if (p < 50) {
+        if (p < 5.0) {
             report.append("• Apply steamed bone meal or fermented fruit juice (FFJ) for root development.<br/>");
         }
-        if (k < 100) {
+        if (k < 15.0) {
             report.append("• Apply banana peel liquid tea or wood ash to supply Potassium.<br/>");
         }
         if (ph < 5.5) {
             report.append("• Top-dress 1 tablespoon of agricultural lime per pot.<br/>");
         } else if (ph > 7.5) {
             report.append("• Mix in rich organic compost to lower alkaline pH.<br/>");
-        } else if (n >= 100 && p >= 50 && k >= 100) {
+        } else if (n >= 5.0 && p >= 5.0 && k >= 15.0) {
             report.append("• Your soil nutrient levels are well-balanced! Maintain regular organic top-dressing.<br/>");
         }
 
@@ -599,11 +575,11 @@ public class RecommendationActivity extends AppCompatActivity {
 
     private void updateExecutiveSummary(double moisture, double ph, double n, double p, double k) {
         int optimalCount = 0;
-        if (moisture >= 35 && moisture <= 80) optimalCount++;
+        if (moisture >= 30 && moisture <= 80) optimalCount++;
         if (ph >= 5.5 && ph <= 7.5) optimalCount++;
-        if (n >= 100 && n <= 250) optimalCount++;
-        if (p >= 50 && p <= 150) optimalCount++;
-        if (k >= 100 && k <= 300) optimalCount++;
+        if (n >= 5.0 && n <= 80.0) optimalCount++;
+        if (p >= 5.0 && p <= 60.0) optimalCount++;
+        if (k >= 15.0 && k <= 150.0) optimalCount++;
 
         if (tvSummaryBadge != null) {
             if (optimalCount >= 4) {
@@ -622,9 +598,9 @@ public class RecommendationActivity extends AppCompatActivity {
         findings.append("• Moisture: ").append(moisture < 35 ? "Low (" + moisture + "%). Needs thorough watering." : moisture > 80 ? "High (" + moisture + "%). Ensure soil drainage." : "Optimal (" + moisture + "%). Healthy range.").append("\n");
         findings.append("• Soil pH: ").append(ph < 5.5 ? "Acidic (" + ph + "). Add agricultural lime." : ph > 7.5 ? "Alkaline (" + ph + "). Add organic compost." : "Optimal neutral (" + ph + "). Ideal for crops.").append("\n");
         findings.append("• NPK Status: ")
-                .append(n < 100 ? "N Deficient, " : n > 250 ? "N High, " : "N Optimal, ")
-                .append(p < 50 ? "P Deficient, " : p > 150 ? "P High, " : "P Optimal, ")
-                .append(k < 100 ? "K Deficient." : k > 300 ? "K High." : "K Optimal.");
+                .append(n < 5.0 ? "N Deficient, " : n > 80.0 ? "N High, " : "N Optimal, ")
+                .append(p < 5.0 ? "P Deficient, " : p > 60.0 ? "P High, " : "P Optimal, ")
+                .append(k < 15.0 ? "K Deficient." : k > 150.0 ? "K High." : "K Optimal.");
 
         if (tvSummaryKeyFindings != null) {
             tvSummaryKeyFindings.setText(findings.toString());
@@ -640,7 +616,7 @@ public class RecommendationActivity extends AppCompatActivity {
                 tvSummaryActionNeeded.setText("Add Agricultural Lime");
             } else if (ph > 7.5) {
                 tvSummaryActionNeeded.setText("Add Organic Compost");
-            } else if (n < 100) {
+            } else if (n < 5.0) {
                 tvSummaryActionNeeded.setText("Apply Organic Nitrogen");
             } else if (moisture < 35) {
                 tvSummaryActionNeeded.setText("Increase Irrigation");

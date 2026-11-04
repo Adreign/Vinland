@@ -70,7 +70,7 @@
                         android:id="@+id/tvInputHeader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Enter Your Soil Readings"
+                        android:text="Live Soil Telemetry Stream"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:textSize="15sp"
@@ -80,43 +80,10 @@
                         android:id="@+id/tvInputSubheader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Select mode: Manual test kit or live ESP32 wireless sensor."
+                        android:text="Real-time data stream from paired ESP32 sensor hardware."
                         android:textColor="#9E9E9E"
                         android:textSize="12sp"
                         android:layout_marginBottom="12dp" />
-
-                    <!-- Mode Toggle Group -->
-                    <com.google.android.material.button.MaterialButtonToggleGroup
-                        android:id="@+id/toggleGroupMode"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        app:singleSelection="true"
-                        app:selectionRequired="true"
-                        app:checkedButton="@id/btnModeManual">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnModeManual"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="✋ Manual"
-                            android:textAllCaps="false"
-                            android:textSize="12sp"
-                            app:strokeColor="#2E7D32" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnModeAuto"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="📡 ESP32 Live"
-                            android:textAllCaps="false"
-                            android:textSize="12sp"
-                            app:strokeColor="#2E7D32" />
-                    </com.google.android.material.button.MaterialButtonToggleGroup>
 
                     <!-- Live Sensor Status Banner -->
                     <com.google.android.material.card.MaterialCardView
@@ -124,7 +91,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="14dp"
-                        android:visibility="gone"
+                        android:visibility="visible"
                         app:cardCornerRadius="12dp"
                         app:cardElevation="0dp"
                         app:strokeWidth="1dp"
@@ -196,6 +163,7 @@
                             android:id="@+id/etMoisture"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:focusable="false"
                             android:inputType="numberDecimal" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -213,6 +181,7 @@
                             android:id="@+id/etPh"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:focusable="false"
                             android:inputType="numberDecimal" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -237,6 +206,7 @@
                                 android:id="@+id/etNitrogen"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:focusable="false"
                                 android:inputType="numberDecimal" />
                         </com.google.android.material.textfield.TextInputLayout>
 
@@ -255,6 +225,7 @@
                                 android:id="@+id/etPhosphorus"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:focusable="false"
                                 android:inputType="numberDecimal" />
                         </com.google.android.material.textfield.TextInputLayout>
 
@@ -272,6 +243,7 @@
                                 android:id="@+id/etPotassium"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:focusable="false"
                                 android:inputType="numberDecimal" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>

@@ -36,7 +36,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:text="Harvest Log"
+                android:text="Soil Activity Logs"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF" />
@@ -118,7 +118,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📊 Period Summary"
+                        android:text="📊 Soil Analytics Summary"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:textColor="#212121" />
@@ -128,37 +128,6 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginTop="12dp">
-
-                        <!-- Total Harvest -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="🌾"
-                                android:textSize="18sp" />
-
-                            <TextView
-                                android:id="@+id/tvTotalHarvest"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="0 kg"
-                                android:textSize="14sp"
-                                android:textStyle="bold"
-                                android:textColor="#2E7D32" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Harvest Yield"
-                                android:textSize="11sp"
-                                android:textColor="#9E9E9E" />
-                        </LinearLayout>
 
                         <!-- Avg Moisture -->
                         <LinearLayout
@@ -222,7 +191,7 @@
                                 android:textColor="#9E9E9E" />
                         </LinearLayout>
 
-                        <!-- Total Logs -->
+                        <!-- Total Soil Logs -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -248,42 +217,13 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Activity Logs"
+                                android:text="Soil Tests Saved"
                                 android:textSize="11sp"
                                 android:textColor="#9E9E9E" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <!-- Category Switcher Buttons -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="16dp">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnTabSoil"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="6dp"
-                    android:text="Soil Health Logs"
-                    android:textSize="12sp"
-                    app:backgroundTint="#E8F5E9" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnTabHarvest"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="6dp"
-                    android:text="Harvest Yield Logs"
-                    android:textSize="12sp" />
-            </LinearLayout>
 
             <!-- Progress Bar -->
             <ProgressBar
@@ -300,39 +240,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="No logs recorded for this timeframe period."
+                android:text="No soil logs recorded for this timeframe period."
                 android:textColor="#9E9E9E"
                 android:textAlignment="center"
                 android:textSize="13sp"
                 android:visibility="gone" />
 
-            <!-- Log Lists -->
+            <!-- Soil Logs List -->
             <LinearLayout
                 android:id="@+id/layoutSoilLogs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:visibility="visible" />
-
-            <LinearLayout
-                android:id="@+id/layoutHarvestLogs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="12dp"
-                android:visibility="gone" />
-
-            <!-- Action Buttons -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnLogHarvest"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginTop="20dp"
-                android:text="+ Log New Harvest"
-                android:textAllCaps="false"
-                app:cornerRadius="12dp"
-                app:backgroundTint="#2E7D32" />
 
         </LinearLayout>
     </LinearLayout>

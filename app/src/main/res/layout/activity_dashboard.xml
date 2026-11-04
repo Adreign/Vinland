@@ -340,7 +340,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Row 5: Reports & Analytics (full width) -->
+            <!-- Row 5: Soil Activity Logs (full width) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/navReports"
                 android:layout_width="match_parent"
@@ -374,7 +374,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Harvest Log"
+                            android:text="Soil Activity Logs"
                             android:textStyle="bold"
                             android:textColor="#212121"
                             android:textSize="14sp" />
@@ -383,7 +383,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Weekly, monthly &amp; yearly harvest yield logs"
+                            android:text="Weekly, monthly &amp; yearly soil health history"
                             android:textColor="#9E9E9E"
                             android:textSize="12sp" />
                     </LinearLayout>
