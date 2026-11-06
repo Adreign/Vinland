@@ -3,44 +3,72 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7F5"
+    android:background="#F3F5EF"
     android:clipToPadding="false"
     android:fillViewport="true">
+
+    <!--
+        Same palette as the rest of the app:
+        Forest #1F4D32 | Fern #2E7D32 | Paper #F3F5EF | Ink #1C2A20 | Muted #5C6B5F | Line #E2E7DC
+        Weather uses the sky tint (#E4EFF6) so it matches the weather chip on the dashboard.
+    -->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header -->
-        <LinearLayout
+        <!-- Header: rounded bottom edge. Negative top margin hides the top corners off-screen. -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="#2E7D32"
-            android:paddingTop="48dp"
-            android:paddingBottom="20dp"
-            android:paddingHorizontal="16dp">
+            android:layout_marginTop="-28dp"
+            app:cardBackgroundColor="#1F4D32"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
-            <TextView
-                android:id="@+id/tvBack"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="←"
-                android:textSize="22sp"
-                android:textColor="#FFFFFF"
-                android:padding="8dp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingTop="76dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="28dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Weather"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-        </LinearLayout>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:cardBackgroundColor="#26FFFFFF"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <TextView
+                        android:id="@+id/tvBack"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="Back"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:text="←"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="-0.01"
+                    android:text="Weather"
+                    android:textColor="#FFFFFF"
+                    android:textSize="22sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -56,7 +84,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="60dp"
+                android:indeterminateTint="#2E7D32"
                 android:visibility="visible" />
 
             <!-- Error state -->
@@ -64,10 +93,13 @@
                 android:id="@+id/tvError"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="40dp"
+                android:lineSpacingExtra="3dp"
+                android:paddingHorizontal="16dp"
                 android:text="Could not load weather. Check your internet connection."
-                android:textColor="#D32F2F"
                 android:textAlignment="center"
+                android:textColor="#B3261E"
+                android:textSize="14sp"
                 android:visibility="gone" />
 
             <!-- Current weather card -->
@@ -75,137 +107,182 @@
                 android:id="@+id/cardCurrentWeather"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="#FFFFFF"
-                android:visibility="gone">
+                android:visibility="gone"
+                app:cardBackgroundColor="#E4EFF6"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#CFE2EE"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:gravity="center_horizontal"
                     android:padding="24dp">
 
-                    <TextView
-                        android:id="@+id/tvLocation"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Quezon City"
-                        android:textSize="14sp"
-                        android:textColor="#666666" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:importantForAccessibility="no"
+                            android:text="📍"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tvLocation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="Quezon City"
+                            android:textColor="#3E5360"
+                            android:textSize="15sp" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvTemp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="sans-serif-light"
+                        android:includeFontPadding="false"
                         android:text="--°C"
-                        android:textSize="48sp"
-                        android:textStyle="bold"
-                        android:textColor="#212121" />
+                        android:textColor="#1C2A20"
+                        android:textSize="64sp" />
 
                     <TextView
                         android:id="@+id/tvDescription"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
                         android:text="--"
-                        android:textSize="15sp"
-                        android:textColor="#666666" />
+                        android:textColor="#3E5360"
+                        android:textSize="16sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="20dp"
+                        android:background="#CFE2EE" />
 
                     <!-- Stat row: humidity / wind / feels-like -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="20dp">
+                        android:baselineAligned="false"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:importantForAccessibility="no"
                                 android:text="💧"
-                                android:textSize="18sp" />
+                                android:textSize="20sp" />
 
                             <TextView
                                 android:id="@+id/tvHumidity"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="--%"
-                                android:textStyle="bold"
-                                android:textSize="14sp" />
+                                android:textColor="#1C2A20"
+                                android:textSize="16sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Humidity"
-                                android:textSize="11sp"
-                                android:textColor="#9E9E9E" />
+                                android:textColor="#4A5B66"
+                                android:textSize="12.5sp" />
                         </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="44dp"
+                            android:background="#CFE2EE" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:importantForAccessibility="no"
                                 android:text="🌬️"
-                                android:textSize="18sp" />
+                                android:textSize="20sp" />
 
                             <TextView
                                 android:id="@+id/tvWind"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="-- m/s"
-                                android:textStyle="bold"
-                                android:textSize="14sp" />
+                                android:textColor="#1C2A20"
+                                android:textSize="16sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Wind"
-                                android:textSize="11sp"
-                                android:textColor="#9E9E9E" />
+                                android:textColor="#4A5B66"
+                                android:textSize="12.5sp" />
                         </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="44dp"
+                            android:background="#CFE2EE" />
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center">
+                            android:gravity="center"
+                            android:orientation="vertical">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:importantForAccessibility="no"
                                 android:text="🌡️"
-                                android:textSize="18sp" />
+                                android:textSize="20sp" />
 
                             <TextView
                                 android:id="@+id/tvFeelsLike"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="--°C"
-                                android:textStyle="bold"
-                                android:textSize="14sp" />
+                                android:textColor="#1C2A20"
+                                android:textSize="16sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Feels like"
-                                android:textSize="11sp"
-                                android:textColor="#9E9E9E" />
+                                android:textColor="#4A5B66"
+                                android:textSize="12.5sp" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -216,35 +293,62 @@
                 android:id="@+id/cardAdvisory"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="16dp"
+                android:layout_marginTop="12dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="#EEF5EA"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="#E8F5E9"
-                android:visibility="gone">
+                app:strokeColor="#D3E4CD"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🌿"
-                        android:textSize="20sp"
-                        android:layout_marginEnd="12dp" />
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        app:cardBackgroundColor="#FFFFFF"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp">
 
-                    <TextView
-                        android:id="@+id/tvAdvisory"
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:importantForAccessibility="no"
+                            android:text="🌿"
+                            android:textSize="20sp" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
-                        android:text="Advisory will appear here."
-                        android:textColor="#2E7D32"
-                        android:textSize="13sp" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="Garden advisory"
+                            android:textColor="#1F4D32"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:id="@+id/tvAdvisory"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:lineSpacingExtra="3dp"
+                            android:text="Advisory will appear here."
+                            android:textColor="#2A3A2E"
+                            android:textSize="14sp" />
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

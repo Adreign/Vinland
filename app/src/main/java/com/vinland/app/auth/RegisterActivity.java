@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -516,9 +517,30 @@ public class RegisterActivity extends AppCompatActivity {
                     Log.d(TAG, "Successfully saved gardener profile in Firestore for UID: " + uid);
                     if (navigateToDashboard) {
                         setLoading(false);
-                        Toast.makeText(this, "Account registered! Welcome to Vinland.", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(this, DashboardActivity.class));
-                        finish();
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+
+                        if (!isGoogleAuthenticated && firebaseUser != null && !firebaseUser.isEmailVerified()) {
+                            // Send Email Verification Link for Email/Password registration
+                            firebaseUser.sendEmailVerification();
+
+                            new AlertDialog.Builder(RegisterActivity.this)
+                                    .setTitle("📧 Verify Your Email Address")
+                                    .setMessage("Account registered successfully!\n\nWe have sent a verification link to your email:\n" + email + "\n\nPlease check your email inbox and click the link to verify your account before logging in.")
+                                    .setPositiveButton("Go to Login", (dialog, which) -> {
+                                        mAuth.signOut();
+                                        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                        startActivity(intent);
+                                        finish();
+                                    })
+                                    .setCancelable(false)
+                                    .show();
+                        } else {
+                            // Google authenticated or already verified -> Go to dashboard
+                            Toast.makeText(this, "Account registered! Welcome to Vinland.", Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(this, DashboardActivity.class));
+                            finish();
+                        }
                     }
                 })
                 .addOnFailureListener(e -> {

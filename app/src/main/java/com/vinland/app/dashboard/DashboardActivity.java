@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
@@ -24,6 +25,7 @@ import com.vinland.app.R;
 import com.vinland.app.auth.LoginActivity;
 import com.vinland.app.calendar.PlantingCalendarActivity;
 import com.vinland.app.chat.AiChatActivity;
+import com.vinland.app.notifications.NotificationHelper;
 import com.vinland.app.notifications.NotificationHistoryActivity;
 import com.vinland.app.notifications.VinlandFirebaseMessagingService;
 import com.vinland.app.profile.ProfileActivity;
@@ -95,16 +97,22 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void scheduleWeatherAlertWorker() {
+        NotificationHelper.createNotificationChannel(this);
+
         PeriodicWorkRequest weatherWorkRequest = new PeriodicWorkRequest.Builder(
                 WeatherAlertWorker.class,
-                6, TimeUnit.HOURS
+                5, TimeUnit.HOURS
         ).build();
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
                 "VinlandWeatherAlertWorker",
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 weatherWorkRequest
         );
+
+        // Immediate sync on launch to issue daily garden care notification
+        OneTimeWorkRequest immediateWorkRequest = new OneTimeWorkRequest.Builder(WeatherAlertWorker.class).build();
+        WorkManager.getInstance(this).enqueue(immediateWorkRequest);
     }
 
     private void syncFcmToken() {

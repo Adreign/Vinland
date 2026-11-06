@@ -128,8 +128,27 @@ public class LoginActivity extends AppCompatActivity {
         // If already logged in, check profile status before going to dashboard
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
-            checkUserStatusAndNavigate(user);
+            setLoading(true);
+            user.reload().addOnCompleteListener(task -> {
+                setLoading(false);
+                if (user.isEmailVerified() || isGoogleAccount(user)) {
+                    checkUserStatusAndNavigate(user);
+                } else {
+                    mAuth.signOut();
+                }
+            });
         }
+    }
+
+    private boolean isGoogleAccount(FirebaseUser user) {
+        if (user != null && user.getProviderData() != null) {
+            for (com.google.firebase.auth.UserInfo profile : user.getProviderData()) {
+                if ("google.com".equalsIgnoreCase(profile.getProviderId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void attemptLogin() {
@@ -153,7 +172,14 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
-                            checkUserStatusAndNavigate(user);
+                            user.reload().addOnCompleteListener(reloadTask -> {
+                                if (!user.isEmailVerified() && !isGoogleAccount(user)) {
+                                    setLoading(false);
+                                    showUnverifiedEmailDialog(user);
+                                } else {
+                                    checkUserStatusAndNavigate(user);
+                                }
+                            });
                         } else {
                             setLoading(false);
                             showError("Login failed.");
@@ -175,6 +201,27 @@ public class LoginActivity extends AppCompatActivity {
                         showError(message);
                     }
                 });
+    }
+
+    private void showUnverifiedEmailDialog(FirebaseUser user) {
+        new AlertDialog.Builder(this)
+                .setTitle("📧 Email Not Verified")
+                .setMessage("Your email address (" + user.getEmail() + ") has not been verified yet.\n\nPlease check your email inbox and click the verification link before logging in.")
+                .setPositiveButton("Resend Verification Link", (dialog, which) -> {
+                    setLoading(true);
+                    user.sendEmailVerification().addOnCompleteListener(task -> {
+                        setLoading(false);
+                        if (task.isSuccessful()) {
+                            Toast.makeText(LoginActivity.this, "📧 Verification link resent to " + user.getEmail() + "!", Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Could not resend email: " + (task.getException() != null ? task.getException().getMessage() : "Error"), Toast.LENGTH_LONG).show();
+                        }
+                        mAuth.signOut();
+                    });
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> mAuth.signOut())
+                .setCancelable(false)
+                .show();
     }
 
     private void attemptGoogleSignIn() {
@@ -280,10 +327,10 @@ public class LoginActivity extends AppCompatActivity {
         container.addView(input);
 
         new AlertDialog.Builder(this)
-                .setTitle("🔑 Reset Your Password")
-                .setMessage("Enter your Vinland account email address below. We'll send you an email with a link to reset your password.")
+                .setTitle("🔑 Password Reset Request")
+                .setMessage("Please enter your registered Vinland account email address below. We will send you an official link to securely reset your password.")
                 .setView(container)
-                .setPositiveButton("Send Reset Email", (dialog, which) -> {
+                .setPositiveButton("Send Reset Instructions", (dialog, which) -> {
                     String email = input.getText() != null ? input.getText().toString().trim() : "";
                     if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                         showError("Please enter a valid email address to reset your password.");
@@ -296,17 +343,17 @@ public class LoginActivity extends AppCompatActivity {
                                 setLoading(false);
                                 new AlertDialog.Builder(LoginActivity.this)
                                         .setTitle("📧 Password Reset Email Sent")
-                                        .setMessage("We have sent a password reset link to:\n\n" + email + "\n\nPlease check your email inbox and follow the instructions to set a new password.")
-                                        .setPositiveButton("Got It", null)
+                                        .setMessage("A secure password reset link has been dispatched to:\n\n" + email + "\n\nPlease check your email inbox and follow the instructions to establish your new password.")
+                                        .setPositiveButton("Understood", null)
                                         .show();
                             })
                             .addOnFailureListener(e -> {
                                 setLoading(false);
                                 String msg = e.getMessage();
                                 if (msg != null && (msg.contains("user-not-found") || msg.contains("no user"))) {
-                                    msg = "No account found with this email address. Please register a new account first.";
+                                    msg = "No Vinland account exists for this email address. Please register a new account.";
                                 }
-                                showError("Password Reset Failed: " + msg);
+                                showError("Password Reset Request Error: " + msg);
                             });
                 })
                 .setNegativeButton("Cancel", null)

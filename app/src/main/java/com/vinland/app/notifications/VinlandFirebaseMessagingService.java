@@ -10,6 +10,8 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.firebase.firestore.SetOptions;
+
 public class VinlandFirebaseMessagingService extends FirebaseMessagingService {
 
     @Override
@@ -53,7 +55,7 @@ public class VinlandFirebaseMessagingService extends FirebaseMessagingService {
             updates.put("fcmUpdatedAt", System.currentTimeMillis());
 
             FirebaseFirestore.getInstance().collection("users").document(uid)
-                    .update(updates);
+                    .set(updates, SetOptions.merge());
         }
     }
 }

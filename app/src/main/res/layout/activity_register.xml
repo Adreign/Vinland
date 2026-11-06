@@ -3,64 +3,92 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7F5"
+    android:background="#F3F5EF"
     android:clipToPadding="false"
     android:fillViewport="true">
+
+    <!--
+        Same palette as the dashboard and login:
+        Forest #1F4D32 | Fern #2E7D32 | Paper #F3F5EF | Ink #1C2A20 | Muted #5C6B5F | Line #E2E7DC
+        Requires res/drawable/bg_choice_tile.xml (selected / unselected tile for the options in steps 3 and 4).
+    -->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header band -->
-        <LinearLayout
+        <!-- Header: rounded bottom edge. Negative top margin hides the top corners off-screen. -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:background="#2E7D32"
-            android:paddingTop="52dp"
-            android:paddingBottom="40dp"
-            android:paddingHorizontal="24dp">
+            android:layout_marginTop="-28dp"
+            app:cardBackgroundColor="#1F4D32"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🌿"
-                android:textSize="36sp" />
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingHorizontal="32dp"
+                android:paddingTop="76dp"
+                android:paddingBottom="56dp">
 
-            <TextView
-                android:id="@+id/tvTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Gardener Account Registration"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:textAlignment="center" />
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    app:cardBackgroundColor="#26FFFFFF"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Join Vinland's urban gardening community"
-                android:textSize="12.5sp"
-                android:textColor="#C8E6C9"
-                android:textAlignment="center" />
-        </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:importantForAccessibility="no"
+                        android:text="🌿"
+                        android:textSize="30sp" />
+                </com.google.android.material.card.MaterialCardView>
 
-        <!-- Multi-Step Registration Form Card -->
+                <TextView
+                    android:id="@+id/tvTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="-0.01"
+                    android:text="Create your account"
+                    android:textAlignment="center"
+                    android:textColor="#FFFFFF"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Join Vinland's urban gardening community"
+                    android:textAlignment="center"
+                    android:textColor="#CDE8D0"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Multi-step registration card: direct child of the root so the overlap is not clipped -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
+            android:layout_marginTop="-28dp"
             android:layout_marginEnd="20dp"
-            android:layout_marginTop="-26dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="6dp"
-            app:strokeWidth="0dp"
-            app:cardBackgroundColor="#FFFFFF">
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="4dp"
+            app:strokeColor="#E2E7DC"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -68,31 +96,32 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
-                <!-- Step Progress Header -->
+                <!-- Step progress -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginBottom="20dp">
+                    android:layout_marginBottom="24dp"
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tvStepIndicator"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
                         android:text="Step 1 of 4: Account Authentication"
-                        android:textSize="12.5sp"
-                        android:textStyle="bold"
-                        android:textColor="#2E7D32" />
+                        android:textColor="#2E7D32"
+                        android:textSize="13sp" />
 
                     <com.google.android.material.progressindicator.LinearProgressIndicator
                         android:id="@+id/progressStep"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="10dp"
                         android:progress="25"
                         app:indicatorColor="#2E7D32"
-                        app:trackColor="#E8F5E9"
-                        app:trackCornerRadius="4dp" />
+                        app:trackColor="#E3F1E0"
+                        app:trackCornerRadius="4dp"
+                        app:trackThickness="6dp" />
                 </LinearLayout>
 
                 <!-- STEP 1: ACCOUNT AUTHENTICATION (Google or Email/Password) -->
@@ -106,11 +135,11 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1. Choose How to Register"
-                        android:textSize="15.5sp"
-                        android:textStyle="bold"
-                        android:textColor="#212121"
-                        android:layout_marginBottom="14dp" />
+                        android:layout_marginBottom="16dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Choose how to register"
+                        android:textColor="#1C2A20"
+                        android:textSize="18sp" />
 
                     <!-- Google / Gmail Button -->
                     <com.google.android.material.button.MaterialButton
@@ -118,80 +147,104 @@
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="match_parent"
                         android:layout_height="52dp"
-                        android:text="Register with Google / Gmail"
-                        android:textAllCaps="false"
-                        android:textSize="14sp"
-                        android:textColor="#2E7D32"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        app:strokeColor="#2E7D32"
-                        app:strokeWidth="1.5dp"
-                        app:cornerRadius="12dp" />
+                        android:text="Register with Google"
+                        android:textAllCaps="false"
+                        android:textColor="#1C2A20"
+                        android:textSize="15sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="#CFD6C9"
+                        app:strokeWidth="1.5dp" />
 
                     <!-- Divider -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="20dp"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="18dp"
-                        android:layout_marginBottom="18dp">
+                        android:orientation="horizontal">
 
                         <View
                             android:layout_width="0dp"
                             android:layout_height="1dp"
                             android:layout_weight="1"
-                            android:background="#E0E0E0" />
+                            android:background="#E2E7DC" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="  OR REGISTER WITH EMAIL  "
-                            android:textSize="11sp"
-                            android:textColor="#757575"
-                            android:textStyle="bold" />
+                            android:paddingHorizontal="12dp"
+                            android:text="or register with email"
+                            android:textColor="#5C6B5F"
+                            android:textSize="13sp" />
 
                         <View
                             android:layout_width="0dp"
                             android:layout_height="1dp"
                             android:layout_weight="1"
-                            android:background="#E0E0E0" />
+                            android:background="#E2E7DC" />
                     </LinearLayout>
 
-                    <!-- First Name -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilFirstName"
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    <!-- First + last name side by side -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="First Name"
-                        app:boxStrokeColor="#2E7D32"
-                        app:hintTextColor="#2E7D32">
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etFirstName"
-                            android:layout_width="match_parent"
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilFirstName"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:inputType="textPersonName|textCapWords" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:hint="First name"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusTopStart="12dp"
+                            app:boxStrokeColor="#2E7D32"
+                            app:hintTextColor="#2E7D32">
 
-                    <!-- Last Name -->
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilLastName"
-                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        android:hint="Last Name"
-                        app:boxStrokeColor="#2E7D32"
-                        app:hintTextColor="#2E7D32">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etFirstName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:autofillHints="givenName"
+                                android:imeOptions="actionNext"
+                                android:inputType="textPersonName|textCapWords"
+                                android:textColor="#1C2A20" />
+                        </com.google.android.material.textfield.TextInputLayout>
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etLastName"
-                            android:layout_width="match_parent"
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/tilLastName"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:inputType="textPersonName|textCapWords" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:hint="Last name"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusTopStart="12dp"
+                            app:boxStrokeColor="#2E7D32"
+                            app:hintTextColor="#2E7D32">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etLastName"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:autofillHints="familyName"
+                                android:imeOptions="actionNext"
+                                android:inputType="textPersonName|textCapWords"
+                                android:textColor="#1C2A20" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
 
                     <!-- Email -->
                     <com.google.android.material.textfield.TextInputLayout
@@ -200,7 +253,11 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:hint="Email Address"
+                        android:hint="Email address"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
                         app:boxStrokeColor="#2E7D32"
                         app:hintTextColor="#2E7D32">
 
@@ -208,7 +265,10 @@
                             android:id="@+id/etEmail"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textEmailAddress" />
+                            android:autofillHints="emailAddress"
+                            android:imeOptions="actionNext"
+                            android:inputType="textEmailAddress"
+                            android:textColor="#1C2A20" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Password -->
@@ -219,15 +279,22 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
                         android:hint="Password"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
                         app:boxStrokeColor="#2E7D32"
-                        app:hintTextColor="#2E7D32"
-                        app:endIconMode="password_toggle">
+                        app:endIconMode="password_toggle"
+                        app:hintTextColor="#2E7D32">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etPassword"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textPassword" />
+                            android:autofillHints="newPassword"
+                            android:imeOptions="actionNext"
+                            android:inputType="textPassword"
+                            android:textColor="#1C2A20" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Confirm Password -->
@@ -237,16 +304,23 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="14dp"
-                        android:hint="Confirm Password"
+                        android:hint="Confirm password"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
                         app:boxStrokeColor="#2E7D32"
-                        app:hintTextColor="#2E7D32"
-                        app:endIconMode="password_toggle">
+                        app:endIconMode="password_toggle"
+                        app:hintTextColor="#2E7D32">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etConfirmPassword"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textPassword" />
+                            android:autofillHints="newPassword"
+                            android:imeOptions="actionDone"
+                            android:inputType="textPassword"
+                            android:textColor="#1C2A20" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Step 1 Next Button -->
@@ -255,13 +329,14 @@
                         android:layout_width="match_parent"
                         android:layout_height="52dp"
                         android:layout_marginTop="24dp"
-                        android:text="Next: Choose Barangay →"
-                        android:textAllCaps="false"
-                        android:textSize="15sp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
-                        app:cornerRadius="12dp"
-                        app:backgroundTint="#2E7D32" />
+                        android:text="Next: Barangay"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        app:backgroundTint="#2E7D32"
+                        app:cornerRadius="14dp" />
                 </LinearLayout>
 
                 <!-- STEP 2: BARANGAY SELECTION -->
@@ -275,27 +350,31 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="2. Select Your Barangay"
-                        android:textSize="15.5sp"
-                        android:textStyle="bold"
-                        android:textColor="#212121"
-                        android:layout_marginBottom="6dp" />
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Select your barangay"
+                        android:textColor="#1C2A20"
+                        android:textSize="18sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="20dp"
                         android:text="Where in Quezon City is your garden located?"
-                        android:textSize="13sp"
-                        android:textColor="#666666"
-                        android:layout_marginBottom="18dp" />
+                        android:textColor="#5C6B5F"
+                        android:textSize="14sp" />
 
-                    <!-- Barangay Dropdown -->
+                    <!-- Barangay autocomplete -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilBarangay"
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Type your Barangay (Quezon City)"
+                        android:hint="Search your barangay"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
                         app:boxStrokeColor="#2E7D32"
                         app:hintTextColor="#2E7D32">
 
@@ -304,43 +383,50 @@
                             android:layout_width="match_parent"
                             android:layout_height="52dp"
                             android:completionThreshold="1"
-                            android:inputType="text" />
+                            android:inputType="text"
+                            android:textColor="#1C2A20" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Navigation Buttons Step 2 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:layout_marginTop="24dp"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="24dp">
+                        android:orientation="horizontal">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnBackStep2"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="52dp"
-                            android:layout_weight="1"
                             android:layout_marginEnd="6dp"
-                            android:text="← Back"
-                            android:textColor="#2E7D32"
+                            android:layout_weight="1"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
-                            app:strokeColor="#2E7D32"
-                            app:cornerRadius="12dp" />
+                            android:text="Back"
+                            android:textAllCaps="false"
+                            android:textColor="#1C2A20"
+                            android:textSize="15sp"
+                            app:backgroundTint="@android:color/transparent"
+                            app:cornerRadius="14dp"
+                            app:strokeColor="#CFD6C9"
+                            app:strokeWidth="1.5dp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnNextStep2"
                             android:layout_width="0dp"
                             android:layout_height="52dp"
-                            android:layout_weight="1.6"
                             android:layout_marginStart="6dp"
-                            android:text="Next: Garden Type →"
-                            android:textAllCaps="false"
+                            android:layout_weight="1.6"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
-                            app:cornerRadius="12dp"
-                            app:backgroundTint="#2E7D32" />
+                            android:text="Next: Garden type"
+                            android:textAllCaps="false"
+                            android:textColor="#FFFFFF"
+                            android:textSize="15sp"
+                            app:backgroundTint="#2E7D32"
+                            app:cornerRadius="14dp" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -355,19 +441,19 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="3. Choose Your Garden Type"
-                        android:textSize="15.5sp"
-                        android:textStyle="bold"
-                        android:textColor="#212121"
-                        android:layout_marginBottom="6dp" />
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Choose your garden type"
+                        android:textColor="#1C2A20"
+                        android:textSize="18sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="20dp"
                         android:text="What type of garden setup do you cultivate?"
-                        android:textSize="13sp"
-                        android:textColor="#666666"
-                        android:layout_marginBottom="18dp" />
+                        android:textColor="#5C6B5F"
+                        android:textSize="14sp" />
 
                     <RadioGroup
                         android:id="@+id/rgGardenType"
@@ -377,68 +463,83 @@
 
                         <RadioButton
                             android:id="@+id/rbBackyard"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="🏡 Backyard Garden"
-                            android:textSize="14sp"
-                            android:paddingVertical="4dp"
-                            android:buttonTint="#2E7D32" />
+                            android:background="@drawable/bg_choice_tile"
+                            android:buttonTint="#2E7D32"
+                            android:minHeight="56dp"
+                            android:paddingHorizontal="14dp"
+                            android:text="🏡  Backyard garden"
+                            android:textColor="#1C2A20"
+                            android:textSize="15sp" />
 
                         <RadioButton
                             android:id="@+id/rbRooftop"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="🏙️ Rooftop / Balcony Garden"
-                            android:textSize="14sp"
-                            android:paddingVertical="4dp"
-                            android:buttonTint="#2E7D32" />
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/bg_choice_tile"
+                            android:buttonTint="#2E7D32"
+                            android:minHeight="56dp"
+                            android:paddingHorizontal="14dp"
+                            android:text="🏙️  Rooftop / balcony garden"
+                            android:textColor="#1C2A20"
+                            android:textSize="15sp" />
 
                         <RadioButton
                             android:id="@+id/rbCommunityPlot"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="🌾 Community Plot"
-                            android:textSize="14sp"
-                            android:paddingVertical="4dp"
-                            android:buttonTint="#2E7D32" />
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/bg_choice_tile"
+                            android:buttonTint="#2E7D32"
+                            android:minHeight="56dp"
+                            android:paddingHorizontal="14dp"
+                            android:text="🌾  Community plot"
+                            android:textColor="#1C2A20"
+                            android:textSize="15sp" />
                     </RadioGroup>
 
                     <!-- Navigation Buttons Step 3 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:layout_marginTop="24dp"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="24dp">
+                        android:orientation="horizontal">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnBackStep3"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="52dp"
-                            android:layout_weight="1"
                             android:layout_marginEnd="6dp"
-                            android:text="← Back"
-                            android:textColor="#2E7D32"
+                            android:layout_weight="1"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
-                            app:strokeColor="#2E7D32"
-                            app:cornerRadius="12dp" />
+                            android:text="Back"
+                            android:textAllCaps="false"
+                            android:textColor="#1C2A20"
+                            android:textSize="15sp"
+                            app:backgroundTint="@android:color/transparent"
+                            app:cornerRadius="14dp"
+                            app:strokeColor="#CFD6C9"
+                            app:strokeWidth="1.5dp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnNextStep3"
                             android:layout_width="0dp"
                             android:layout_height="52dp"
-                            android:layout_weight="1.6"
                             android:layout_marginStart="6dp"
-                            android:text="Next: Choose Crops →"
-                            android:textAllCaps="false"
+                            android:layout_weight="1.6"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
-                            app:cornerRadius="12dp"
-                            app:backgroundTint="#2E7D32" />
+                            android:text="Next: Crops"
+                            android:textAllCaps="false"
+                            android:textColor="#FFFFFF"
+                            android:textSize="15sp"
+                            app:backgroundTint="#2E7D32"
+                            app:cornerRadius="14dp" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -453,81 +554,92 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="4. What Crops Do You Grow?"
-                        android:textSize="15.5sp"
-                        android:textStyle="bold"
-                        android:textColor="#212121"
-                        android:layout_marginBottom="6dp" />
+                        android:fontFamily="sans-serif-medium"
+                        android:text="What crops do you grow?"
+                        android:textColor="#1C2A20"
+                        android:textSize="18sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="20dp"
                         android:text="Select the urban vegetables in your garden:"
-                        android:textSize="13sp"
-                        android:textColor="#666666"
-                        android:layout_marginBottom="18dp" />
+                        android:textColor="#5C6B5F"
+                        android:textSize="14sp" />
 
                     <LinearLayout
                         android:id="@+id/layoutCropsContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="4dp">
+                        android:orientation="vertical">
 
                         <CheckBox
                             android:id="@+id/cbTomato"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="🍅 Tomato"
-                            android:paddingVertical="4dp"
-                            android:buttonTint="#2E7D32" />
+                            android:background="@drawable/bg_choice_tile"
+                            android:buttonTint="#2E7D32"
+                            android:minHeight="56dp"
+                            android:paddingHorizontal="14dp"
+                            android:text="🍅  Tomato"
+                            android:textColor="#1C2A20"
+                            android:textSize="15sp" />
 
                         <CheckBox
                             android:id="@+id/cbGreenPepper"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:text="🫑 Green Pepper"
-                            android:paddingVertical="4dp"
-                            android:buttonTint="#2E7D32" />
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/bg_choice_tile"
+                            android:buttonTint="#2E7D32"
+                            android:minHeight="56dp"
+                            android:paddingHorizontal="14dp"
+                            android:text="🫑  Green pepper"
+                            android:textColor="#1C2A20"
+                            android:textSize="15sp" />
                     </LinearLayout>
 
                     <!-- Navigation Buttons Step 4 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:layout_marginTop="24dp"
                         android:gravity="center_vertical"
-                        android:layout_marginTop="24dp">
+                        android:orientation="horizontal">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnBackStep4"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="52dp"
-                            android:layout_weight="1"
                             android:layout_marginEnd="6dp"
-                            android:text="← Back"
-                            android:textColor="#2E7D32"
+                            android:layout_weight="1"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
-                            app:strokeColor="#2E7D32"
-                            app:cornerRadius="12dp" />
+                            android:text="Back"
+                            android:textAllCaps="false"
+                            android:textColor="#1C2A20"
+                            android:textSize="15sp"
+                            app:backgroundTint="@android:color/transparent"
+                            app:cornerRadius="14dp"
+                            app:strokeColor="#CFD6C9"
+                            app:strokeWidth="1.5dp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnRegister"
                             android:layout_width="0dp"
                             android:layout_height="52dp"
-                            android:layout_weight="1.8"
                             android:layout_marginStart="6dp"
-                            android:text="Complete Registration 🎉"
-                            android:textAllCaps="false"
-                            android:textSize="13.5sp"
-                            android:paddingHorizontal="10dp"
+                            android:layout_weight="1.6"
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
-                            app:cornerRadius="12dp"
-                            app:backgroundTint="#2E7D32" />
+                            android:text="Create account"
+                            android:textAllCaps="false"
+                            android:textColor="#FFFFFF"
+                            android:textSize="15sp"
+                            app:backgroundTint="#2E7D32"
+                            app:cornerRadius="14dp" />
                     </LinearLayout>
                 </LinearLayout>
 
@@ -537,9 +649,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:textColor="#D32F2F"
-                    android:textSize="13sp"
                     android:textAlignment="center"
+                    android:textColor="#B3261E"
+                    android:textSize="13sp"
                     android:visibility="gone" />
 
                 <ProgressBar
@@ -548,6 +660,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_marginTop="16dp"
+                    android:indeterminateTint="#2E7D32"
                     android:visibility="gone" />
 
             </LinearLayout>
@@ -556,10 +669,12 @@
         <TextView
             android:id="@+id/tvGoToLogin"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_gravity="center"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="32dp"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
             android:text="Already have an account? Log in"
             android:textColor="#2E7D32"
             android:textSize="14sp"

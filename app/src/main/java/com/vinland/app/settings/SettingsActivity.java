@@ -18,6 +18,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.vinland.app.R;
+import com.vinland.app.notifications.NotificationHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -103,6 +104,13 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         Toast.makeText(this, "📶 Ping sent to " + deviceId + "... Checking telemetry stream.", Toast.LENGTH_SHORT).show();
+
+        // Trigger a test system notification so the user can verify notifications
+        NotificationHelper.sendNotification(
+                this,
+                "🔔 Vinland Notification System Active",
+                "Connected to " + deviceId + ". Hardware telemetry and garden advisories are online 🟢"
+        );
 
         db.collection("sensor_devices").document(deviceId)
                 .get()

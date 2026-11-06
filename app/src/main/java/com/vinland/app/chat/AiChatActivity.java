@@ -19,6 +19,8 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.vinland.app.R;
 import com.vinland.app.weather.WeatherConfig;
 
@@ -27,20 +29,24 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class AiChatActivity extends AppCompatActivity {
 
     private RecyclerView rvChatMessages;
     private TextInputEditText etInput;
     private MaterialButton btnSend;
-    private TextView btnBack, btnClearChat;
+    private TextView btnClearChat;
     private ProgressBar progressAiLoading;
     private Chip chipYellowLeaves, chipNpkRatio, chipSoilPh, chipWaterSchedule;
 
     private ChatAdapter chatAdapter;
     private final List<ChatMessage> messageList = new ArrayList<>();
     private RequestQueue requestQueue;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +54,9 @@ public class AiChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_ai_chat);
 
         requestQueue = Volley.newRequestQueue(this);
+        db = FirebaseFirestore.getInstance();
 
-        btnBack = findViewById(R.id.btnBack);
+        TextView btnBack = findViewById(R.id.btnBack);
         btnClearChat = findViewById(R.id.btnClearChat);
         rvChatMessages = findViewById(R.id.rvChatMessages);
         etInput = findViewById(R.id.etInput);
@@ -78,13 +85,8 @@ public class AiChatActivity extends AppCompatActivity {
         addAiMessage("Hello! 🌿 I am your Vinland AI Agronomist & Urban Gardening Assistant for Quezon City.\n\nAsk me anything about soil NPK, pH levels, crop care, organic fertilizers, or pest management!");
     }
 
-    private String getEffectiveGeminiApiKey() {
-        SharedPreferences prefs = getSharedPreferences("VinlandPrefs", MODE_PRIVATE);
-        String customKey = prefs.getString("gemini_api_key", "");
-        if (!TextUtils.isEmpty(customKey)) {
-            return customKey;
-        }
-        return WeatherConfig.GEMINI_API_KEY;
+    private String getEffectiveGroqApiKey() {
+        return WeatherConfig.GROQ_API_KEY;
     }
 
     private void clearChatHistory() {
@@ -108,7 +110,7 @@ public class AiChatActivity extends AppCompatActivity {
         etInput.setText("");
 
         // 2. Fetch AI Response
-        fetchGeminiResponse(text);
+        fetchGroqResponse(text);
     }
 
     private void addUserMessage(String text) {
@@ -123,77 +125,227 @@ public class AiChatActivity extends AppCompatActivity {
         rvChatMessages.scrollToPosition(messageList.size() - 1);
     }
 
-    private void fetchGeminiResponse(String userPrompt) {
-        String activeApiKey = getEffectiveGeminiApiKey();
+    private void fetchGroqResponse(String userPrompt) {
+        progressAiLoading.setVisibility(View.VISIBLE);
+        btnSend.setEnabled(false);
 
-        // If a valid Google Gemini API Key is configured, query Google Cloud AI in real time
-        if (!TextUtils.isEmpty(activeApiKey) && (activeApiKey.startsWith("AIzaSy") || activeApiKey.length() > 25)) {
-            progressAiLoading.setVisibility(View.VISIBLE);
-            btnSend.setEnabled(false);
+        // Fetch live ESP32 soil sensor telemetry from Firestore to supply real-time context to the AI
+        db.collection("sensor_devices").document("VINLAND-ESP32-01")
+                .get()
+                .addOnCompleteListener(task -> {
+                    String telemetryContext = "";
+                    if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                        DocumentSnapshot doc = task.getResult();
+                        Double m = doc.getDouble("moisture");
+                        Double ph = doc.getDouble("ph");
+                        Double n = doc.getDouble("nitrogen");
+                        Double p = doc.getDouble("phosphorus");
+                        Double k = doc.getDouble("potassium");
 
-            String systemInstruction = "You are an expert AI agricultural agronomist and master urban gardener serving Quezon City, Philippines. "
-                    + "You assist urban gardeners growing urban crops and leafy vegetables. "
-                    + "Provide helpful, friendly, and practical agronomic advice tailored to tropical Quezon City weather, NPK soil nutrients, pH levels, and organic fertilization. "
-                    + "Keep your answers structured with clear headings or bullet points where appropriate.\n\nUser Question: " + userPrompt;
-
-            String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + activeApiKey;
-
-            try {
-                JSONObject jsonBody = new JSONObject();
-                JSONArray contents = new JSONArray();
-                JSONObject contentObj = new JSONObject();
-                JSONArray parts = new JSONArray();
-                JSONObject partObj = new JSONObject();
-
-                partObj.put("text", systemInstruction);
-                parts.put(partObj);
-                contentObj.put("parts", parts);
-                contents.put(contentObj);
-                jsonBody.put("contents", contents);
-
-                JsonObjectRequest request = new JsonObjectRequest(
-                        Request.Method.POST,
-                        url,
-                        jsonBody,
-                        response -> {
-                            progressAiLoading.setVisibility(View.GONE);
-                            btnSend.setEnabled(true);
-                            try {
-                                JSONArray candidates = response.optJSONArray("candidates");
-                                if (candidates != null && candidates.length() > 0) {
-                                    JSONObject content = candidates.getJSONObject(0).optJSONObject("content");
-                                    if (content != null) {
-                                        JSONArray resParts = content.optJSONArray("parts");
-                                        if (resParts != null && resParts.length() > 0) {
-                                            String aiText = resParts.getJSONObject(0).optString("text", "");
-                                            if (!TextUtils.isEmpty(aiText)) {
-                                                addAiMessage(aiText.trim());
-                                                return;
-                                            }
-                                        }
-                                    }
-                                }
-                                addAiMessage(generateAgronomistAiResponse(userPrompt));
-                            } catch (JSONException e) {
-                                addAiMessage(generateAgronomistAiResponse(userPrompt));
-                            }
-                        },
-                        error -> {
-                            progressAiLoading.setVisibility(View.GONE);
-                            btnSend.setEnabled(true);
-                            addAiMessage(generateAgronomistAiResponse(userPrompt));
+                        if (m != null && ph != null && n != null && p != null && k != null) {
+                            telemetryContext = String.format(Locale.US,
+                                    "\n\n[Live Soil Sensor Telemetry (VINLAND-ESP32-01)]:\n"
+                                            + "• Soil Moisture: %.1f%%\n"
+                                            + "• Soil pH: %.1f\n"
+                                            + "• Nitrogen (N): %.0f ppm\n"
+                                            + "• Phosphorus (P): %.0f ppm\n"
+                                            + "• Potassium (K): %.0f ppm\n",
+                                    m, ph, n, p, k);
                         }
-                );
+                    }
 
-                requestQueue.add(request);
+                    sendPromptWithTelemetry(userPrompt, telemetryContext);
+                });
+    }
 
-            } catch (JSONException e) {
-                progressAiLoading.setVisibility(View.GONE);
-                btnSend.setEnabled(true);
-                addAiMessage(generateAgronomistAiResponse(userPrompt));
-            }
+    private void sendPromptWithTelemetry(String userPrompt, String telemetryContext) {
+        String openAiKey = WeatherConfig.OPENAI_API_KEY != null ? WeatherConfig.OPENAI_API_KEY.trim() : "";
+        String groqKey = WeatherConfig.GROQ_API_KEY != null ? WeatherConfig.GROQ_API_KEY.trim() : "";
+
+        String systemInstruction = "You are Vinland AI, an expert agricultural assistant specializing in urban leaf vegetable gardening in Quezon City, Philippines. "
+                + "Your core task is to analyze soil NPK (Nitrogen, Phosphorus, Potassium) sensor readings and provide actionable, highly accurate planting and fertilizer recommendations.\n\n"
+                + "YOUR DOMAIN & FOCUS:\n"
+                + "• Target Crops: Leafy vegetables suitable for urban gardening (tomato, green pepper, pechay, kangkong, lettuce, etc.).\n"
+                + "• Environment: Urban settings in Quezon City (container gardening, rooftop gardens, vertical setups, tropical climate with distinct wet and dry seasons).\n\n"
+                + "HOW YOU SHOULD RESPOND:\n"
+                + "• Analyze the Data: When provided with NPK values, explain if levels are low, optimal, or high for leafy greens (which require higher Nitrogen).\n"
+                + "• Actionable Advice: Recommend specific organic fertilizers (Vermicompost, FPJ, FAA, Banana Peel Tea, Cal-Phos eggshell tea) or soil amendments (Wood Ash, Agricultural Lime, CRH).\n"
+                + "• Tone & Formatting: Be concise, encouraging, and practical. Use short paragraphs and bullet points.\n"
+                + "• Language: Respond naturally in Tagalog or Taglish when asked in Tagalog/Taglish.\n"
+                + "• Safety/Constraints: If asked about unrelated topics (sports, finance, crypto, politics), politely redirect back to soil monitoring and urban gardening.\n\n"
+                + "EXPERT KNOWLEDGE BASE & FEW-SHOT EXAMPLES:\n"
+                + "1. Yellow Leaves (Chlorosis): Nitrogen deficiency or poor drainage. Solution: Apply 2 tbsp vermicompost or FPJ weekly and improve pot drainage.\n"
+                + "2. Tomato NPK Targets: Vegetative stage (10-10-10 or high-N compost), Fruiting stage (5-10-10 or crushed eggshell & banana peel tea for Calcium/Phosphorus/Potassium).\n"
+                + "3. Soil pH Balancers: Ideal pH is 6.0-7.0. Raise low pH (<5.5) with agricultural lime or wood ash. Lower high pH (>7.5) with vermicompost or elemental sulfur.\n"
+                + "4. ESP32 Sensor Targets: Moisture 45-75%, pH 6.0-7.0, N 120-200 ppm, P 60-120 ppm, K 150-250 ppm.\n"
+                + "5. Organic Pest Spray: For aphids/whiteflies, spray neem oil solution (1 tsp organic neem oil + 1/2 tsp soap per 1L water) in late afternoon.\n"
+                + "6. Potting Mix Ratio: 1:1:1 (Garden Soil : Carbonized Rice Hull / Coco Peat : Vermicompost).\n"
+                + "7. Watering Schedule: Dry season (twice daily: 6-7:30 AM & 5 PM). Wet season (check moisture sensor first; skip watering if >60%).\n"
+                + "8. Blossom End Rot: Caused by Calcium deficiency and irregular watering. Fix with Cal-Phos tea (eggshells in vinegar) and steady irrigation.\n"
+                + "9. Fermented Plant Juice (FPJ): KNF Nitrogen booster made from fermented kangkong/banana shoots + brown sugar (1:1 ratio for 7 days).\n"
+                + telemetryContext;
+
+        if (!TextUtils.isEmpty(openAiKey) && openAiKey.startsWith("sk-")) {
+            // Query OpenAI Fine-Tuned Model (gpt-4o-mini / fine-tuned model ID)
+            queryOpenAiApi(userPrompt, systemInstruction, openAiKey);
+        } else if (!TextUtils.isEmpty(groqKey) && groqKey.startsWith("gsk_")) {
+            // Query Groq Cloud API (Llama 3.1 8B Instant)
+            queryGroqApi(userPrompt, systemInstruction, groqKey);
         } else {
             // Local AI Knowledge Engine
+            progressAiLoading.setVisibility(View.GONE);
+            btnSend.setEnabled(true);
+            addAiMessage(generateAgronomistAiResponse(userPrompt));
+        }
+    }
+
+    private void queryOpenAiApi(String userPrompt, String systemInstruction, String apiKey) {
+        String url = "https://api.openai.com/v1/chat/completions";
+        String modelId = !TextUtils.isEmpty(WeatherConfig.FINE_TUNED_MODEL_ID) ? WeatherConfig.FINE_TUNED_MODEL_ID : "gpt-4o-mini";
+
+        try {
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("model", modelId);
+
+            JSONArray messages = new JSONArray();
+
+            JSONObject sysMsg = new JSONObject();
+            sysMsg.put("role", "system");
+            sysMsg.put("content", systemInstruction);
+            messages.put(sysMsg);
+
+            JSONObject usrMsg = new JSONObject();
+            usrMsg.put("role", "user");
+            usrMsg.put("content", userPrompt);
+            messages.put(usrMsg);
+
+            jsonBody.put("messages", messages);
+            jsonBody.put("temperature", 0.7);
+
+            JsonObjectRequest request = new JsonObjectRequest(
+                    Request.Method.POST,
+                    url,
+                    jsonBody,
+                    response -> {
+                        progressAiLoading.setVisibility(View.GONE);
+                        btnSend.setEnabled(true);
+                        try {
+                            JSONArray choices = response.optJSONArray("choices");
+                            if (choices != null && choices.length() > 0) {
+                                JSONObject firstChoice = choices.getJSONObject(0);
+                                JSONObject messageObj = firstChoice.optJSONObject("message");
+                                if (messageObj != null) {
+                                    String aiText = messageObj.optString("content", "");
+                                    if (!TextUtils.isEmpty(aiText)) {
+                                        addAiMessage(aiText.trim());
+                                        return;
+                                    }
+                                }
+                            }
+                            addAiMessage(generateAgronomistAiResponse(userPrompt));
+                        } catch (JSONException e) {
+                            addAiMessage(generateAgronomistAiResponse(userPrompt));
+                        }
+                    },
+                    error -> {
+                        progressAiLoading.setVisibility(View.GONE);
+                        btnSend.setEnabled(true);
+                        String errorMsg = "OpenAI API Error";
+                        if (error.networkResponse != null) {
+                            errorMsg += " (HTTP " + error.networkResponse.statusCode + ")";
+                        }
+                        Toast.makeText(AiChatActivity.this, errorMsg + ". Falling back to local agronomist.", Toast.LENGTH_LONG).show();
+                        addAiMessage(generateAgronomistAiResponse(userPrompt));
+                    }
+            ) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Content-Type", "application/json");
+                    headers.put("Authorization", "Bearer " + apiKey);
+                    return headers;
+                }
+            };
+
+            requestQueue.add(request);
+
+        } catch (JSONException e) {
+            progressAiLoading.setVisibility(View.GONE);
+            btnSend.setEnabled(true);
+            addAiMessage(generateAgronomistAiResponse(userPrompt));
+        }
+    }
+
+    private void queryGroqApi(String userPrompt, String systemInstruction, String apiKey) {
+        String url = "https://api.groq.com/openai/v1/chat/completions";
+
+        try {
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("model", "llama-3.1-8b-instant");
+
+            JSONArray messages = new JSONArray();
+
+            JSONObject sysMsg = new JSONObject();
+            sysMsg.put("role", "system");
+            sysMsg.put("content", systemInstruction);
+            messages.put(sysMsg);
+
+            JSONObject usrMsg = new JSONObject();
+            usrMsg.put("role", "user");
+            usrMsg.put("content", userPrompt);
+            messages.put(usrMsg);
+
+            jsonBody.put("messages", messages);
+            jsonBody.put("temperature", 0.7);
+
+            JsonObjectRequest request = new JsonObjectRequest(
+                    Request.Method.POST,
+                    url,
+                    jsonBody,
+                    response -> {
+                        progressAiLoading.setVisibility(View.GONE);
+                        btnSend.setEnabled(true);
+                        try {
+                            JSONArray choices = response.optJSONArray("choices");
+                            if (choices != null && choices.length() > 0) {
+                                JSONObject firstChoice = choices.getJSONObject(0);
+                                JSONObject messageObj = firstChoice.optJSONObject("message");
+                                if (messageObj != null) {
+                                    String aiText = messageObj.optString("content", "");
+                                    if (!TextUtils.isEmpty(aiText)) {
+                                        addAiMessage(aiText.trim());
+                                        return;
+                                    }
+                                }
+                            }
+                            addAiMessage(generateAgronomistAiResponse(userPrompt));
+                        } catch (JSONException e) {
+                            addAiMessage(generateAgronomistAiResponse(userPrompt));
+                        }
+                    },
+                    error -> {
+                        progressAiLoading.setVisibility(View.GONE);
+                        btnSend.setEnabled(true);
+                        String errorMsg = "Groq API Error";
+                        if (error.networkResponse != null) {
+                            errorMsg += " (HTTP " + error.networkResponse.statusCode + ")";
+                        }
+                        Toast.makeText(AiChatActivity.this, errorMsg + ". Falling back to local agronomist.", Toast.LENGTH_LONG).show();
+                        addAiMessage(generateAgronomistAiResponse(userPrompt));
+                    }
+            ) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Content-Type", "application/json");
+                    headers.put("Authorization", "Bearer " + apiKey);
+                    return headers;
+                }
+            };
+
+            requestQueue.add(request);
+
+        } catch (JSONException e) {
             progressAiLoading.setVisibility(View.GONE);
             btnSend.setEnabled(true);
             addAiMessage(generateAgronomistAiResponse(userPrompt));

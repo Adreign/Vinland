@@ -3,63 +3,92 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7F5"
+    android:background="#F3F5EF"
     android:clipToPadding="false"
     android:fillViewport="true">
+
+    <!--
+        Same palette as the dashboard:
+        Forest #1F4D32 | Fern #2E7D32 | Paper #F3F5EF | Ink #1C2A20 | Muted #5C6B5F | Line #E2E7DC
+    -->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header band -->
-        <LinearLayout
+        <!-- Header: rounded bottom edge. Negative top margin hides the top corners off-screen. -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal"
-            android:background="#2E7D32"
-            android:paddingTop="72dp"
-            android:paddingBottom="40dp"
-            android:paddingHorizontal="24dp">
+            android:layout_marginTop="-28dp"
+            app:cardBackgroundColor="#1F4D32"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="🌱"
-                android:textSize="44sp" />
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingHorizontal="32dp"
+                android:paddingTop="96dp"
+                android:paddingBottom="64dp">
 
-            <TextView
-                android:id="@+id/tvAppName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Vinland"
-                android:textSize="30sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    app:cardBackgroundColor="#26FFFFFF"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
 
-            <TextView
-                android:id="@+id/tvTagline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Soil Monitoring for Urban Gardeners in Quezon City"
-                android:textSize="13sp"
-                android:textColor="#C8E6C9" />
-        </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:importantForAccessibility="no"
+                        android:text="🌱"
+                        android:textSize="36sp" />
+                </com.google.android.material.card.MaterialCardView>
 
-        <!-- Form card -->
+                <TextView
+                    android:id="@+id/tvAppName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="-0.01"
+                    android:text="Vinland"
+                    android:textColor="#FFFFFF"
+                    android:textSize="32sp" />
+
+                <TextView
+                    android:id="@+id/tvTagline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:lineSpacingMultiplier="1.1"
+                    android:text="Soil Monitoring for Urban Gardeners in Quezon City"
+                    android:textColor="#CDE8D0"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Form card: direct child of the root so the overlap is not clipped -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
+            android:layout_marginTop="-36dp"
             android:layout_marginEnd="20dp"
-            android:layout_marginTop="-28dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="6dp"
-            app:strokeWidth="0dp"
-            app:cardBackgroundColor="#FFFFFF">
+            app:cardBackgroundColor="#FFFFFF"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="4dp"
+            app:strokeColor="#E2E7DC"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -70,11 +99,19 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Welcome Back"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#212121"
-                    android:layout_marginBottom="16dp" />
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Welcome back"
+                    android:textColor="#1C2A20"
+                    android:textSize="22sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="20dp"
+                    android:text="Log in to see how your soil is doing."
+                    android:textColor="#5C6B5F"
+                    android:textSize="14sp" />
 
                 <!-- Email -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -82,7 +119,11 @@
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Email Address"
+                    android:hint="Email address"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusTopStart="12dp"
                     app:boxStrokeColor="#2E7D32"
                     app:hintTextColor="#2E7D32">
 
@@ -90,7 +131,10 @@
                         android:id="@+id/etEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress" />
+                        android:autofillHints="emailAddress"
+                        android:imeOptions="actionNext"
+                        android:inputType="textEmailAddress"
+                        android:textColor="#1C2A20" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Password -->
@@ -101,36 +145,44 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:hint="Password"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusTopStart="12dp"
                     app:boxStrokeColor="#2E7D32"
-                    app:hintTextColor="#2E7D32"
-                    app:endIconMode="password_toggle">
+                    app:endIconMode="password_toggle"
+                    app:hintTextColor="#2E7D32">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etPassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPassword" />
+                        android:autofillHints="password"
+                        android:imeOptions="actionDone"
+                        android:inputType="textPassword"
+                        android:textColor="#1C2A20" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Forgot password -->
                 <TextView
                     android:id="@+id/tvForgotPassword"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:layout_gravity="end"
-                    android:layout_marginTop="10dp"
-                    android:text="Forgot Password?"
+                    android:gravity="center_vertical"
+                    android:paddingStart="8dp"
+                    android:text="Forgot password?"
                     android:textColor="#2E7D32"
-                    android:textStyle="bold"
-                    android:textSize="13sp" />
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <!-- Error / status text -->
                 <TextView
                     android:id="@+id/tvError"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:textColor="#D32F2F"
+                    android:layout_marginBottom="4dp"
+                    android:textColor="#B3261E"
                     android:textSize="13sp"
                     android:visibility="gone" />
 
@@ -139,41 +191,42 @@
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:layout_marginTop="18dp"
-                    android:text="Log In"
+                    android:layout_marginTop="4dp"
+                    android:text="Log in"
                     android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
                     android:textSize="16sp"
-                    app:cornerRadius="12dp"
-                    app:backgroundTint="#2E7D32" />
+                    app:backgroundTint="#2E7D32"
+                    app:cornerRadius="14dp" />
 
                 <!-- Divider -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="20dp"
                     android:gravity="center"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="12dp">
+                    android:orientation="horizontal">
 
                     <View
                         android:layout_width="0dp"
                         android:layout_height="1dp"
                         android:layout_weight="1"
-                        android:background="#E0E0E0" />
+                        android:background="#E2E7DC" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=" OR "
-                        android:textSize="12sp"
-                        android:textColor="#757575"
-                        android:textStyle="bold" />
+                        android:paddingHorizontal="12dp"
+                        android:text="or"
+                        android:textColor="#5C6B5F"
+                        android:textSize="13sp" />
 
                     <View
                         android:layout_width="0dp"
                         android:layout_height="1dp"
                         android:layout_weight="1"
-                        android:background="#E0E0E0" />
+                        android:background="#E2E7DC" />
                 </LinearLayout>
 
                 <!-- Google / Gmail Sign In Button -->
@@ -182,20 +235,22 @@
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:text="Sign In with Google / Gmail"
+                    android:text="Continue with Google"
                     android:textAllCaps="false"
-                    android:textSize="14sp"
-                    android:textColor="#2E7D32"
-                    app:strokeColor="#2E7D32"
-                    app:strokeWidth="1.5dp"
-                    app:cornerRadius="12dp" />
+                    android:textColor="#1C2A20"
+                    android:textSize="15sp"
+                    app:backgroundTint="@android:color/transparent"
+                    app:cornerRadius="14dp"
+                    app:strokeColor="#CFD6C9"
+                    app:strokeWidth="1.5dp" />
 
                 <ProgressBar
                     android:id="@+id/progressBar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
+                    android:indeterminateTint="#2E7D32"
                     android:visibility="gone" />
 
             </LinearLayout>
@@ -205,14 +260,16 @@
         <TextView
             android:id="@+id/tvGoToRegister"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_gravity="center"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="32dp"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
             android:text="Don't have an account? Register"
             android:textColor="#2E7D32"
-            android:textStyle="bold"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

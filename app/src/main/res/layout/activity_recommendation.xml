@@ -3,44 +3,72 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7F5"
+    android:background="#F3F5EF"
     android:clipToPadding="false"
     android:fillViewport="true">
+
+    <!--
+        Same palette as the rest of the app:
+        Forest #1F4D32 | Fern #2E7D32 | Paper #F3F5EF | Ink #1C2A20 | Muted #5C6B5F | Line #E2E7DC
+        Requires res/drawable/bg_badge_pill.xml (rounded background for tvSummaryBadge).
+    -->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header -->
-        <LinearLayout
+        <!-- Header: rounded bottom edge. Negative top margin hides the top corners off-screen. -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="#2E7D32"
-            android:paddingTop="48dp"
-            android:paddingBottom="20dp"
-            android:paddingHorizontal="16dp">
+            android:layout_marginTop="-28dp"
+            app:cardBackgroundColor="#1F4D32"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
-            <TextView
-                android:id="@+id/tvBack"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="←"
-                android:textSize="22sp"
-                android:textColor="#FFFFFF"
-                android:padding="8dp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingTop="76dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="28dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Soil Monitoring"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-        </LinearLayout>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:cardBackgroundColor="#26FFFFFF"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <TextView
+                        android:id="@+id/tvBack"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="Back"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:text="←"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:letterSpacing="-0.01"
+                    android:text="Soil Monitoring"
+                    android:textColor="#FFFFFF"
+                    android:textSize="22sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -54,11 +82,11 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardCornerRadius="18dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp"
-                app:cardBackgroundColor="#FFFFFF">
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E2E7DC"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -70,53 +98,54 @@
                         android:id="@+id/tvInputHeader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Live Soil Telemetry Stream"
-                        android:textStyle="bold"
-                        android:textColor="#212121"
-                        android:textSize="15sp"
-                        android:layout_marginBottom="4dp" />
+                        android:layout_marginBottom="4dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Live soil readings"
+                        android:textColor="#1C2A20"
+                        android:textSize="17sp" />
 
                     <TextView
                         android:id="@+id/tvInputSubheader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Real-time data stream from paired ESP32 sensor hardware."
-                        android:textColor="#9E9E9E"
-                        android:textSize="12sp"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="16dp"
+                        android:text="Real-time data from your paired ESP32 sensor."
+                        android:textColor="#5C6B5F"
+                        android:textSize="13sp" />
 
-                    <!-- Live Sensor Status Banner -->
+                    <!-- Live sensor status banner -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cardLiveSensorBanner"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="14dp"
+                        android:layout_marginBottom="16dp"
                         android:visibility="visible"
-                        app:cardCornerRadius="12dp"
+                        app:cardBackgroundColor="#EAF3E6"
+                        app:cardCornerRadius="14dp"
                         app:cardElevation="0dp"
-                        app:strokeWidth="1dp"
-                        app:strokeColor="#81C784"
-                        app:cardBackgroundColor="#E8F5E9">
+                        app:strokeColor="#CFE2C9"
+                        app:strokeWidth="1dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
-                            android:padding="12dp">
+                            android:paddingHorizontal="14dp"
+                            android:paddingVertical="12dp">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:gravity="center_vertical">
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
 
                                 <TextView
                                     android:id="@+id/tvLiveStatusDot"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
+                                    android:layout_marginEnd="8dp"
                                     android:text="🟡"
-                                    android:textSize="14sp"
-                                    android:layout_marginEnd="6dp" />
+                                    android:textSize="14sp" />
 
                                 <TextView
                                     android:id="@+id/tvLiveStatusText"
@@ -124,19 +153,21 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:text="Listening to VINLAND-ESP32-01..."
-                                    android:textColor="#2E7D32"
-                                    android:textSize="13sp"
+                                    android:textColor="#1F4D32"
+                                    android:textSize="14sp"
                                     android:textStyle="bold" />
 
                                 <TextView
                                     android:id="@+id/tvChangeDevice"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
+                                    android:minHeight="36dp"
+                                    android:gravity="center_vertical"
+                                    android:paddingHorizontal="8dp"
                                     android:text="Change ID"
                                     android:textColor="#1B5E20"
-                                    android:textSize="12sp"
-                                    android:textStyle="bold"
-                                    android:padding="4dp" />
+                                    android:textSize="13sp"
+                                    android:textStyle="bold" />
                             </LinearLayout>
 
                             <TextView
@@ -146,16 +177,23 @@
                                 android:layout_marginTop="2dp"
                                 android:text="Waiting for sensor telemetry..."
                                 android:textColor="#486B4A"
-                                android:textSize="11sp" />
+                                android:textSize="12sp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Readings are filled in by the sensor, so the boxes have a soft fill to read as display-only -->
 
                     <!-- Moisture -->
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Soil Moisture (%)"
+                        android:hint="Soil moisture (%)"
+                        app:boxBackgroundColor="#F6F8F3"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
                         app:boxStrokeColor="#2E7D32"
                         app:hintTextColor="#2E7D32">
 
@@ -164,7 +202,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:focusable="false"
-                            android:inputType="numberDecimal" />
+                            android:inputType="numberDecimal"
+                            android:textColor="#1C2A20" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- pH -->
@@ -174,6 +213,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:hint="Soil pH (0-14)"
+                        app:boxBackgroundColor="#F6F8F3"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
                         app:boxStrokeColor="#2E7D32"
                         app:hintTextColor="#2E7D32">
 
@@ -182,23 +226,30 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:focusable="false"
-                            android:inputType="numberDecimal" />
+                            android:inputType="numberDecimal"
+                            android:textColor="#1C2A20" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- N P K row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="12dp">
+                        android:layout_marginTop="12dp"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
 
                         <com.google.android.material.textfield.TextInputLayout
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
                             android:layout_weight="1"
-                            android:layout_marginEnd="6dp"
                             android:hint="N (ppm)"
+                            app:boxBackgroundColor="#F6F8F3"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusTopStart="12dp"
                             app:boxStrokeColor="#2E7D32"
                             app:hintTextColor="#2E7D32">
 
@@ -207,17 +258,23 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:focusable="false"
-                                android:inputType="numberDecimal" />
+                                android:inputType="numberDecimal"
+                                android:textColor="#1C2A20" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <com.google.android.material.textfield.TextInputLayout
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_marginEnd="4dp"
                             android:layout_weight="1"
-                            android:layout_marginStart="3dp"
-                            android:layout_marginEnd="3dp"
                             android:hint="P (ppm)"
+                            app:boxBackgroundColor="#F6F8F3"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusTopStart="12dp"
                             app:boxStrokeColor="#2E7D32"
                             app:hintTextColor="#2E7D32">
 
@@ -226,16 +283,22 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:focusable="false"
-                                android:inputType="numberDecimal" />
+                                android:inputType="numberDecimal"
+                                android:textColor="#1C2A20" />
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <com.google.android.material.textfield.TextInputLayout
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
                             android:layout_weight="1"
-                            android:layout_marginStart="6dp"
                             android:hint="K (ppm)"
+                            app:boxBackgroundColor="#F6F8F3"
+                            app:boxCornerRadiusBottomEnd="12dp"
+                            app:boxCornerRadiusBottomStart="12dp"
+                            app:boxCornerRadiusTopEnd="12dp"
+                            app:boxCornerRadiusTopStart="12dp"
                             app:boxStrokeColor="#2E7D32"
                             app:hintTextColor="#2E7D32">
 
@@ -244,7 +307,8 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:focusable="false"
-                                android:inputType="numberDecimal" />
+                                android:inputType="numberDecimal"
+                                android:textColor="#1C2A20" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
 
@@ -253,19 +317,21 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:textColor="#D32F2F"
+                        android:textColor="#B3261E"
                         android:textSize="13sp"
                         android:visibility="gone" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnAnalyze"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:layout_marginTop="16dp"
-                        android:text="Generate Recommendation"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="20dp"
+                        android:text="Generate recommendation"
                         android:textAllCaps="false"
-                        app:cornerRadius="12dp"
-                        app:backgroundTint="#2E7D32" />
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        app:backgroundTint="#2E7D32"
+                        app:cornerRadius="14dp" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -275,71 +341,72 @@
                 android:id="@+id/layoutResults"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:layout_marginTop="20dp"
+                android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- Executive Summary Card -->
+                <!-- Soil summary card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardSummaryOverview"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp"
-                    app:strokeWidth="0dp"
-                    app:cardBackgroundColor="#FFFFFF">
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="#E2E7DC"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp">
+                        android:padding="20dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
+                            android:layout_marginBottom="10dp"
                             android:gravity="center_vertical"
-                            android:layout_marginBottom="8dp">
+                            android:orientation="horizontal">
 
                             <TextView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="📊 Executive Soil Summary"
-                                android:textSize="15sp"
-                                android:textStyle="bold"
-                                android:textColor="#212121" />
+                                android:fontFamily="sans-serif-medium"
+                                android:text="Soil summary"
+                                android:textColor="#1C2A20"
+                                android:textSize="17sp" />
 
                             <TextView
                                 android:id="@+id/tvSummaryBadge"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:background="@drawable/bg_badge_pill"
+                                android:fontFamily="sans-serif-medium"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="5dp"
                                 android:text="Optimal Health"
-                                android:textSize="11sp"
-                                android:textStyle="bold"
                                 android:textColor="#FFFFFF"
-                                android:background="#2E7D32"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="4dp" />
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <TextView
                             android:id="@+id/tvSummaryKeyFindings"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
+                            android:lineSpacingExtra="3dp"
                             android:text="Soil parameters evaluated."
-                            android:textColor="#555555"
-                            android:textSize="13sp"
-                            android:lineSpacingExtra="2dp"
-                            android:layout_marginBottom="12dp" />
+                            android:textColor="#3F4D42"
+                            android:textSize="14sp" />
 
                         <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:background="#EEEEEE"
-                            android:layout_marginBottom="12dp" />
+                            android:layout_marginBottom="16dp"
+                            android:background="#EDF0E8" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -355,20 +422,19 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="TOP CROP MATCH"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold"
-                                    android:textColor="#9E9E9E" />
+                                    android:text="Best crop match"
+                                    android:textColor="#5C6B5F"
+                                    android:textSize="12.5sp" />
 
                                 <TextView
                                     android:id="@+id/tvSummaryTopCropName"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:fontFamily="sans-serif-medium"
                                     android:text="🌱 Tomato"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold"
                                     android:textColor="#2E7D32"
-                                    android:layout_marginTop="2dp" />
+                                    android:textSize="15sp" />
                             </LinearLayout>
 
                             <LinearLayout
@@ -380,70 +446,81 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="PRIMARY ACTION"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold"
-                                    android:textColor="#9E9E9E" />
+                                    android:text="Top action"
+                                    android:textColor="#5C6B5F"
+                                    android:textSize="12.5sp" />
 
                                 <TextView
                                     android:id="@+id/tvSummaryActionNeeded"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:fontFamily="sans-serif-medium"
                                     android:text="Add Organic Nitrogen"
-                                    android:textSize="13sp"
-                                    android:textStyle="bold"
-                                    android:textColor="#1565C0"
-                                    android:layout_marginTop="2dp" />
+                                    android:textColor="#8A5A00"
+                                    android:textSize="15sp" />
                             </LinearLayout>
                         </LinearLayout>
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- AI Agronomist Insights Card -->
+                <!-- AI Agronomist insights card -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardAiInsights"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="14dp"
-                    app:cardCornerRadius="16dp"
+                    android:layout_marginBottom="12dp"
+                    app:cardBackgroundColor="#EEF5EA"
+                    app:cardCornerRadius="20dp"
                     app:cardElevation="0dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#A5D6A7"
-                    app:cardBackgroundColor="#F1F8E9">
+                    app:strokeColor="#D3E4CD"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="16dp">
+                        android:padding="20dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="🤖"
-                                android:textSize="22sp"
-                                android:layout_marginEnd="8dp" />
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                app:cardBackgroundColor="#FFFFFF"
+                                app:cardCornerRadius="12dp"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="0dp">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:importantForAccessibility="no"
+                                    android:text="🤖"
+                                    android:textSize="20sp" />
+                            </com.google.android.material.card.MaterialCardView>
 
                             <TextView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
                                 android:layout_weight="1"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="AI Agronomist Insights"
-                                android:textSize="14sp"
-                                android:textStyle="bold"
-                                android:textColor="#2E7D32" />
+                                android:textColor="#1F4D32"
+                                android:textSize="16sp" />
 
                             <ProgressBar
                                 android:id="@+id/progressAiLoading"
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:indeterminateTint="#2E7D32"
                                 android:visibility="visible" />
                         </LinearLayout>
 
@@ -451,39 +528,40 @@
                             android:id="@+id/tvAiAdvice"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
+                            android:layout_marginTop="14dp"
+                            android:lineSpacingExtra="4dp"
                             android:text="Consulting Gemini AI for personalized soil recommendations..."
-                            android:textColor="#333333"
-                            android:textSize="13sp"
-                            android:lineSpacingExtra="3dp" />
+                            android:textColor="#2A3A2E"
+                            android:textSize="14sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🌱 Recommended Crops for Your Soil"
-                    android:textStyle="bold"
-                    android:textColor="#212121"
-                    android:textSize="14sp"
                     android:layout_marginTop="16dp"
-                    android:layout_marginBottom="10dp" />
+                    android:layout_marginBottom="12dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Recommended crops for your soil"
+                    android:textColor="#1C2A20"
+                    android:textSize="17sp" />
 
                 <LinearLayout
                     android:id="@+id/layoutRecommendedCrops"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginBottom="10dp" />
+                    android:layout_marginBottom="10dp"
+                    android:orientation="vertical" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Parameter Details"
-                    android:textStyle="bold"
-                    android:textColor="#212121"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="10dp" />
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Parameter details"
+                    android:textColor="#1C2A20"
+                    android:textSize="17sp" />
 
                 <LinearLayout
                     android:id="@+id/layoutParameterResults"
@@ -494,12 +572,14 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSaveToHistory"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginTop="12dp"
-                    android:text="💾 Save Reading to History"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="20dp"
+                    android:text="Save to history"
                     android:textAllCaps="false"
-                    app:cornerRadius="12dp"
-                    app:backgroundTint="#2E7D32" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    app:backgroundTint="#2E7D32"
+                    app:cornerRadius="14dp" />
 
             </LinearLayout>
 

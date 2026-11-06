@@ -53,23 +53,29 @@ public class WeatherAlertWorker extends Worker {
                     description = weatherArray.getJSONObject(0).optString("description", "").toLowerCase();
                 }
 
-                if (description.contains("rain") || description.contains("thunderstorm") || description.contains("drizzle")) {
+                if (description.contains("rain") || description.contains("thunderstorm") || description.contains("drizzle") || description.contains("shower")) {
                     NotificationHelper.sendNotification(
                             getApplicationContext(),
                             "☔ Quezon City Rain Advisory",
-                            "Rain detected today in QC. Delay watering urban beds and verify container drainage."
+                            "Rain detected in QC (" + description + "). Verify container drainage and delay irrigation."
                     );
-                } else if (temp >= 33) {
+                } else if (temp >= 32) {
                     NotificationHelper.sendNotification(
                             getApplicationContext(),
-                            "🌡️ Extreme Heat Warning",
-                            "Temperatures reaching " + Math.round(temp) + "°C today in QC. Check soil moisture and provide shade for leafy crops."
+                            "🌡️ Quezon City Heat Warning",
+                            "High temperature (" + Math.round(temp) + "°C) in QC today. Water base of plants and shade young seedlings."
                     );
-                } else if (humidity >= 85) {
+                } else if (humidity >= 80) {
                     NotificationHelper.sendNotification(
                             getApplicationContext(),
                             "🌿 High Humidity Alert",
-                            "High humidity detected in QC (" + humidity + "%). Check garden crops and leafy greens for fungal leaf spot."
+                            "High humidity detected (" + humidity + "%). Inspect leafy crops for fungal spot or powdery mildew."
+                    );
+                } else {
+                    NotificationHelper.sendNotification(
+                            getApplicationContext(),
+                            "🌱 Vinland Daily Garden Advisory",
+                            "Weather in Quezon City: " + description + " (" + Math.round(temp) + "°C). Check soil Moisture & NPK via Vinland."
                     );
                 }
             }
