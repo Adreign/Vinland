@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:name=".VinlandApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -41,6 +42,8 @@
         <activity android:name=".weather.WeatherActivity" android:exported="false" />
 
         <activity android:name=".recommendation.RecommendationActivity" android:exported="false" />
+
+        <activity android:name=".ai.AiRecommendationActivity" android:exported="false" />
 
         <activity android:name=".profile.ProfileActivity" android:exported="false" />
 

@@ -512,7 +512,7 @@
                                 android:layout_marginStart="12dp"
                                 android:layout_weight="1"
                                 android:fontFamily="sans-serif-medium"
-                                android:text="AI Agronomist Insights"
+                                android:text="Soil Insights"
                                 android:textColor="#1F4D32"
                                 android:textSize="16sp" />
 
@@ -521,7 +521,7 @@
                                 android:layout_width="22dp"
                                 android:layout_height="22dp"
                                 android:indeterminateTint="#2E7D32"
-                                android:visibility="visible" />
+                                android:visibility="gone" />
                         </LinearLayout>
 
                         <TextView
@@ -530,9 +530,19 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="14dp"
                             android:lineSpacingExtra="4dp"
-                            android:text="Consulting Gemini AI for personalized soil recommendations..."
+                            android:text="Analyze a reading to see soil insights."
                             android:textColor="#2A3A2E"
                             android:textSize="14sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnOpenAiRecommendations"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:backgroundTint="#1F4D32"
+                            android:text="✨ Get AI garden recommendations"
+                            android:textAllCaps="false"
+                            app:cornerRadius="14dp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

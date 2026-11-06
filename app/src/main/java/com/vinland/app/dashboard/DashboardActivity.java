@@ -82,6 +82,9 @@ public class DashboardActivity extends AppCompatActivity {
         navProfile.setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
         navCalendar.setOnClickListener(v -> startActivity(new Intent(this, PlantingCalendarActivity.class)));
         navReports.setOnClickListener(v -> startActivity(new Intent(this, ReportsActivity.class)));
+        View navAiRecommendations = findViewById(R.id.navAiRecommendations);
+        navAiRecommendations.setOnClickListener(v ->
+                startActivity(new Intent(this, com.vinland.app.ai.AiRecommendationActivity.class)));
         if (navSettings != null) {
             navSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         }

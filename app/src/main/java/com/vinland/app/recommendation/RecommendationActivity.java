@@ -1,7 +1,6 @@
 package com.vinland.app.recommendation;
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -15,10 +14,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
@@ -30,11 +25,7 @@ import com.vinland.app.R;
 import com.vinland.app.data.Crop;
 import com.vinland.app.data.CropDatabaseSeeder;
 import com.vinland.app.data.SoilLog;
-import com.vinland.app.weather.WeatherConfig;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -56,7 +47,6 @@ public class RecommendationActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private RequestQueue requestQueue;
 
     private ListenerRegistration sensorListenerRegistration;
     private String activeSensorDeviceId = "VINLAND-ESP32-01";
@@ -66,6 +56,8 @@ public class RecommendationActivity extends AppCompatActivity {
 
     private double currentMoisture, currentPh, currentN, currentP, currentK;
 
+    private List<CropScorer.Match> lastRanking = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,7 +65,6 @@ public class RecommendationActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        requestQueue = Volley.newRequestQueue(this);
 
         tvBack = findViewById(R.id.tvBack);
         tvInputError = findViewById(R.id.tvInputError);
@@ -102,20 +93,14 @@ public class RecommendationActivity extends AppCompatActivity {
         tvBack.setOnClickListener(v -> finish());
         btnAnalyze.setOnClickListener(v -> analyzeSoil());
         btnSaveToHistory.setOnClickListener(v -> saveReadingToHistory());
+        View btnOpenAi = findViewById(R.id.btnOpenAiRecommendations);
+        btnOpenAi.setOnClickListener(v ->
+                startActivity(new Intent(this, com.vinland.app.ai.AiRecommendationActivity.class)));
         tvChangeDevice.setOnClickListener(v -> showChangeDeviceDialog());
 
         setFieldsEditable(false);
         loadUserSavedDeviceId();
         CropDatabaseSeeder.seedIfEmpty(db, this::loadCropsFromFirestore);
-    }
-
-    private String getEffectiveGeminiApiKey() {
-        SharedPreferences prefs = getSharedPreferences("VinlandPrefs", Context.MODE_PRIVATE);
-        String customKey = prefs.getString("gemini_api_key", "");
-        if (!TextUtils.isEmpty(customKey)) {
-            return customKey;
-        }
-        return WeatherConfig.GEMINI_API_KEY;
     }
 
     private void loadUserSavedDeviceId() {
@@ -256,6 +241,11 @@ public class RecommendationActivity extends AppCompatActivity {
         detachSensorListener();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
     private void loadCropsFromFirestore() {
         db.collection("crops").get().addOnSuccessListener(querySnapshot -> {
             cropMap.clear();
@@ -298,63 +288,32 @@ public class RecommendationActivity extends AppCompatActivity {
         evaluateRecommendedCrops(currentMoisture, currentPh, currentN, currentP, currentK);
         updateExecutiveSummary(currentMoisture, currentPh, currentN, currentP, currentK);
         showGeneralParameterResults(currentMoisture, currentPh, currentN, currentP, currentK);
-        fetchGeminiAiRecommendation(currentMoisture, currentPh, currentN, currentP, currentK);
+        fetchLlmRecommendation(currentMoisture, currentPh, currentN, currentP, currentK);
     }
 
     private void evaluateRecommendedCrops(double moisture, double ph, double n, double p, double k) {
         if (layoutRecommendedCrops == null) return;
         layoutRecommendedCrops.removeAllViews();
+        topRecommendedCrop = null;
 
-        List<CropMatch> matches = new ArrayList<>();
-        for (Crop crop : cropMap.values()) {
-            int score = 0;
-            if (ph >= crop.getPhMin() - 0.5 && ph <= crop.getPhMax() + 0.5) score++;
-            if (moisture >= crop.getMoistureMin() - 10 && moisture <= crop.getMoistureMax() + 10) score++;
-            if (n >= 5.0 && n <= 80.0) score++;
-            if (p >= 5.0 && p <= 60.0) score++;
-            if (k >= 15.0 && k <= 150.0) score++;
-
-            matches.add(new CropMatch(crop, score));
-        }
-
-        matches.sort((a, b) -> Integer.compare(b.score, a.score));
+        lastRanking = CropScorer.rank(cropMap.values(), moisture, ph, n, p, k);
 
         int count = 0;
-        for (CropMatch match : matches) {
-            if (match.score >= 2) {
-                addCropMatchCard(layoutRecommendedCrops, match.crop, match.score);
-                if (count == 0) {
-                    topRecommendedCrop = match.crop;
-                }
-                count++;
-                if (count >= 4) break;
-            }
-        }
-
-        if (count == 0 && !matches.isEmpty()) {
-            for (int i = 0; i < Math.min(2, matches.size()); i++) {
-                addCropMatchCard(layoutRecommendedCrops, matches.get(i).crop, matches.get(i).score);
-                if (i == 0) topRecommendedCrop = matches.get(0).crop;
-            }
-        }
-
-        if (topRecommendedCrop == null && !cropMap.isEmpty()) {
-            topRecommendedCrop = cropMap.values().iterator().next();
+        for (CropScorer.Match match : lastRanking) {
+            // Always show the top 2; show up to 4 if they're reasonable matches.
+            if (count >= 4 || (count >= 2 && match.score < 60)) break;
+            String reason = match.issues.isEmpty()
+                    ? "All soil parameters are within this crop's range."
+                    : TextUtils.join("; ", match.issues) + ".";
+            addCropMatchCard(layoutRecommendedCrops, match.crop, match.score, reason);
+            if (count == 0) topRecommendedCrop = match.crop;
+            count++;
         }
 
         layoutResults.setVisibility(View.VISIBLE);
     }
 
-    private static class CropMatch {
-        Crop crop;
-        int score;
-        CropMatch(Crop crop, int score) {
-            this.crop = crop;
-            this.score = score;
-        }
-    }
-
-    private void addCropMatchCard(LinearLayout container, Crop crop, int score) {
+    private void addCropMatchCard(LinearLayout container, Crop crop, int score, String reason) {
         MaterialCardView card = new MaterialCardView(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -385,7 +344,9 @@ public class RecommendationActivity extends AppCompatActivity {
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         tvName.setTextColor(android.graphics.Color.parseColor("#212121"));
 
-        String matchText = score >= 4 ? "⭐ Excellent Match (" + score + "/5 optimal parameters)" : "👍 Compatible Match (" + score + "/5 optimal)";
+        String matchText = score >= 80 ? "⭐ Excellent match · " + score + "%"
+                : score >= 60 ? "👍 Good match · " + score + "%"
+                : "⚠️ Needs soil adjustment · " + score + "%";
         TextView tvMatch = new TextView(this);
         tvMatch.setText(matchText);
         tvMatch.setTextSize(12);
@@ -394,6 +355,15 @@ public class RecommendationActivity extends AppCompatActivity {
 
         textCol.addView(tvName);
         textCol.addView(tvMatch);
+
+        if (!TextUtils.isEmpty(reason)) {
+            TextView tvReason = new TextView(this);
+            tvReason.setText(reason);
+            tvReason.setTextSize(12);
+            tvReason.setTextColor(android.graphics.Color.parseColor("#666666"));
+            tvReason.setPadding(0, dpToPx(2), 0, 0);
+            textCol.addView(tvReason);
+        }
         row.addView(textCol);
 
         card.addView(row);
@@ -428,84 +398,15 @@ public class RecommendationActivity extends AppCompatActivity {
         return new String[]{"Optimal", name + " level is balanced.", "#2E7D32"};
     }
 
-    private void fetchGeminiAiRecommendation(double moisture, double ph, double n, double p, double k) {
-        String activeApiKey = getEffectiveGeminiApiKey();
-
-        if (TextUtils.isEmpty(activeApiKey) || !activeApiKey.startsWith("AIzaSy")) {
-            progressAiLoading.setVisibility(View.GONE);
-            displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
-            return;
-        }
-
-        progressAiLoading.setVisibility(View.VISIBLE);
-        tvAiAdvice.setText("Consulting Gemini AI for crop recommendations based on your soil...");
-
-        String prompt = "You are an expert AI agricultural agronomist and master urban gardener in Quezon City, Philippines. "
-                + "A local gardener tested their soil and provided these exact sensor readings: "
-                + "• Soil Moisture: " + moisture + "% "
-                + "• Soil pH: " + ph + " "
-                + "• Nitrogen (N): " + n + " ppm "
-                + "• Phosphorus (P): " + p + " ppm "
-                + "• Potassium (K): " + k + " ppm. "
-                + "Please provide a detailed, comprehensive agronomist report structured as follows:\n"
-                + "1. **Soil Health Breakdown**: Analyze each parameter (moisture, pH, N, P, K) and explain what it means for plant growth in tropical Quezon City conditions.\n"
-                + "2. **Top Crop Recommendations**: Recommend 2 to 3 specific crops that thrive under these exact conditions, explaining why they are a good match.\n"
-                + "3. **Actionable Soil Amendments & Fertilizers**: Provide specific, practical steps on what organic amendments, fertilizers, compost, or pH balancers to add.\n"
-                + "4. **Watering & Container Advice**: Give practical watering schedules and container/drainage management tips tailored for urban gardeners in Quezon City (handling wet and dry seasons).";
-
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + activeApiKey;
-
-        try {
-            JSONObject jsonBody = new JSONObject();
-            JSONArray contents = new JSONArray();
-            JSONObject contentObj = new JSONObject();
-            JSONArray parts = new JSONArray();
-            JSONObject partObj = new JSONObject();
-
-            partObj.put("text", prompt);
-            parts.put(partObj);
-            contentObj.put("parts", parts);
-            contents.put(contentObj);
-            jsonBody.put("contents", contents);
-
-            JsonObjectRequest request = new JsonObjectRequest(
-                    Request.Method.POST,
-                    url,
-                    jsonBody,
-                    response -> {
-                        progressAiLoading.setVisibility(View.GONE);
-                        try {
-                            JSONArray candidates = response.optJSONArray("candidates");
-                            if (candidates != null && candidates.length() > 0) {
-                                JSONObject content = candidates.getJSONObject(0).optJSONObject("content");
-                                if (content != null) {
-                                    JSONArray resParts = content.optJSONArray("parts");
-                                    if (resParts != null && resParts.length() > 0) {
-                                        String aiText = resParts.getJSONObject(0).optString("text", "");
-                                        if (!TextUtils.isEmpty(aiText)) {
-                                            displayFormattedAiText(tvAiAdvice, aiText.trim());
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
-                            displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
-                        } catch (JSONException e) {
-                            displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
-                        }
-                    },
-                    error -> {
-                        progressAiLoading.setVisibility(View.GONE);
-                        displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
-                    }
-            );
-
-            requestQueue.add(request);
-
-        } catch (JSONException e) {
-            progressAiLoading.setVisibility(View.GONE);
-            displayFormattedAiText(tvAiAdvice, generateLocalAgronomistReport(moisture, ph, n, p, k));
-        }
+    /**
+     * Shows the built-in (offline, rule-based) soil report. Personalized AI advice now
+     * lives on its own screen, powered by a Cloud Function: see ai/AiRecommendationActivity.
+     */
+    private void fetchLlmRecommendation(double moisture, double ph, double n, double p, double k) {
+        progressAiLoading.setVisibility(View.GONE);
+        String html = generateLocalAgronomistReport(moisture, ph, n, p, k)
+                + "<br/><br/><i>Tip: save this reading, then open AI Garden Recommendations for personalized advice.</i>";
+        displayFormattedAiText(tvAiAdvice, html);
     }
 
     private String generateLocalAgronomistReport(double moisture, double ph, double n, double p, double k) {
