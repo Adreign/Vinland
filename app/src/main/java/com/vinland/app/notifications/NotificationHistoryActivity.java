@@ -158,7 +158,7 @@ public class NotificationHistoryActivity extends AppCompatActivity {
         tvHeader.setText(sectionTitle + " (" + categoryItems.size() + ")");
         tvHeader.setTextSize(14f);
         tvHeader.setTypeface(null, android.graphics.Typeface.BOLD);
-        tvHeader.setTextColor(Color.parseColor("#212121"));
+        tvHeader.setTextColor(Color.parseColor("#1C2A20"));
 
         LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -203,9 +203,10 @@ public class NotificationHistoryActivity extends AppCompatActivity {
         cardParams.bottomMargin = dpToPx(12);
         card.setLayoutParams(cardParams);
         card.setCardBackgroundColor(Color.parseColor("#FFFFFF"));
-        card.setRadius(dpToPx(16));
-        card.setCardElevation(1f);
-        card.setStrokeWidth(0);
+        card.setRadius(dpToPx(20));
+        card.setCardElevation(0);
+        card.setStrokeColor(Color.parseColor("#E2E7DC"));
+        card.setStrokeWidth(dpToPx(1));
 
         LinearLayout contentLayout = new LinearLayout(this);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
@@ -221,14 +222,17 @@ public class NotificationHistoryActivity extends AppCompatActivity {
         tvBadge.setTextSize(11f);
         tvBadge.setTypeface(null, android.graphics.Typeface.BOLD);
         tvBadge.setTextColor(Color.parseColor(textColor));
-        tvBadge.setBackgroundColor(Color.parseColor(bgColor));
+        android.graphics.drawable.GradientDrawable pill = new android.graphics.drawable.GradientDrawable();
+        pill.setColor(Color.parseColor(bgColor));
+        pill.setCornerRadius(dpToPx(50));
+        tvBadge.setBackground(pill);
         tvBadge.setPadding(dpToPx(8), dpToPx(3), dpToPx(8), dpToPx(3));
         rowHeader.addView(tvBadge);
 
         TextView tvTime = new TextView(this);
         tvTime.setText(dateFormat.format(new Date(item.getTimestamp())));
         tvTime.setTextSize(11f);
-        tvTime.setTextColor(Color.parseColor("#757575"));
+        tvTime.setTextColor(Color.parseColor("#5C6B5F"));
         LinearLayout.LayoutParams timeParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -243,7 +247,7 @@ public class NotificationHistoryActivity extends AppCompatActivity {
         TextView tvTitle = new TextView(this);
         tvTitle.setText(item.getTitle() != null ? item.getTitle() : "Notification");
         tvTitle.setTextSize(15f);
-        tvTitle.setTextColor(Color.parseColor("#212121"));
+        tvTitle.setTextColor(Color.parseColor("#1C2A20"));
         tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -257,7 +261,7 @@ public class NotificationHistoryActivity extends AppCompatActivity {
         TextView tvMessage = new TextView(this);
         tvMessage.setText(item.getMessage() != null ? item.getMessage() : "");
         tvMessage.setTextSize(13f);
-        tvMessage.setTextColor(Color.parseColor("#424242"));
+        tvMessage.setTextColor(Color.parseColor("#2A3A2E"));
         LinearLayout.LayoutParams msgParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT

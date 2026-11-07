@@ -1,6 +1,19 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
+}
+
+// API keys live in secrets.properties (project root, ignored by git), never in source code.
+val secrets = Properties().apply {
+    val file = rootProject.file("secrets.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun secret(name: String): String {
+    val value = secrets.getProperty(name, "").trim()
+    return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 }
 
 android {
@@ -17,6 +30,16 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "ANTHROPIC_API_KEY", secret("ANTHROPIC_API_KEY"))
+        buildConfigField("String", "GEMINI_API_KEY", secret("GEMINI_API_KEY"))
+        buildConfigField("String", "GROQ_API_KEY", secret("GROQ_API_KEY"))
+        buildConfigField("String", "OPENAI_API_KEY", secret("OPENAI_API_KEY"))
+        buildConfigField("String", "OPENAI_FINE_TUNED_MODEL_ID", secret("OPENAI_FINE_TUNED_MODEL_ID"))
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -29,6 +52,14 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        // The Claude library uses java.time, which needs this on Android 7 (API 24-25).
+        isCoreLibraryDesugaringEnabled = true
+    }
+
+    packaging {
+        resources {
+            excludes += setOf("META-INF/DEPENDENCIES", "META-INF/LICENSE*", "META-INF/NOTICE*", "META-INF/INDEX.LIST", "META-INF/*.kotlin_module", "META-INF/versions/9/previous-compilation-data.bin")
+        }
     }
 }
 
@@ -49,8 +80,12 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation("androidx.work:work-runtime:2.9.0")
     implementation("com.android.volley:volley:1.2.1")
+    // AI recommendations: calls Claude directly from the app
+    implementation("com.anthropic:anthropic-java:3.3.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation(libs.material)
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303") // real org.json for unit tests (Android only ships stubs)
     testImplementation(libs.arch.core.testing)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)

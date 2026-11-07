@@ -1,23 +1,19 @@
 package com.vinland.app.ai;
 
-import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.text.format.DateUtils;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.ViewCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.vinland.app.R;
 import com.vinland.app.ai.model.AiError;
-import com.vinland.app.ai.model.AiRecommendation;
 import com.vinland.app.ai.model.AiRecommendationResponse;
 
 /** Shows AI recommendations: cached result instantly, refresh button, last-updated time, AI note. */
@@ -58,9 +54,11 @@ public class AiRecommendationActivity extends AppCompatActivity {
         tvQuota = findViewById(R.id.tvQuota);
 
         findViewById(R.id.tvBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnSavedRecommendations).setOnClickListener(v ->
+                startActivity(new android.content.Intent(this, SavedRecommendationsActivity.class)));
 
         viewModel = new ViewModelProvider(this,
-                new AiRecommendationViewModel.Factory(FirebaseAiRecommendationRepository.create(this)))
+                new AiRecommendationViewModel.Factory(new com.vinland.app.ai.direct.DirectClaudeRepository(this)))
                 .get(AiRecommendationViewModel.class);
 
         btnRefresh.setOnClickListener(v -> viewModel.refresh());
@@ -106,7 +104,7 @@ public class AiRecommendationActivity extends AppCompatActivity {
                 showMessage(errorIcon(state.error), errorTitle(state.error), state.error.message, true);
                 break;
             case INSUFFICIENT_DATA:
-                showMessage("🌱", "Not enough garden data yet", bulletList(data.missingData.isEmpty()
+                showMessage("🌱", "Not enough garden data yet", AiRecommendationViews.bulletList(data.missingData.isEmpty()
                         ? java.util.Collections.singletonList(data.summary) : data.missingData), true);
                 btnRetry.setText("Check again");
                 break;
@@ -132,26 +130,14 @@ public class AiRecommendationActivity extends AppCompatActivity {
     private void showContent(AiRecommendationResponse data) {
         layoutContent.setVisibility(View.VISIBLE);
         tvSummary.setText(data.summary);
-        tvSoilStatus.setText(soilLabel(data.soilStatus));
-        tint(tvSoilStatus, soilColor(data.soilStatus));
+        tvSoilStatus.setText(AiRecommendationViews.soilLabel(data.soilStatus));
+        AiRecommendationViews.tint(tvSoilStatus, AiRecommendationViews.soilColor(data.soilStatus));
 
         layoutRecommendations.removeAllViews();
-        LayoutInflater inflater = LayoutInflater.from(this);
-        for (AiRecommendation rec : data.recommendations) {
-            View item = inflater.inflate(R.layout.item_ai_recommendation, layoutRecommendations, false);
-            TextView tvPriority = item.findViewById(R.id.tvPriority);
-            tvPriority.setText(priorityLabel(rec.priority));
-            tint(tvPriority, priorityColor(rec.priority));
-            ((TextView) item.findViewById(R.id.tvCategory)).setText(
-                    categoryLabel(rec.category) + (rec.crop != null ? " · " + rec.crop : ""));
-            ((TextView) item.findViewById(R.id.tvTitle)).setText(rec.title);
-            ((TextView) item.findViewById(R.id.tvReason)).setText(rec.reason);
-            ((TextView) item.findViewById(R.id.tvAction)).setText(rec.suggestedAction);
-            layoutRecommendations.addView(item);
-        }
+        AiRecommendationViews.addRecommendationCards(layoutRecommendations, data.recommendations);
 
         if (!data.missingData.isEmpty()) {
-            tvMissing.setText(bulletList(data.missingData));
+            tvMissing.setText(AiRecommendationViews.bulletList(data.missingData));
             cardMissing.setVisibility(View.VISIBLE);
         } else {
             cardMissing.setVisibility(View.GONE);
@@ -159,52 +145,6 @@ public class AiRecommendationActivity extends AppCompatActivity {
     }
 
     // ------------------------------------------------------------- labels
-
-    private static void tint(View v, int color) {
-        ViewCompat.setBackgroundTintList(v, ColorStateList.valueOf(color));
-    }
-
-    private static String bulletList(java.util.List<String> items) {
-        StringBuilder sb = new StringBuilder();
-        for (String s : items) {
-            if (sb.length() > 0) sb.append('\n');
-            sb.append("• ").append(s);
-        }
-        return sb.toString();
-    }
-
-    private static String priorityLabel(String p) {
-        if ("high".equals(p)) return "HIGH PRIORITY";
-        if ("low".equals(p)) return "LOW PRIORITY";
-        return "MEDIUM PRIORITY";
-    }
-
-    private static int priorityColor(String p) {
-        if ("high".equals(p)) return 0xFFD32F2F;
-        if ("low".equals(p)) return 0xFF2E7D32;
-        return 0xFFF9A825;
-    }
-
-    private static String categoryLabel(String c) {
-        if ("crop".equals(c)) return "🌿 Crop";
-        if ("soil".equals(c)) return "🪴 Soil";
-        if ("watering".equals(c)) return "💧 Watering";
-        return "📌 General";
-    }
-
-    private static String soilLabel(String s) {
-        if ("optimal".equals(s)) return "Optimal";
-        if ("fair".equals(s)) return "Fair";
-        if ("action_needed".equals(s)) return "Action needed";
-        return "Unknown";
-    }
-
-    private static int soilColor(String s) {
-        if ("optimal".equals(s)) return 0xFF2E7D32;
-        if ("fair".equals(s)) return 0xFFF9A825;
-        if ("action_needed".equals(s)) return 0xFFD32F2F;
-        return 0xFF5C6B5F;
-    }
 
     private static String bannerIcon(AiError e) {
         return e.type == AiError.Type.OFFLINE ? "📶" : e.isRateLimited() ? "⏳" : "⚠️";

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7F5"
+    android:background="#F3F5EF"
     android:clipToPadding="false"
     android:fillViewport="true">
 
@@ -12,35 +12,72 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header -->
-        <LinearLayout
+        <!-- Header (same style as the rest of the app) -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="#2E7D32"
-            android:paddingTop="48dp"
-            android:paddingBottom="20dp"
-            android:paddingHorizontal="16dp">
+            android:layout_marginTop="-28dp"
+            app:cardBackgroundColor="#1F4D32"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
 
-            <TextView
-                android:id="@+id/tvBack"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="←"
-                android:textSize="22sp"
-                android:textColor="#FFFFFF"
-                android:padding="8dp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingTop="76dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="28dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Planting Calendar"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF" />
-        </LinearLayout>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    app:cardBackgroundColor="#26FFFFFF"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <TextView
+                        android:id="@+id/tvBack"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="Back"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:text="←"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:letterSpacing="-0.01"
+                        android:text="Planting Calendar"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="What to plant and when"
+                        android:textColor="#CDE8D0"
+                        android:textSize="12.5sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -55,7 +92,7 @@
                 android:layout_height="wrap_content"
                 android:text="Guidance for:"
                 android:textStyle="bold"
-                android:textColor="#212121"
+                android:textColor="#1C2A20"
                 android:textSize="14sp" />
 
             <com.google.android.material.chip.ChipGroup
@@ -72,7 +109,7 @@
                 android:layout_marginTop="18dp"
                 android:text="Next 5 Days"
                 android:textStyle="bold"
-                android:textColor="#212121"
+                android:textColor="#1C2A20"
                 android:textSize="14sp" />
 
             <ProgressBar
@@ -103,7 +140,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="0dp"
                 app:cardBackgroundColor="#FFF8E1"

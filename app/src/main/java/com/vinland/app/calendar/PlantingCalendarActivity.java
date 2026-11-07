@@ -191,9 +191,11 @@ public class PlantingCalendarActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         cardParams.bottomMargin = dpToPx(10);
         card.setLayoutParams(cardParams);
-        card.setRadius(dpToPx(14));
-        card.setCardElevation(isCurrent ? dpToPx(2) : 0);
-        card.setCardBackgroundColor(isCurrent ? Color.parseColor("#2E7D32") : Color.WHITE);
+        card.setRadius(dpToPx(20));
+        card.setCardElevation(0);
+        card.setCardBackgroundColor(isCurrent ? Color.parseColor("#1F4D32") : Color.WHITE);
+        card.setStrokeColor(Color.parseColor("#E2E7DC"));
+        card.setStrokeWidth(isCurrent ? 0 : dpToPx(1));
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
@@ -207,7 +209,7 @@ public class PlantingCalendarActivity extends AppCompatActivity {
         tvMonth.setText(monthName);
         tvMonth.setTextSize(14);
         tvMonth.setTypeface(null, Typeface.BOLD);
-        tvMonth.setTextColor(isCurrent ? Color.WHITE : Color.parseColor("#212121"));
+        tvMonth.setTextColor(isCurrent ? Color.WHITE : Color.parseColor("#1C2A20"));
         labelRow.addView(tvMonth);
 
         if (isCurrent) {
@@ -215,14 +217,14 @@ public class PlantingCalendarActivity extends AppCompatActivity {
             tvBadge.setText("  \u2022 Now");
             tvBadge.setTextSize(12);
             tvBadge.setTypeface(null, Typeface.BOLD);
-            tvBadge.setTextColor(Color.parseColor("#C8E6C9"));
+            tvBadge.setTextColor(Color.parseColor("#CDE8D0"));
             labelRow.addView(tvBadge);
         }
 
         TextView tvTip = new TextView(this);
         tvTip.setText(tip);
         tvTip.setTextSize(13f);
-        tvTip.setTextColor(isCurrent ? Color.parseColor("#E8F5E9") : Color.parseColor("#666666"));
+        tvTip.setTextColor(isCurrent ? Color.parseColor("#E8F5E9") : Color.parseColor("#5C6B5F"));
         tvTip.setPadding(0, dpToPx(4), 0, 0);
 
         row.addView(labelRow);
@@ -327,9 +329,11 @@ public class PlantingCalendarActivity extends AppCompatActivity {
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(dpToPx(78), LinearLayout.LayoutParams.WRAP_CONTENT);
         cardParams.rightMargin = dpToPx(10);
         card.setLayoutParams(cardParams);
-        card.setRadius(dpToPx(14));
-        card.setCardElevation(dpToPx(1));
+        card.setRadius(dpToPx(18));
+        card.setCardElevation(0);
         card.setCardBackgroundColor(Color.WHITE);
+        card.setStrokeColor(Color.parseColor("#E2E7DC"));
+        card.setStrokeWidth(dpToPx(1));
 
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -340,7 +344,7 @@ public class PlantingCalendarActivity extends AppCompatActivity {
         tvDay.setText(label);
         tvDay.setTextSize(12);
         tvDay.setTypeface(null, Typeface.BOLD);
-        tvDay.setTextColor(Color.parseColor("#212121"));
+        tvDay.setTextColor(Color.parseColor("#1C2A20"));
 
         TextView tvIcon = new TextView(this);
         tvIcon.setText(iconForCondition(condition));
@@ -350,7 +354,7 @@ public class PlantingCalendarActivity extends AppCompatActivity {
         TextView tvTemp = new TextView(this);
         tvTemp.setText(maxTemp + "\u00b0/" + minTemp + "\u00b0");
         tvTemp.setTextSize(12);
-        tvTemp.setTextColor(Color.parseColor("#424242"));
+        tvTemp.setTextColor(Color.parseColor("#2A3A2E"));
 
         TextView tvRain = new TextView(this);
         tvRain.setText("\ud83d\udca7 " + rainChance + "%");

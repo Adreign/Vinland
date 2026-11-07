@@ -1,7 +1,28 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Vinland" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <!-- Same light theme in dark mode: the screens are drawn with fixed light colors. -->
+    <style name="Base.Theme.Vinland" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/vinland_fern</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/vinland_mint</item>
+        <item name="colorOnPrimaryContainer">@color/vinland_forest</item>
+        <item name="colorSecondary">@color/vinland_forest</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondaryContainer">@color/vinland_leaf</item>
+        <item name="colorOnSecondaryContainer">@color/vinland_forest</item>
+        <item name="colorTertiary">@color/vinland_forest</item>
+        <item name="colorError">@color/vinland_error</item>
+        <item name="android:colorBackground">@color/vinland_paper</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorSurfaceContainerHigh">@color/white</item>
+        <item name="colorOnSurface">@color/vinland_ink</item>
+        <item name="colorOnSurfaceVariant">@color/vinland_muted</item>
+        <item name="colorOutline">@color/vinland_line</item>
+        <item name="colorControlActivated">@color/vinland_fern</item>
+        <item name="android:textColorHighlight">@color/vinland_mint</item>
+        <!-- Keep white cards white (no green tint on cards with a shadow). -->
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+        <item name="android:navigationBarColor">@color/vinland_paper</item>
     </style>
 </resources>

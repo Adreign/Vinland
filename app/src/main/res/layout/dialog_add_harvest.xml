@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="🌾 Log New Harvest"
-        android:textColor="#212121"
+        android:textColor="#1C2A20"
         android:textSize="18sp"
         android:textStyle="bold" />
 

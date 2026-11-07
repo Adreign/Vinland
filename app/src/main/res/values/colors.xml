@@ -2,4 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Vinland palette (used by the theme; layouts use the same hex values) -->
+    <color name="vinland_forest">#1F4D32</color>
+    <color name="vinland_fern">#2E7D32</color>
+    <color name="vinland_mint">#CDE8D0</color>
+    <color name="vinland_leaf">#EEF5EA</color>
+    <color name="vinland_paper">#F3F5EF</color>
+    <color name="vinland_ink">#1C2A20</color>
+    <color name="vinland_muted">#5C6B5F</color>
+    <color name="vinland_line">#E2E7DC</color>
+    <color name="vinland_error">#D32F2F</color>
 </resources>

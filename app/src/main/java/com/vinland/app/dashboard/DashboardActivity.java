@@ -24,7 +24,6 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.vinland.app.R;
 import com.vinland.app.auth.LoginActivity;
 import com.vinland.app.calendar.PlantingCalendarActivity;
-import com.vinland.app.chat.AiChatActivity;
 import com.vinland.app.notifications.NotificationHelper;
 import com.vinland.app.notifications.NotificationHistoryActivity;
 import com.vinland.app.notifications.VinlandFirebaseMessagingService;
@@ -40,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 public class DashboardActivity extends AppCompatActivity {
 
     private TextView tvWelcome, tvSubtitle;
-    private View navSoil, navWeather, navProfile, navCalendar, navReports, navSettings, navAiChat;
+    private View navSoil, navWeather, navProfile, navCalendar, navReports, navSettings;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -58,7 +57,6 @@ public class DashboardActivity extends AppCompatActivity {
         TextView tvHeaderNotification = findViewById(R.id.tvHeaderNotification);
         navSoil = findViewById(R.id.navSoil);
         navWeather = findViewById(R.id.navWeather);
-        navAiChat = findViewById(R.id.navAiChat);
         navProfile = findViewById(R.id.navProfile);
         navCalendar = findViewById(R.id.navCalendar);
         navReports = findViewById(R.id.navReports);
@@ -76,15 +74,14 @@ public class DashboardActivity extends AppCompatActivity {
 
         navSoil.setOnClickListener(v -> startActivity(new Intent(this, RecommendationActivity.class)));
         navWeather.setOnClickListener(v -> startActivity(new Intent(this, WeatherActivity.class)));
-        if (navAiChat != null) {
-            navAiChat.setOnClickListener(v -> startActivity(new Intent(this, AiChatActivity.class)));
-        }
         navProfile.setOnClickListener(v -> startActivity(new Intent(this, ProfileActivity.class)));
         navCalendar.setOnClickListener(v -> startActivity(new Intent(this, PlantingCalendarActivity.class)));
         navReports.setOnClickListener(v -> startActivity(new Intent(this, ReportsActivity.class)));
         View navAiRecommendations = findViewById(R.id.navAiRecommendations);
         navAiRecommendations.setOnClickListener(v ->
                 startActivity(new Intent(this, com.vinland.app.ai.AiRecommendationActivity.class)));
+        findViewById(R.id.navSavedRecommendations).setOnClickListener(v ->
+                startActivity(new Intent(this, com.vinland.app.ai.SavedRecommendationsActivity.class)));
         if (navSettings != null) {
             navSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         }

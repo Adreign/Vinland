@@ -344,6 +344,18 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSavedRecommendations"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="📚  View saved recommendations"
+                android:textAllCaps="false"
+                android:textColor="#1F4D32"
+                app:cornerRadius="14dp"
+                app:strokeColor="#2E7D32" />
+
             <TextView
                 android:id="@+id/tvQuota"
                 android:layout_width="match_parent"

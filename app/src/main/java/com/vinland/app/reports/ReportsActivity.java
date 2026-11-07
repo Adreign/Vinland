@@ -154,9 +154,11 @@ public class ReportsActivity extends AppCompatActivity {
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         cardParams.bottomMargin = dpToPx(10);
         card.setLayoutParams(cardParams);
-        card.setRadius(dpToPx(14));
+        card.setRadius(dpToPx(20));
         card.setCardElevation(0);
         card.setCardBackgroundColor(android.graphics.Color.WHITE);
+        card.setStrokeColor(android.graphics.Color.parseColor("#E2E7DC"));
+        card.setStrokeWidth(dpToPx(1));
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
@@ -171,7 +173,7 @@ public class ReportsActivity extends AppCompatActivity {
         tvTitle.setText(log.getCropName() + " Soil Test");
         tvTitle.setTextSize(14);
         tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        tvTitle.setTextColor(android.graphics.Color.parseColor("#212121"));
+        tvTitle.setTextColor(android.graphics.Color.parseColor("#1C2A20"));
         tvTitle.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
 
         TextView tvDelete = new TextView(this);
@@ -189,13 +191,13 @@ public class ReportsActivity extends AppCompatActivity {
         tvDetails.setText(String.format(Locale.US, "💧 Moisture: %.0f%%   |   ⚗️ pH: %.1f   |   🌿 NPK: %.0f-%.0f-%.0f",
                 log.getMoisture(), log.getPh(), log.getNitrogen(), log.getPhosphorus(), log.getPotassium()));
         tvDetails.setTextSize(12.5f);
-        tvDetails.setTextColor(android.graphics.Color.parseColor("#424242"));
+        tvDetails.setTextColor(android.graphics.Color.parseColor("#2A3A2E"));
         tvDetails.setPadding(0, dpToPx(4), 0, dpToPx(4));
 
         TextView tvDate = new TextView(this);
         tvDate.setText("📅 " + dateFormat.format(new Date(log.getTimestamp())));
         tvDate.setTextSize(11);
-        tvDate.setTextColor(android.graphics.Color.parseColor("#9E9E9E"));
+        tvDate.setTextColor(android.graphics.Color.parseColor("#5C6B5F"));
 
         row.addView(tvDetails);
         row.addView(tvDate);

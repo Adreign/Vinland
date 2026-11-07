@@ -45,6 +45,8 @@
 
         <activity android:name=".ai.AiRecommendationActivity" android:exported="false" />
 
+        <activity android:name=".ai.SavedRecommendationsActivity" android:exported="false" />
+
         <activity android:name=".profile.ProfileActivity" android:exported="false" />
 
         <activity android:name=".calendar.PlantingCalendarActivity" android:exported="false" />
@@ -55,11 +57,6 @@
 
         <activity
             android:name=".settings.SettingsActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-
-        <activity
-            android:name=".chat.AiChatActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 

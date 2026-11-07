@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# API keys stay on this computer only (read by app/build.gradle.kts)
+secrets.properties
