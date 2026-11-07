@@ -82,7 +82,7 @@ export default function SystemMonitoring() {
   }, []);
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -145,7 +145,7 @@ export default function SystemMonitoring() {
             </div>
           </div>
         ) : (
-          <div className="p-8 text-center text-gray-400 text-sm">
+          <div className="p-4 sm:p-6 lg:p-8 text-center text-gray-400 text-sm">
             Connecting to ESP32 telemetry broadcast...
           </div>
         )}

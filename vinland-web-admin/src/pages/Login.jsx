@@ -1,227 +1,226 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ShieldCheck, Lock, Mail, AlertCircle, CheckCircle2, ArrowRight, KeyRound, Globe, Info } from "lucide-react";
+import { Lock, Mail, AlertCircle, CheckCircle2, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { LeafLogo } from "../components/common/Sidebar";
+
+/** Turns Firebase error codes into plain sentences. */
+function friendlyError(err) {
+  switch (err?.code) {
+    case "vinland/not-admin":
+      return err.message;
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+    case "auth/invalid-email":
+      return "Wrong email or password.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Please wait a few minutes and try again.";
+    case "auth/network-request-failed":
+      return "No internet connection. Check your network and try again.";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "";
+    case "auth/operation-not-allowed":
+      return "This sign-in method is turned off. Enable it in Firebase Console → Authentication → Sign-in method.";
+    default:
+      return "Sign-in failed. Please try again.";
+  }
+}
 
 export default function Login() {
   const [mode, setMode] = useState("signin"); // "signin" or "reset"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [firebaseConfigNotice, setFirebaseConfigNotice] = useState(false);
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login, localAdminBypass, loginWithGoogle, resetPassword } = useAuth();
+  const { user, isAdmin, login, loginWithGoogle, resetPassword } = useAuth();
   const navigate = useNavigate();
 
-  // Handle Form Submit
+  if (user && isAdmin) return <Navigate to="/dashboard" replace />;
+
+  const switchMode = (next) => {
+    setMode(next);
+    setError("");
+    setSuccess("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    setFirebaseConfigNotice(false);
     setLoading(true);
-
     try {
       if (mode === "signin") {
-        await login(email, password);
+        await login(email.trim(), password);
         navigate("/dashboard");
-      } else if (mode === "reset") {
-        await resetPassword(email);
-        setSuccess(`Password reset link sent to ${email}. Check your inbox.`);
+      } else {
+        await resetPassword(email.trim());
+        setSuccess(`If ${email.trim()} has an account, a password reset link is on its way. Check your inbox.`);
       }
     } catch (err) {
-      console.error("Auth Error:", err);
-      if (err.code === "auth/operation-not-allowed") {
-        setFirebaseConfigNotice(true);
-        setError("Email/Password Sign-In is currently disabled in your Firebase Console.");
-      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
-        setError("Invalid administrator email or password.");
-      } else {
-        setError(err.message || "Authentication failed.");
-      }
+      console.error("Sign-in error:", err);
+      setError(friendlyError(err));
     } finally {
       setLoading(false);
     }
   };
 
-  // Google Sign-In
   const handleGoogleSignIn = async () => {
     setError("");
-    setFirebaseConfigNotice(false);
     setLoading(true);
     try {
       await loginWithGoogle();
       navigate("/dashboard");
     } catch (err) {
-      console.error("Google Auth Error:", err);
-      if (err.code === "auth/operation-not-allowed") {
-        setFirebaseConfigNotice(true);
-        setError("Google Sign-In Provider is not enabled in your Firebase Console.");
-      } else {
-        setError("Google authentication failed: " + err.message);
-      }
+      console.error("Google sign-in error:", err);
+      setError(friendlyError(err));
     } finally {
       setLoading(false);
     }
   };
 
-  // Instant Admin Access Bypass
-  const handleDirectAccess = () => {
-    localAdminBypass(email || "admin@vinland.com", "System Administrator");
-    navigate("/dashboard");
-  };
+  const inputCls =
+    "w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/20";
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-8 space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-green-600/20 text-green-500 rounded-2xl flex items-center justify-center mx-auto border border-green-500/30 shadow-lg">
-            <ShieldCheck size={36} />
-          </div>
-          <h2 className="text-2xl font-bold text-white">Vinland Admin Portal</h2>
-          <p className="text-xs text-slate-400">
-            Quezon City Urban Agriculture Administrator Portal
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      {/* Green band, like the mobile app's login */}
+      <div className="bg-slate-900 rounded-b-[2.5rem] px-4 pt-12 pb-24 text-center">
+        <LeafLogo className="w-16 h-16 mx-auto rounded-2xl" />
+        <h1 className="mt-4 text-3xl font-extrabold text-white tracking-tight">Vinland Admin</h1>
+        <p className="mt-1 text-sm text-slate-200">Quezon City Urban Agriculture Management</p>
+      </div>
 
-        {/* Firebase Config Guide Notice */}
-        {firebaseConfigNotice && (
-          <div className="p-4 bg-amber-950/60 border border-amber-800/80 rounded-2xl space-y-2 text-xs text-amber-200">
-            <div className="flex items-center space-x-2 font-bold text-amber-400">
-              <Info size={18} />
-              <span>Firebase Console Setup Required</span>
-            </div>
-            <p className="text-[11px] leading-relaxed text-amber-200/90">
-              In your Firebase Console (<code className="bg-amber-900/60 px-1 rounded text-amber-300">vinland-b6e0b</code>), navigate to:
-              <br />
-              <strong className="text-white">Authentication → Sign-in method</strong> and enable <strong>Google</strong> & <strong>Email/Password</strong>.
-            </p>
-            <button
-              type="button"
-              onClick={handleDirectAccess}
-              className="w-full mt-2 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
-            >
-              <KeyRound size={15} /> Continue to Admin Dashboard (Bypass)
-            </button>
-          </div>
-        )}
-
-        {/* Status Error Alert */}
-        {error && !firebaseConfigNotice && (
-          <div className="p-4 bg-red-950/60 border border-red-800/80 rounded-xl flex items-start space-x-3 text-red-200 text-xs">
-            <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-400" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Success Alert */}
-        {success && (
-          <div className="p-4 bg-green-950/60 border border-green-800/80 rounded-xl flex items-start space-x-3 text-green-200 text-xs">
-            <CheckCircle2 size={18} className="shrink-0 mt-0.5 text-green-400" />
-            <span>{success}</span>
-          </div>
-        )}
-
-        {/* Main Sign In Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex-1 px-4 -mt-16 pb-10">
+        <div className="max-w-md mx-auto bg-white border border-gray-200 rounded-3xl shadow-xl p-6 sm:p-8 space-y-5">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase mb-1.5">
-              Administrator Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-3 text-slate-500" size={18} />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@vinland.com"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
-              />
-            </div>
+            <h2 className="text-xl font-bold text-gray-900">
+              {mode === "signin" ? "Welcome back" : "Reset your password"}
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {mode === "signin"
+                ? "Sign in with your administrator account."
+                : "Enter your email and we'll send you a reset link."}
+            </p>
           </div>
 
-          {mode !== "reset" && (
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-semibold text-slate-300 uppercase">
-                  Password
-                </label>
-                <button
-                  type="button"
-                  onClick={() => { setMode("reset"); setError(""); setSuccess(""); setFirebaseConfigNotice(false); }}
-                  className="text-xs text-green-400 hover:underline font-medium"
-                >
-                  Forgot Password?
-                </button>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-3 text-slate-500" size={18} />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                />
-              </div>
+          {error && (
+            <div role="alert" className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5 text-red-800 text-sm">
+              <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-600" />
+              <span>{error}</span>
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg hover:shadow-green-600/25 disabled:opacity-50 text-sm flex items-center justify-center space-x-2"
-          >
-            <span>
-              {loading
-                ? "Processing..."
-                : mode === "signin"
-                ? "Sign In to Admin Dashboard"
-                : "Send Reset Password Email"}
-            </span>
-            <ArrowRight size={16} />
-          </button>
-        </form>
+          {success && (
+            <div className="p-3.5 bg-green-50 border border-green-200 rounded-xl flex items-start gap-2.5 text-green-900 text-sm">
+              <CheckCircle2 size={18} className="shrink-0 mt-0.5 text-green-600" />
+              <span>{success}</span>
+            </div>
+          )}
 
-        {/* Google OAuth & Direct Access Options */}
-        <div className="space-y-3 pt-3 border-t border-slate-800/80">
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800 font-semibold py-2.5 rounded-xl transition-all text-xs flex items-center justify-center space-x-2"
-          >
-            <Globe size={16} className="text-blue-400" />
-            <span>Sign In with Google Account</span>
-          </button>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3 text-gray-400" size={18} />
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@vinland.com"
+                  className={inputCls}
+                />
+              </div>
+            </div>
 
-          <button
-            type="button"
-            onClick={handleDirectAccess}
-            className="w-full bg-slate-950/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-medium py-2 rounded-xl transition-all text-xs flex items-center justify-center space-x-1.5"
-          >
-            <KeyRound size={14} className="text-amber-400" />
-            <span>Instant Admin Portal Access (Bypass)</span>
-          </button>
-        </div>
+            {mode === "signin" && (
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => switchMode("reset")}
+                    className="text-sm text-green-700 hover:underline font-medium"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-3 text-gray-400" size={18} />
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`${inputCls} pr-11`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2.5 top-2 p-1 text-gray-500 hover:text-gray-800"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+            )}
 
-        {/* Security Policy Footnote */}
-        <div className="text-center pt-2">
-          {mode === "reset" ? (
             <button
-              onClick={() => { setMode("signin"); setError(""); setSuccess(""); setFirebaseConfigNotice(false); }}
-              className="text-xs text-slate-400 hover:text-white underline"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-60 text-sm flex items-center justify-center gap-2"
             >
-              ← Back to Sign In
+              {loading ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>{mode === "signin" ? "Sign in" : "Send reset link"}</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
             </button>
+          </form>
+
+          {mode === "signin" ? (
+            <>
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                <span className="flex-1 h-px bg-gray-200" /> or <span className="flex-1 h-px bg-gray-200" />
+              </div>
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-semibold py-2.5 rounded-xl transition-colors text-sm flex items-center justify-center gap-2.5 disabled:opacity-60"
+              >
+                <svg viewBox="0 0 48 48" className="w-[18px] h-[18px]" aria-hidden="true">
+                  <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+                  <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+                  <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+                </svg>
+                <span>Continue with Google</span>
+              </button>
+              <p className="text-xs text-gray-500 text-center leading-relaxed">
+                Only administrator accounts can sign in. Admins are added by a Super Admin in Accounts.
+              </p>
+            </>
           ) : (
-            <p className="text-[11px] text-slate-500 leading-tight">
-              🔒 Public admin registration is disabled. Admin accounts are managed directly by <span className="text-amber-400 font-semibold">Super Administrators</span> inside Account Management.
-            </p>
+            <button
+              onClick={() => switchMode("signin")}
+              className="w-full text-sm text-gray-600 hover:text-gray-900 font-medium"
+            >
+              ← Back to sign in
+            </button>
           )}
         </div>
       </div>

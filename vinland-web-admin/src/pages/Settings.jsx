@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { Settings as SettingsIcon, Shield, Database, Bell, Cpu, Sun, Users, Save, CheckCircle2, Lock, RefreshCw } from "lucide-react";
+import { notify } from "../components/common/Notifier";
 
 export default function Settings() {
   const [loading, setLoading] = useState(false);
@@ -60,14 +61,14 @@ export default function Settings() {
       setSaveMessage(true);
       setTimeout(() => setSaveMessage(false), 3000);
     } catch (e) {
-      alert("Failed to save settings: " + e.message);
+      notify("Failed to save settings: " + e.message, "error");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>

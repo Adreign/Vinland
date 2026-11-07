@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { Sliders, Plus, Edit2, Trash2, X, CheckCircle2, AlertTriangle, Lightbulb, BookOpen, Tag, Cpu, RefreshCw } from "lucide-react";
+import { notify, confirmAction } from "../components/common/Notifier";
 
 export default function RecommendationManagement() {
   const [recommendations, setRecommendations] = useState([]);
@@ -185,25 +186,27 @@ export default function RecommendationManagement() {
       const docRef = doc(db, "recommendations", ruleId);
       await setDoc(docRef, { ...formData, id: ruleId }, { merge: true });
       setIsModalOpen(false);
+      notify(editingRule ? "Recommendation rule updated." : "Recommendation rule added.");
       fetchInitialData();
     } catch (e) {
-      alert("Error saving recommendation rule: " + e.message);
+      notify("Error saving recommendation rule: " + e.message, "error");
     }
   }
 
   async function handleDeleteRule(ruleId) {
-    if (confirm("Are you sure you want to delete this recommendation rule?")) {
+    if (await confirmAction("Are you sure you want to delete this recommendation rule?", { confirmLabel: "Delete", danger: true })) {
       try {
         await deleteDoc(doc(db, "recommendations", ruleId));
         setRecommendations(recommendations.filter(r => r.id !== ruleId));
+        notify("Recommendation rule deleted.");
       } catch (e) {
-        alert("Could not delete recommendation rule: " + e.message);
+        notify("Could not delete recommendation rule: " + e.message, "error");
       }
     }
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -303,7 +306,7 @@ export default function RecommendationManagement() {
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-gray-500 font-medium">Loading rules from Firestore...</div>
+          <div className="p-4 sm:p-6 lg:p-8 text-center text-gray-500 font-medium">Loading rules from Firestore...</div>
         ) : recommendations.length === 0 ? (
           <p className="text-xs text-gray-400 py-6 text-center">No custom recommendation rules created in database yet.</p>
         ) : (

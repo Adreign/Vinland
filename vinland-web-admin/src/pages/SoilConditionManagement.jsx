@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { Layers, Sliders, AlertTriangle, ShieldAlert, CheckCircle2, Save, RefreshCw, Info } from "lucide-react";
+import { notify } from "../components/common/Notifier";
 
 export default function SoilConditionManagement() {
   const [loading, setLoading] = useState(false);
@@ -91,14 +92,14 @@ export default function SoilConditionManagement() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (e) {
-      alert("Failed to save soil condition parameters: " + e.message);
+      notify("Failed to save soil condition parameters: " + e.message, "error");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>

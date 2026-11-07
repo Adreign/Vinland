@@ -3,6 +3,7 @@ import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore"
 import { db } from "../config/firebase";
 import { useAuth } from "../context/AuthContext";
 import { Search, UserPlus, Edit3, Trash2, Eye, ShieldCheck, Crown, UserCheck, X, Check, Lock, CheckCircle2, Sprout } from "lucide-react";
+import { notify, confirmAction } from "../components/common/Notifier";
 
 export default function AccountManagement() {
   const { isSuperAdmin, user: currentUser } = useAuth();
@@ -93,16 +94,17 @@ export default function AccountManagement() {
 
   async function handleRoleChange(userId, newRole, currentAccountRole) {
     if (currentAccountRole === "super_admin" && !isSuperAdmin) {
-      alert("Only a Super Administrator can modify Super Admin accounts.");
+      notify("Only a Super Administrator can modify Super Admin accounts.", "error");
       return;
     }
 
-    if (confirm(`Change this account's role to ${newRole.toUpperCase()}?`)) {
+    if (await confirmAction(`Change this account's role to ${newRole.toUpperCase()}?`, { confirmLabel: "Change role" })) {
       try {
         await setDoc(doc(db, "users", userId), { role: newRole }, { merge: true });
         setGardeners(prev => prev.map(g => g.id === userId ? { ...g, role: newRole } : g));
+        notify("Role updated.");
       } catch (e) {
-        alert("Failed to update user role: " + e.message);
+        notify("Failed to update user role: " + e.message, "error");
       }
     }
   }
@@ -120,9 +122,10 @@ export default function AccountManagement() {
       };
       await setDoc(doc(db, "users", userId), newAccount);
       setIsAddModalOpen(false);
+      notify("Account added.");
       fetchGardeners();
     } catch (e) {
-      alert("Error adding gardener account: " + e.message);
+      notify("Error adding gardener account: " + e.message, "error");
     }
   }
 
@@ -135,9 +138,10 @@ export default function AccountManagement() {
         fullName
       }, { merge: true });
       setIsEditModalOpen(false);
+      notify("Account updated.");
       fetchGardeners();
     } catch (e) {
-      alert("Error updating gardener account: " + e.message);
+      notify("Error updating gardener account: " + e.message, "error");
     }
   }
 
@@ -145,18 +149,19 @@ export default function AccountManagement() {
     try {
       await setDoc(doc(db, "users", userId), { status: newStatus }, { merge: true });
       setGardeners(prev => prev.map(g => g.id === userId ? { ...g, status: newStatus } : g));
+      notify(`Account marked ${newStatus}.`);
     } catch (e) {
-      alert("Error changing status: " + e.message);
+      notify("Error changing status: " + e.message, "error");
     }
   }
 
   async function handleDeleteGardener(g) {
     if (g.role === "super_admin" && !isSuperAdmin) {
-      alert("Only a Super Administrator can delete Super Admin accounts.");
+      notify("Only a Super Administrator can delete Super Admin accounts.", "error");
       return;
     }
 
-    if (confirm(`Are you sure you want to delete the account for ${g.fullName || g.email}? This will permanently remove the record from Firestore.`)) {
+    if (await confirmAction(`Are you sure you want to delete the account for ${g.fullName || g.email}? This will permanently remove the record from Firestore.`, { confirmLabel: "Delete", danger: true })) {
       try {
         // Delete document from Firestore database
         await deleteDoc(doc(db, "users", g.id));
@@ -164,18 +169,19 @@ export default function AccountManagement() {
         // Delete associated subcollections if any exist
         try {
           const soilSnap = await getDocs(collection(db, "users", g.id, "soil_logs"));
-          soilSnap.docs.forEach(async (d) => await deleteDoc(d.ref));
+          await Promise.all(soilSnap.docs.map((d) => deleteDoc(d.ref)));
 
           const harvestSnap = await getDocs(collection(db, "users", g.id, "harvest_logs"));
-          harvestSnap.docs.forEach(async (d) => await deleteDoc(d.ref));
+          await Promise.all(harvestSnap.docs.map((d) => deleteDoc(d.ref)));
         } catch (subErr) {
           console.warn("Subcollections cleanup notice:", subErr);
         }
 
         // Optimistically remove from UI state immediately
         setGardeners(prev => prev.filter(item => item.id !== g.id));
+        notify("Account deleted.");
       } catch (e) {
-        alert("Could not delete account from Firestore: " + e.message);
+        notify("Could not delete account from Firestore: " + e.message, "error");
       }
     }
   }
@@ -188,7 +194,7 @@ export default function AccountManagement() {
   );
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -226,7 +232,7 @@ export default function AccountManagement() {
       {/* Gardeners Data Table */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-500 font-medium">Fetching accounts from Firestore `users` collection...</div>
+          <div className="p-4 sm:p-6 lg:p-8 text-center text-gray-500 font-medium">Fetching accounts from Firestore `users` collection...</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">

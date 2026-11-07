@@ -11,6 +11,7 @@ import SoilConditionManagement from "./pages/SoilConditionManagement";
 import SystemMonitoring from "./pages/SystemMonitoring";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Notifier from "./components/common/Notifier";
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        <Notifier />
       </BrowserRouter>
     </AuthProvider>
   );

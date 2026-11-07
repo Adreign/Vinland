@@ -104,14 +104,14 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-gray-500 font-medium">
+      <div className="p-4 sm:p-6 lg:p-8 text-center text-gray-500 font-medium">
         Connecting to Firestore & calculating accurate system metrics...
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto">
       {/* Title Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Admin Module Live Dashboard</h1>

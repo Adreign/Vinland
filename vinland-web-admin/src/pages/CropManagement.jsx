@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { Plus, Edit2, Trash2, Sprout, X, Check, Calendar, Sun, Droplets, Info } from "lucide-react";
+import { notify, confirmAction } from "../components/common/Notifier";
 
 export default function CropManagement() {
   const [crops, setCrops] = useState([]);
@@ -67,25 +68,27 @@ export default function CropManagement() {
       const docRef = doc(db, "crops", cropId);
       await setDoc(docRef, { ...formData, id: cropId }, { merge: true });
       setIsModalOpen(false);
+      notify(editingCrop ? "Crop profile updated." : "Crop profile added.");
       fetchCrops();
     } catch (e) {
-      alert("Error saving crop profile: " + e.message);
+      notify("Error saving crop profile: " + e.message, "error");
     }
   }
 
   async function handleDelete(cropId) {
-    if (confirm("Are you sure you want to delete this crop profile from Firestore?")) {
+    if (await confirmAction("Are you sure you want to delete this crop profile from Firestore?", { confirmLabel: "Delete", danger: true })) {
       try {
         await deleteDoc(doc(db, "crops", cropId));
+        notify("Crop profile deleted.");
         fetchCrops();
       } catch (e) {
-        alert("Could not delete crop profile: " + e.message);
+        notify("Could not delete crop profile: " + e.message, "error");
       }
     }
   }
 
   return (
-    <div className="p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -104,7 +107,7 @@ export default function CropManagement() {
 
       {/* Crop Cards Grid */}
       {loading ? (
-        <div className="p-8 text-center text-gray-500 font-medium">Fetching crop profiles from Firestore...</div>
+        <div className="p-4 sm:p-6 lg:p-8 text-center text-gray-500 font-medium">Fetching crop profiles from Firestore...</div>
       ) : crops.length === 0 ? (
         <div className="p-12 text-center text-gray-400 bg-white rounded-2xl border">
           No crop profiles found in `crops` collection.
