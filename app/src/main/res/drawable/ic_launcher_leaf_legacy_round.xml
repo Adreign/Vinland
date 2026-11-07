@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App icon for Android 7 (older phones without adaptive icons). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <path
+        android:fillColor="#1F4D32"
+        android:pathData="M36,2 A34,34 0 1 1 36,70 A34,34 0 1 1 36,2 Z" />
+    <group
+        android:translateX="-18"
+        android:translateY="-18">
+        <group
+            android:pivotX="54"
+            android:pivotY="54"
+            android:scaleX="0.85"
+            android:scaleY="0.85">
+        <path
+            android:pathData="M33,75 L29,79"
+            android:strokeColor="#9CCC65"
+            android:strokeLineCap="round"
+            android:strokeWidth="3.5" />
+        <path
+            android:fillColor="#9CCC65"
+            android:pathData="M33,75 C33,49 49,33 75,33 C75,59 59,75 33,75 Z" />
+        <path
+            android:pathData="M37,71 L64,44"
+            android:strokeColor="#1F4D32"
+            android:strokeAlpha="0.55"
+            android:strokeLineCap="round"
+            android:strokeWidth="2.5" />
+        </group>
+    </group>
+</vector>
