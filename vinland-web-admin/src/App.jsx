@@ -8,7 +8,6 @@ import AccountManagement from "./pages/AccountManagement";
 import CropManagement from "./pages/CropManagement";
 import RecommendationManagement from "./pages/RecommendationManagement";
 import SoilConditionManagement from "./pages/SoilConditionManagement";
-import SystemMonitoring from "./pages/SystemMonitoring";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Notifier from "./components/common/Notifier";
@@ -26,7 +25,6 @@ export default function App() {
             <Route path="/crops" element={<CropManagement />} />
             <Route path="/recommendations" element={<RecommendationManagement />} />
             <Route path="/soil-condition" element={<SoilConditionManagement />} />
-            <Route path="/monitoring" element={<SystemMonitoring />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

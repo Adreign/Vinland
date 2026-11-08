@@ -1,25 +1,56 @@
 import React, { useEffect, useState } from "react";
 import { collection, collectionGroup, getDocs, doc, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "../config/firebase";
-import { Users, Sprout, Cpu, Activity, ArrowRight, ShieldCheck, CheckCircle2, AlertTriangle, Layers, Scale } from "lucide-react";
+import { Users, Sprout, ArrowRight, ShieldCheck, Sun, CloudRain } from "lucide-react";
 import { Link } from "react-router-dom";
+
+// Turns an Open-Meteo weather code into a short label.
+function weatherLabel(code) {
+  if (code === 0) return "Clear Skies";
+  if (code >= 1 && code <= 3) return "Partly Cloudy";
+  if (code >= 51 && code <= 67) return "Light Rain Showers";
+  if (code >= 80) return "Tropical Rain Showers";
+  return "Partly Cloudy";
+}
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
     totalGardeners: 0,
     activeGardens: 0,
-    totalCrops: 0,
-    activeSensors: 0,
-    totalSoilLogs: 0,
-    totalHarvestKg: 0,
-    optimalSoilCount: 0,
-    alertSoilCount: 0
+    totalCrops: 0
   });
 
   const [recentGardeners, setRecentGardeners] = useState([]);
   const [recentSoilLogs, setRecentSoilLogs] = useState([]);
   const [telemetryStatus, setTelemetryStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Live Quezon City weather from the free Open-Meteo API
+  const [weather, setWeather] = useState({
+    temp: "--°C",
+    humidity: "--%",
+    condition: "Fetching Live Weather..."
+  });
+
+  useEffect(() => {
+    async function fetchQCWeather() {
+      try {
+        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=14.6760&longitude=121.0437&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia%2FManila");
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.current) {
+          setWeather({
+            temp: `${Math.round(json.current.temperature_2m)}°C`,
+            humidity: `${json.current.relative_humidity_2m}%`,
+            condition: weatherLabel(json.current.weather_code)
+          });
+        }
+      } catch (e) {
+        console.error("Error fetching live QC weather:", e);
+      }
+    }
+    fetchQCWeather();
+  }, []);
 
   useEffect(() => {
     async function fetchAccurateDashboardData() {
@@ -34,50 +65,19 @@ export default function Dashboard() {
         const cropsSnap = await getDocs(collection(db, "crops"));
         const cropCount = cropsSnap.size;
 
-        // 3. Query Real Sensors from 'sensor_devices'
-        const sensorsSnap = await getDocs(collection(db, "sensor_devices"));
-        const sensorCount = sensorsSnap.size;
-
-        // 4. Query Real Soil Logs across all gardeners via collectionGroup('soil_logs')
+        // 3. Latest soil logs across all gardeners via collectionGroup('soil_logs')
         let soilLogsList = [];
-        let optimalCount = 0;
-        let alertCount = 0;
         try {
-          const soilLogsSnap = await getDocs(query(collectionGroup(db, "soil_logs"), orderBy("timestamp", "desc"), limit(20)));
+          const soilLogsSnap = await getDocs(query(collectionGroup(db, "soil_logs"), orderBy("timestamp", "desc"), limit(5)));
           soilLogsList = soilLogsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-          soilLogsList.forEach(log => {
-            const status = (log.overallStatus || "").toLowerCase();
-            if (status.includes("optimal") || status.includes("good") || status.includes("normal")) {
-              optimalCount++;
-            } else {
-              alertCount++;
-            }
-          });
         } catch (e) {
           console.warn("Collection group 'soil_logs' index fallback:", e);
-        }
-
-        // 5. Query Real Harvest Logs across all gardeners via collectionGroup('harvest_logs')
-        let totalKg = 0;
-        try {
-          const harvestSnap = await getDocs(collectionGroup(db, "harvest_logs"));
-          harvestSnap.docs.forEach(d => {
-            const h = d.data();
-            if (h.quantityKg) totalKg += Number(h.quantityKg) || 0;
-          });
-        } catch (e) {
-          console.warn("Collection group 'harvest_logs' fallback:", e);
         }
 
         setStats({
           totalGardeners: gardeners.length,
           activeGardens: activeG.length,
-          totalCrops: cropCount,
-          activeSensors: sensorCount || 1,
-          totalSoilLogs: soilLogsList.length,
-          totalHarvestKg: Math.round(totalKg * 10) / 10,
-          optimalSoilCount: optimalCount,
-          alertSoilCount: alertCount
+          totalCrops: cropCount
         });
 
         setRecentGardeners(gardeners.slice(0, 5));
@@ -116,12 +116,12 @@ export default function Dashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Admin Module Live Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Accurate operational metrics calculated directly from Firestore collections (`users`, `crops`, `sensor_devices`, `soil_logs`, `harvest_logs`).
+          Accurate operational metrics calculated directly from Firestore collections (`users`, `crops`, `sensor_devices`, `soil_logs`).
         </p>
       </div>
 
-      {/* KEY ACCURATE METRICS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* KEY ACCURATE METRICS + LIVE WEATHER */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Total Gardeners */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
           <div>
@@ -146,27 +146,23 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Total Soil Testing Analyses Logged */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Soil Tests Conducted</p>
-            <p className="text-3xl font-extrabold text-gray-900 mt-1">{stats.totalSoilLogs}</p>
-            <p className="text-xs text-amber-600 mt-1 font-medium">{stats.optimalSoilCount} Optimal / {stats.alertSoilCount} Alert</p>
-          </div>
-          <div className="p-3.5 bg-amber-50 text-amber-700 rounded-xl">
-            <Layers size={26} />
-          </div>
-        </div>
-
-        {/* Total Harvest Yield Logged */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Total Harvest Logged</p>
-            <p className="text-3xl font-extrabold text-gray-900 mt-1">{stats.totalHarvestKg} <span className="text-sm font-normal">kg</span></p>
-            <p className="text-xs text-blue-600 mt-1 font-medium">Recorded by gardeners</p>
-          </div>
-          <div className="p-3.5 bg-blue-50 text-blue-700 rounded-xl">
-            <Scale size={26} />
+        {/* Live Quezon City Ambient Weather (Open-Meteo) */}
+        <div className="sm:col-span-2 lg:col-span-1 bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-3">
+          <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider flex items-center gap-1.5">
+            <Sun size={14} className="text-amber-500" /> Live Quezon City Ambient Weather (Open-Meteo)
+          </p>
+          <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-semibold text-blue-200">Quezon City, Metro Manila</p>
+                <p className="text-3xl font-extrabold mt-1">{weather.temp}</p>
+                <p className="text-xs text-blue-100 mt-1 font-medium">{weather.condition}</p>
+              </div>
+              <CloudRain size={32} className="text-blue-200" />
+            </div>
+            <p className="text-xs text-blue-100 pt-2 mt-2 border-t border-blue-400/40">
+              <span className="text-[10px] uppercase text-blue-300">Humidity</span> {weather.humidity}
+            </p>
           </div>
         </div>
       </div>
