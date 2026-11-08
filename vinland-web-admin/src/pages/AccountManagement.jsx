@@ -2,8 +2,22 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useAuth } from "../context/AuthContext";
-import { Search, UserPlus, Edit3, Trash2, Eye, ShieldCheck, Crown, UserCheck, X, Check, Lock, CheckCircle2, Sprout } from "lucide-react";
+import { Search, UserPlus, Edit3, Trash2, Eye, ShieldCheck, Crown, UserCheck, X, Check, Lock, CheckCircle2, Sprout, EyeOff } from "lucide-react";
 import { notify, confirmAction } from "../components/common/Notifier";
+import { QC_BARANGAYS } from "../data/qcBarangays";
+import { createAuthAccount, authErrorMessage } from "../config/createAuthAccount";
+
+// Dropdown of every Quezon City barangay. An old value that is not on the list
+// (e.g. typed in before) is still shown so editing doesn't silently change it.
+function BarangaySelect({ value, onChange }) {
+  const options = value && !QC_BARANGAYS.includes(value) ? [value, ...QC_BARANGAYS] : QC_BARANGAYS;
+  return (
+    <select required value={value} onChange={(e) => onChange(e.target.value)} className="w-full border rounded-xl px-3 py-2 text-sm bg-white">
+      <option value="" disabled>Select barangay</option>
+      {options.map((b) => <option key={b} value={b}>{b}</option>)}
+    </select>
+  );
+}
 
 export default function AccountManagement() {
   const { isSuperAdmin, user: currentUser } = useAuth();
@@ -25,7 +39,7 @@ export default function AccountManagement() {
     lastName: "",
     email: "",
     phone: "",
-    barangay: "Batasan Hills",
+    barangay: "",
     gardenType: "Backyard Garden",
     crops: ["Tomato", "Green Pepper"],
     role: "gardener",
@@ -33,6 +47,11 @@ export default function AccountManagement() {
   };
 
   const [formData, setFormData] = useState(emptyGardener);
+  // Kept apart from formData so the password is never saved to Firestore.
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetchGardeners();
@@ -53,6 +72,9 @@ export default function AccountManagement() {
 
   function openAddModal() {
     setFormData(emptyGardener);
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
     setIsAddModalOpen(true);
   }
 
@@ -63,7 +85,7 @@ export default function AccountManagement() {
       lastName: g.lastName || g.fullName?.split(" ")[1] || "",
       email: g.email || "",
       phone: g.phone || "",
-      barangay: g.barangay || "Quezon City",
+      barangay: g.barangay || "",
       gardenType: g.gardenType || "Backyard Garden",
       crops: Array.isArray(g.crops) ? g.crops : [],
       role: g.role || "gardener",
@@ -111,21 +133,44 @@ export default function AccountManagement() {
 
   async function handleAddGardener(e) {
     e.preventDefault();
+    if (password.length < 6) {
+      notify("Password must be at least 6 characters.", "error");
+      return;
+    }
+    if (password !== confirmPassword) {
+      notify("Passwords do not match.", "error");
+      return;
+    }
+
+    setCreating(true);
+    let userId;
     try {
-      const userId = `user_${Date.now()}`;
+      // 1. Create the real login (Firebase Authentication)
+      userId = await createAuthAccount(formData.email.trim(), password);
+    } catch (e) {
+      notify(authErrorMessage(e), "error");
+      setCreating(false);
+      return;
+    }
+
+    try {
+      // 2. Save the profile under the same id the Android app uses (users/{uid})
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-      const newAccount = {
+      await setDoc(doc(db, "users", userId), {
         id: userId,
         ...formData,
+        email: formData.email.trim(),
         fullName,
-        createdAt: new Date().toISOString()
-      };
-      await setDoc(doc(db, "users", userId), newAccount);
+        sensorDeviceId: "VINLAND-ESP32-01",
+        createdAt: Date.now()
+      });
       setIsAddModalOpen(false);
-      notify("Account added.");
+      notify(`Account created. A verification email was sent to ${formData.email.trim()}.`);
       fetchGardeners();
     } catch (e) {
-      notify("Error adding gardener account: " + e.message, "error");
+      notify("Login was created, but saving the profile failed: " + e.message, "error");
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -397,7 +442,7 @@ export default function AccountManagement() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Barangay</label>
-                  <input type="text" value={formData.barangay} onChange={e => setFormData({...formData, barangay: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" />
+                  <BarangaySelect value={formData.barangay} onChange={v => setFormData({...formData, barangay: v})} />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Role Level</label>
@@ -442,8 +487,26 @@ export default function AccountManagement() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Password</label>
+                  <div className="relative">
+                    <input required minLength={6} type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded-xl pl-3 pr-9 py-2 text-sm" placeholder="At least 6 characters" />
+                    <button type="button" onClick={() => setShowPassword(s => !s)} title={showPassword ? "Hide password" : "Show password"} className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600">
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Confirm Password</label>
+                  <input required type={showPassword ? "text" : "password"} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={`w-full border rounded-xl px-3 py-2 text-sm ${confirmPassword && confirmPassword !== password ? "border-red-400" : ""}`} placeholder="Type it again" />
+                  {confirmPassword && confirmPassword !== password && (
+                    <p className="text-[11px] text-red-600 mt-1">Passwords do not match</p>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Barangay</label>
-                  <input type="text" value={formData.barangay} onChange={e => setFormData({...formData, barangay: e.target.value})} className="w-full border rounded-xl px-3 py-2 text-sm" placeholder="Batasan Hills" />
+                  <BarangaySelect value={formData.barangay} onChange={v => setFormData({...formData, barangay: v})} />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Role Level</label>
@@ -456,7 +519,9 @@ export default function AccountManagement() {
               </div>
               <div className="flex justify-end space-x-3 pt-3 border-t">
                 <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 border rounded-xl font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
-                <button type="submit" className="px-5 py-2 bg-green-700 text-white rounded-xl font-semibold hover:bg-green-800 shadow-xs">Create Account</button>
+                <button type="submit" disabled={creating} className="px-5 py-2 bg-green-700 text-white rounded-xl font-semibold hover:bg-green-800 shadow-xs disabled:opacity-60">
+                  {creating ? "Creating..." : "Create Account"}
+                </button>
               </div>
             </form>
           </div>
