@@ -16,7 +16,7 @@ import java.util.TimeZone;
 
 /**
  * Turns raw Firestore data into the text sent to Claude.
- * Ported from functions/src (context.ts, scoring.ts, buildPrompt.ts, systemPrompt.ts).
+ * Builds the garden context and prompt sent to Claude.
  * No Android classes, so it can be unit tested.
  */
 public final class GardenPrompt {

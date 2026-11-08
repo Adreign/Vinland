@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Checks Claude's JSON before it reaches the screen (ported from functions/src/validate.ts):
+ * Checks Claude's JSON before it reaches the screen:
  * drops items naming a crop that is not in the database, drops empty and duplicate items,
  * shortens long text, keeps at most 5, and sorts by priority.
  */
