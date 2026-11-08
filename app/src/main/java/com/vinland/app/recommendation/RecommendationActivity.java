@@ -1,6 +1,8 @@
 package com.vinland.app.recommendation;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -16,11 +18,15 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 import com.vinland.app.R;
 import com.vinland.app.data.Crop;
 import com.vinland.app.data.CropDatabaseSeeder;
@@ -57,6 +63,22 @@ public class RecommendationActivity extends AppCompatActivity {
     private double currentMoisture, currentPh, currentN, currentP, currentK;
 
     private List<CropScorer.Match> lastRanking = new ArrayList<>();
+
+    // Which option the user picked at the top of the screen
+    private static final int MODE_NONE = 0;
+    private static final int MODE_NEW_SOIL = 1;
+    private static final int MODE_MONITOR_CROPS = 2;
+    private int mode = MODE_NONE;
+
+    private MaterialCardView cardModeNewSoil, cardModeMonitorCrops, cardCropPicker, cardSensorInput;
+    private TextView tvModeNewSoilCheck, tvModeMonitorCheck, tvCropPickerStatus;
+    private TextView tvInputHeader, tvInputSubheader, tvCropsSectionTitle, tvSummaryCropLabel;
+    private ChipGroup chipGroupCrops;
+
+    // Monitor Crops: crops checked last time (saved on the user's profile), and the latest results
+    private final List<String> preselectedCrops = new ArrayList<>();
+    private boolean cropsLoaded = false, userLoaded = false;
+    private List<CropHealthChecker.Result> lastHealthResults = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,13 +120,69 @@ public class RecommendationActivity extends AppCompatActivity {
                 startActivity(new Intent(this, com.vinland.app.ai.AiRecommendationActivity.class)));
         tvChangeDevice.setOnClickListener(v -> showChangeDeviceDialog());
 
+        cardModeNewSoil = findViewById(R.id.cardModeNewSoil);
+        cardModeMonitorCrops = findViewById(R.id.cardModeMonitorCrops);
+        cardCropPicker = findViewById(R.id.cardCropPicker);
+        cardSensorInput = findViewById(R.id.cardSensorInput);
+        tvModeNewSoilCheck = findViewById(R.id.tvModeNewSoilCheck);
+        tvModeMonitorCheck = findViewById(R.id.tvModeMonitorCheck);
+        tvCropPickerStatus = findViewById(R.id.tvCropPickerStatus);
+        tvInputHeader = findViewById(R.id.tvInputHeader);
+        tvInputSubheader = findViewById(R.id.tvInputSubheader);
+        tvCropsSectionTitle = findViewById(R.id.tvCropsSectionTitle);
+        tvSummaryCropLabel = findViewById(R.id.tvSummaryCropLabel);
+        chipGroupCrops = findViewById(R.id.chipGroupCrops);
+
+        cardModeNewSoil.setOnClickListener(v -> setMode(MODE_NEW_SOIL));
+        cardModeMonitorCrops.setOnClickListener(v -> setMode(MODE_MONITOR_CROPS));
+
         setFieldsEditable(false);
         loadUserSavedDeviceId();
         CropDatabaseSeeder.seedIfEmpty(db, this::loadCropsFromFirestore);
     }
 
+    /** Switches between "New Soil" and "Monitor Crops / Plants". */
+    private void setMode(int newMode) {
+        if (mode == newMode) return;
+        mode = newMode;
+        boolean newSoil = mode == MODE_NEW_SOIL;
+
+        styleModeCard(cardModeNewSoil, tvModeNewSoilCheck, newSoil);
+        styleModeCard(cardModeMonitorCrops, tvModeMonitorCheck, !newSoil);
+
+        cardCropPicker.setVisibility(newSoil ? View.GONE : View.VISIBLE);
+        cardSensorInput.setVisibility(View.VISIBLE);
+
+        if (newSoil) {
+            tvInputHeader.setText("Test your new soil");
+            tvInputSubheader.setText("Insert the NPK sensor into the new soil and wait for the live reading, then tap the button.");
+            btnAnalyze.setText("Recommend crops");
+            tvCropsSectionTitle.setText("Recommended crops for your soil");
+            tvSummaryCropLabel.setText("Best crop match");
+        } else {
+            tvInputHeader.setText("Check your crops' soil");
+            tvInputSubheader.setText("Insert the NPK sensor into the soil near your plants and wait for the live reading, then tap the button.");
+            btnAnalyze.setText("Check my crops");
+            tvCropsSectionTitle.setText("Your crops' soil health");
+            tvSummaryCropLabel.setText("Needs most attention");
+        }
+
+        // Old results belong to the other option, so hide them.
+        layoutResults.setVisibility(View.GONE);
+        hideInputError();
+    }
+
+    private void styleModeCard(MaterialCardView card, TextView check, boolean selected) {
+        card.setStrokeColor(Color.parseColor(selected ? "#2E7D32" : "#E2E7DC"));
+        card.setStrokeWidth(dpToPx(selected ? 2 : 1));
+        card.setCardBackgroundColor(Color.parseColor(selected ? "#F1F8EE" : "#FFFFFF"));
+        check.setVisibility(selected ? View.VISIBLE : View.INVISIBLE);
+    }
+
     private void loadUserSavedDeviceId() {
         if (mAuth.getCurrentUser() == null) {
+            userLoaded = true;
+            buildCropChips();
             listenToLiveSensorData();
             return;
         }
@@ -117,9 +195,75 @@ public class RecommendationActivity extends AppCompatActivity {
                             activeSensorDeviceId = savedId;
                         }
                     }
+                    // Pre-check the crops monitored last time, or else the crops on the user's profile.
+                    Object saved = document.get("monitoredCrops");
+                    if (!(saved instanceof List) || ((List<?>) saved).isEmpty()) {
+                        saved = document.get("crops");
+                    }
+                    if (saved instanceof List) {
+                        for (Object o : (List<?>) saved) {
+                            if (o != null) preselectedCrops.add(o.toString().toLowerCase(Locale.ROOT));
+                        }
+                    }
+                    userLoaded = true;
+                    buildCropChips();
                     listenToLiveSensorData();
                 })
-                .addOnFailureListener(e -> listenToLiveSensorData());
+                .addOnFailureListener(e -> {
+                    userLoaded = true;
+                    buildCropChips();
+                    listenToLiveSensorData();
+                });
+    }
+
+    /** Fills the crop picker once both the crop list and the user's profile have loaded. */
+    private void buildCropChips() {
+        if (!cropsLoaded || !userLoaded) return;
+        chipGroupCrops.removeAllViews();
+
+        List<Crop> crops = new ArrayList<>(cropMap.values());
+        crops.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+
+        ColorStateList chipBg = new ColorStateList(
+                new int[][]{{android.R.attr.state_checked}, {}},
+                new int[]{Color.parseColor("#DCEED6"), Color.parseColor("#F6F8F3")});
+        ColorStateList chipStroke = new ColorStateList(
+                new int[][]{{android.R.attr.state_checked}, {}},
+                new int[]{Color.parseColor("#2E7D32"), Color.parseColor("#E2E7DC")});
+
+        for (Crop crop : crops) {
+            Chip chip = new Chip(this);
+            String emoji = crop.getEmoji() != null ? crop.getEmoji() + " " : "";
+            chip.setText(emoji + crop.getName());
+            chip.setTag(crop.getName().toLowerCase(Locale.ROOT));
+            chip.setCheckable(true);
+            chip.setChipBackgroundColor(chipBg);
+            chip.setChipStrokeColor(chipStroke);
+            chip.setChipStrokeWidth(dpToPx(1));
+            chip.setCheckedIconTint(ColorStateList.valueOf(Color.parseColor("#2E7D32")));
+            chip.setTextColor(Color.parseColor("#1C2A20"));
+            chip.setChecked(preselectedCrops.contains(crop.getName().toLowerCase(Locale.ROOT)));
+            chipGroupCrops.addView(chip);
+        }
+
+        if (crops.isEmpty()) {
+            tvCropPickerStatus.setText("No crops found in the database.");
+            tvCropPickerStatus.setVisibility(View.VISIBLE);
+        } else {
+            tvCropPickerStatus.setVisibility(View.GONE);
+        }
+    }
+
+    private List<Crop> getSelectedCrops() {
+        List<Crop> selected = new ArrayList<>();
+        for (int i = 0; i < chipGroupCrops.getChildCount(); i++) {
+            View child = chipGroupCrops.getChildAt(i);
+            if (child instanceof Chip && ((Chip) child).isChecked()) {
+                Crop crop = cropMap.get((String) child.getTag());
+                if (crop != null) selected.add(crop);
+            }
+        }
+        return selected;
     }
 
     private void setFieldsEditable(boolean editable) {
@@ -252,11 +396,14 @@ public class RecommendationActivity extends AppCompatActivity {
             for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                 Crop crop = doc.toObject(Crop.class);
                 if (crop != null) {
-                    cropMap.put(crop.getName().toLowerCase(), crop);
+                    cropMap.put(crop.getName().toLowerCase(Locale.ROOT), crop);
                 }
             }
+            cropsLoaded = true;
+            buildCropChips();
         }).addOnFailureListener(e -> {
             Toast.makeText(this, "Could not load crops database", Toast.LENGTH_SHORT).show();
+            tvCropPickerStatus.setText("Could not load crops. Check your internet and reopen this screen.");
         });
     }
 
@@ -284,11 +431,192 @@ public class RecommendationActivity extends AppCompatActivity {
             return;
         }
 
+        if (mode == MODE_MONITOR_CROPS) {
+            List<Crop> selected = getSelectedCrops();
+            if (selected.isEmpty()) {
+                showInputError("Choose at least one crop or plant to monitor.");
+                return;
+            }
+            hideInputError();
+            monitorSelectedCrops(selected);
+            return;
+        }
+
         hideInputError();
         evaluateRecommendedCrops(currentMoisture, currentPh, currentN, currentP, currentK);
         updateExecutiveSummary(currentMoisture, currentPh, currentN, currentP, currentK);
         showGeneralParameterResults(currentMoisture, currentPh, currentN, currentP, currentK);
         fetchLlmRecommendation(currentMoisture, currentPh, currentN, currentP, currentK);
+    }
+
+    // ---------------------------------------------------------------------
+    // Option 2: Monitor Crops / Plants
+    // ---------------------------------------------------------------------
+
+    private void monitorSelectedCrops(List<Crop> selected) {
+        lastHealthResults = new ArrayList<>();
+        for (Crop crop : selected) {
+            lastHealthResults.add(CropHealthChecker.check(crop, currentMoisture, currentPh, currentN, currentP, currentK));
+        }
+        // Worst first, so the crop that needs help is on top.
+        lastHealthResults.sort((a, b) -> Integer.compare(a.score, b.score));
+
+        layoutRecommendedCrops.removeAllViews();
+        for (CropHealthChecker.Result r : lastHealthResults) {
+            addCropHealthCard(layoutRecommendedCrops, r);
+        }
+
+        // Shared soil summary, then the crop-specific parts.
+        updateExecutiveSummary(currentMoisture, currentPh, currentN, currentP, currentK);
+        CropHealthChecker.Result worst = lastHealthResults.get(0);
+        if (worst.score >= 80) {
+            tvSummaryCropLabel.setText("Crop status");
+            tvSummaryTopCropName.setText("✅ All crops healthy");
+            tvSummaryActionNeeded.setText("Maintain Current Care");
+        } else {
+            tvSummaryCropLabel.setText("Needs most attention");
+            tvSummaryTopCropName.setText(emojiOf(worst.crop) + " " + worst.crop.getName());
+            tvSummaryActionNeeded.setText(firstProblemAction(worst));
+        }
+
+        showGeneralParameterResults(currentMoisture, currentPh, currentN, currentP, currentK);
+        progressAiLoading.setVisibility(View.GONE);
+        displayFormattedAiText(tvAiAdvice, buildMonitoringReport(lastHealthResults)
+                + "<br/><br/><i>Tip: save this reading, then open AI Garden Recommendations for personalized advice.</i>");
+
+        layoutResults.setVisibility(View.VISIBLE);
+        rememberMonitoredCrops(selected);
+    }
+
+    private String firstProblemAction(CropHealthChecker.Result r) {
+        List<CropHealthChecker.ParamCheck> problems = r.problems();
+        if (problems.isEmpty()) return "Maintain Current Care";
+        CropHealthChecker.ParamCheck c = problems.get(0);
+        return (c.level == CropHealthChecker.Level.LOW ? "Raise " : "Lower ") + c.label;
+    }
+
+    private String buildMonitoringReport(List<CropHealthChecker.Result> results) {
+        StringBuilder sb = new StringBuilder("<b>🌿 Crop Monitoring Report</b><br/>");
+        for (CropHealthChecker.Result r : results) {
+            sb.append("<br/><b>").append(emojiOf(r.crop)).append(" ").append(r.crop.getName())
+                    .append(" — ").append(r.statusLabel()).append(" (").append(r.score).append("%)</b><br/>");
+            List<CropHealthChecker.ParamCheck> problems = r.problems();
+            if (problems.isEmpty()) {
+                sb.append("• Soil is within this crop's ideal range. Keep your current care.<br/>");
+            }
+            for (CropHealthChecker.ParamCheck c : problems) {
+                sb.append("• <b>").append(c.label).append(c.level == CropHealthChecker.Level.LOW ? " is low" : " is high")
+                        .append("</b> (").append(c.valueText()).append(", ideal ").append(c.rangeText()).append("): ")
+                        .append(c.tip).append("<br/>");
+            }
+        }
+        return sb.toString();
+    }
+
+    private void addCropHealthCard(LinearLayout container, CropHealthChecker.Result r) {
+        MaterialCardView card = new MaterialCardView(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.bottomMargin = dpToPx(10);
+        card.setLayoutParams(params);
+        card.setRadius(dpToPx(14));
+        card.setCardElevation(0);
+        card.setStrokeColor(Color.parseColor("#E2E7DC"));
+        card.setStrokeWidth(dpToPx(1));
+        card.setCardBackgroundColor(Color.WHITE);
+
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(dpToPx(16), dpToPx(14), dpToPx(16), dpToPx(14));
+
+        // Header: emoji, name, status
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView tvEmoji = new TextView(this);
+        tvEmoji.setText(emojiOf(r.crop));
+        tvEmoji.setTextSize(24);
+        tvEmoji.setPadding(0, 0, dpToPx(10), 0);
+        header.addView(tvEmoji);
+
+        TextView tvName = new TextView(this);
+        tvName.setText(r.crop.getName());
+        tvName.setTextSize(15);
+        tvName.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvName.setTextColor(Color.parseColor("#1C2A20"));
+        tvName.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        header.addView(tvName);
+
+        String statusColor = r.score >= 80 ? "#2E7D32" : r.score >= 60 ? "#F57C00" : "#D32F2F";
+        TextView tvStatus = new TextView(this);
+        tvStatus.setText(r.statusLabel() + " · " + r.score + "%");
+        tvStatus.setTextSize(12);
+        tvStatus.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvStatus.setTextColor(Color.WHITE);
+        tvStatus.setBackgroundResource(R.drawable.bg_badge_pill);
+        tvStatus.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor(statusColor)));
+        tvStatus.setPadding(dpToPx(10), dpToPx(4), dpToPx(10), dpToPx(4));
+        header.addView(tvStatus);
+        col.addView(header);
+
+        // One line per soil parameter
+        for (CropHealthChecker.ParamCheck c : r.checks) {
+            if (c.level == CropHealthChecker.Level.UNKNOWN) continue;
+
+            LinearLayout line = new LinearLayout(this);
+            line.setOrientation(LinearLayout.HORIZONTAL);
+            line.setPadding(0, dpToPx(8), 0, 0);
+
+            TextView tvParam = new TextView(this);
+            tvParam.setText(c.label + "  " + c.valueText());
+            tvParam.setTextSize(13);
+            tvParam.setTextColor(Color.parseColor("#1C2A20"));
+            tvParam.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+            line.addView(tvParam);
+
+            String levelText;
+            String levelColor;
+            switch (c.level) {
+                case LOW: levelText = "Low"; levelColor = "#D32F2F"; break;
+                case HIGH: levelText = "High"; levelColor = "#F57C00"; break;
+                default: levelText = "OK"; levelColor = "#2E7D32"; break;
+            }
+            TextView tvLevel = new TextView(this);
+            tvLevel.setText(levelText + "  (ideal " + c.rangeText() + ")");
+            tvLevel.setTextSize(12);
+            tvLevel.setTypeface(null, android.graphics.Typeface.BOLD);
+            tvLevel.setTextColor(Color.parseColor(levelColor));
+            line.addView(tvLevel);
+            col.addView(line);
+
+            if (!c.tip.isEmpty()) {
+                TextView tvTip = new TextView(this);
+                tvTip.setText("→ " + c.tip);
+                tvTip.setTextSize(12);
+                tvTip.setTextColor(Color.parseColor("#5C6B5F"));
+                tvTip.setPadding(0, dpToPx(2), 0, 0);
+                col.addView(tvTip);
+            }
+        }
+
+        card.addView(col);
+        container.addView(card);
+    }
+
+    /** Remembers the picked crops so they are pre-selected next time. */
+    private void rememberMonitoredCrops(List<Crop> selected) {
+        if (mAuth.getCurrentUser() == null) return;
+        List<String> names = new ArrayList<>();
+        for (Crop c : selected) names.add(c.getName());
+        Map<String, Object> update = new HashMap<>();
+        update.put("monitoredCrops", names);
+        db.collection("users").document(mAuth.getCurrentUser().getUid())
+                .set(update, SetOptions.merge());
+    }
+
+    private static String emojiOf(Crop crop) {
+        return crop.getEmoji() != null ? crop.getEmoji() : "🌱";
     }
 
     private void evaluateRecommendedCrops(double moisture, double ph, double n, double p, double k) {
@@ -539,6 +867,12 @@ public class RecommendationActivity extends AppCompatActivity {
     private void saveReadingToHistory() {
         if (mAuth.getCurrentUser() == null) return;
         String uid = mAuth.getCurrentUser().getUid();
+
+        if (mode == MODE_MONITOR_CROPS) {
+            saveMonitoringToHistory(uid);
+            return;
+        }
+
         String cropName = topRecommendedCrop != null ? topRecommendedCrop.getName() : "General Soil Test";
 
         String logId = db.collection("users").document(uid).collection("soil_logs").document().getId();
@@ -557,6 +891,25 @@ public class RecommendationActivity extends AppCompatActivity {
         db.collection("users").document(uid).collection("soil_logs").document(logId)
                 .set(log)
                 .addOnSuccessListener(unused -> Toast.makeText(this, "Soil reading saved to history!", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Could not save reading: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    /** Saves one history entry per monitored crop, all with the same reading. */
+    private void saveMonitoringToHistory(String uid) {
+        if (lastHealthResults.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        WriteBatch batch = db.batch();
+        for (CropHealthChecker.Result r : lastHealthResults) {
+            String logId = db.collection("users").document(uid).collection("soil_logs").document().getId();
+            SoilLog log = new SoilLog(logId, r.crop.getName(), currentMoisture, currentPh,
+                    currentN, currentP, currentK,
+                    "Crop Monitoring: " + r.statusLabel() + " (" + r.score + "%)", now);
+            batch.set(db.collection("users").document(uid).collection("soil_logs").document(logId), log);
+        }
+        int count = lastHealthResults.size();
+        batch.commit()
+                .addOnSuccessListener(unused -> Toast.makeText(this,
+                        count == 1 ? "Saved to history!" : "Saved " + count + " crops to history!", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e -> Toast.makeText(this, "Could not save reading: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
