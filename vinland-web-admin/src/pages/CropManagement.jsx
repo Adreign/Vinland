@@ -4,6 +4,15 @@ import { db } from "../config/firebase";
 import { Plus, Edit2, Trash2, Sprout, X, Check, Calendar, Sun, Droplets, Info } from "lucide-react";
 import { notify, confirmAction } from "../components/common/Notifier";
 
+const MONTHS = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+// The app's Planting Calendar reads monthlyTips[0..11] (January..December).
+function toTwelveTips(tips) {
+  const list = Array.isArray(tips) ? tips : [];
+  return MONTHS.map((_, i) => (typeof list[i] === "string" ? list[i] : ""));
+}
+
 export default function CropManagement() {
   const [crops, setCrops] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +34,8 @@ export default function CropManagement() {
     phosphorusMin: 15.0,
     phosphorusMax: 30.0,
     potassiumMin: 100.0,
-    potassiumMax: 200.0
+    potassiumMax: 200.0,
+    monthlyTips: toTwelveTips([])
   };
 
   const [formData, setFormData] = useState(emptyCrop);
@@ -56,7 +66,8 @@ export default function CropManagement() {
     setEditingCrop(crop);
     setFormData({
       ...emptyCrop,
-      ...crop
+      ...crop,
+      monthlyTips: toTwelveTips(crop.monthlyTips)
     });
     setIsModalOpen(true);
   }
@@ -66,7 +77,11 @@ export default function CropManagement() {
     try {
       const cropId = editingCrop ? editingCrop.id : formData.name.toLowerCase().replace(/\s+/g, '_');
       const docRef = doc(db, "crops", cropId);
-      await setDoc(docRef, { ...formData, id: cropId }, { merge: true });
+      // Empty months get the same fallback text the app would show.
+      const name = formData.name.trim();
+      const monthlyTips = formData.monthlyTips.map(t =>
+        t.trim() || `Regular care and monitoring month for ${name}.`);
+      await setDoc(docRef, { ...formData, name, monthlyTips, id: cropId }, { merge: true });
       setIsModalOpen(false);
       notify(editingCrop ? "Crop profile updated." : "Crop profile added.");
       fetchCrops();
@@ -150,6 +165,14 @@ export default function CropManagement() {
                     <div className="col-span-2"><span className="font-semibold text-slate-900">Potassium (K):</span> {crop.potassiumMin}-{crop.potassiumMax} ppm</div>
                   </div>
                 </div>
+
+                <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                  <Calendar size={12} className="text-green-700" />
+                  {(() => {
+                    const filled = toTwelveTips(crop.monthlyTips).filter(t => t.trim()).length;
+                    return filled === 12 ? "Monthly tips: all 12 months set" : `Monthly tips: ${filled} of 12 months set`;
+                  })()}
+                </p>
               </div>
             </div>
           ))}
@@ -220,6 +243,41 @@ export default function CropManagement() {
                       <input type="number" value={formData.phosphorusMax} onChange={e => setFormData({...formData, phosphorusMax: parseFloat(e.target.value)})} className="w-1/2 border rounded-xl px-3 py-1.5" />
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700">Potassium Range (ppm)</label>
+                    <div className="flex gap-2">
+                      <input type="number" value={formData.potassiumMin} onChange={e => setFormData({...formData, potassiumMin: parseFloat(e.target.value)})} className="w-1/2 border rounded-xl px-3 py-1.5" />
+                      <input type="number" value={formData.potassiumMax} onChange={e => setFormData({...formData, potassiumMax: parseFloat(e.target.value)})} className="w-1/2 border rounded-xl px-3 py-1.5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Monthly tips shown in the app's Planting Calendar */}
+              <div className="pt-2 border-t">
+                <p className="text-xs font-bold text-green-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <Calendar size={14} /> Monthly Care Tips
+                </p>
+                <p className="text-xs text-gray-500 mb-3">
+                  Shown in the mobile app's Planting Calendar, one tip per month. Empty months get a general care message.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {MONTHS.map((month, i) => (
+                    <div key={month}>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1">{month}</label>
+                      <textarea
+                        rows={2}
+                        value={formData.monthlyTips[i]}
+                        onChange={e => {
+                          const monthlyTips = [...formData.monthlyTips];
+                          monthlyTips[i] = e.target.value;
+                          setFormData({ ...formData, monthlyTips });
+                        }}
+                        className="w-full border rounded-xl p-2 text-sm"
+                        placeholder={`What to do in ${month}...`}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 
