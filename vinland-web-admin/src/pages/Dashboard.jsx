@@ -16,7 +16,6 @@ function weatherLabel(code) {
 export default function Dashboard() {
   const [stats, setStats] = useState({
     totalGardeners: 0,
-    activeGardens: 0,
     totalCrops: 0
   });
 
@@ -57,7 +56,6 @@ export default function Dashboard() {
         // 1. Query Real Gardeners from 'users'
         const usersSnap = await getDocs(collection(db, "users"));
         const gardeners = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        const activeG = gardeners.filter(g => g.gardenType || (Array.isArray(g.crops) && g.crops.length > 0));
 
         // 2. Query Real Crops from 'crops'
         const cropsSnap = await getDocs(collection(db, "crops"));
@@ -65,7 +63,6 @@ export default function Dashboard() {
 
         setStats({
           totalGardeners: gardeners.length,
-          activeGardens: activeG.length,
           totalCrops: cropCount
         });
 
@@ -106,7 +103,6 @@ export default function Dashboard() {
           <div>
             <p className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Registered Gardeners</p>
             <p className="text-3xl font-extrabold text-gray-900 mt-1">{stats.totalGardeners}</p>
-            <p className="text-xs text-green-600 mt-1 font-medium">{stats.activeGardens} active gardens in QC</p>
           </div>
           <div className="p-3.5 bg-green-50 text-green-700 rounded-xl">
             <Users size={26} />
