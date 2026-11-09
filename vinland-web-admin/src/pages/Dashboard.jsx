@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { collection, collectionGroup, getDocs, doc, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../config/firebase";
-import { Users, Sprout, ArrowRight, ShieldCheck, Sun, CloudRain } from "lucide-react";
+import { Users, Sprout, ArrowRight, Sun, CloudRain } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // Turns an Open-Meteo weather code into a short label.
@@ -21,8 +21,6 @@ export default function Dashboard() {
   });
 
   const [recentGardeners, setRecentGardeners] = useState([]);
-  const [recentSoilLogs, setRecentSoilLogs] = useState([]);
-  const [telemetryStatus, setTelemetryStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Live Quezon City weather from the free Open-Meteo API
@@ -65,15 +63,6 @@ export default function Dashboard() {
         const cropsSnap = await getDocs(collection(db, "crops"));
         const cropCount = cropsSnap.size;
 
-        // 3. Latest soil logs across all gardeners via collectionGroup('soil_logs')
-        let soilLogsList = [];
-        try {
-          const soilLogsSnap = await getDocs(query(collectionGroup(db, "soil_logs"), orderBy("timestamp", "desc"), limit(5)));
-          soilLogsList = soilLogsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        } catch (e) {
-          console.warn("Collection group 'soil_logs' index fallback:", e);
-        }
-
         setStats({
           totalGardeners: gardeners.length,
           activeGardens: activeG.length,
@@ -81,7 +70,6 @@ export default function Dashboard() {
         });
 
         setRecentGardeners(gardeners.slice(0, 5));
-        setRecentSoilLogs(soilLogsList.slice(0, 5));
 
       } catch (err) {
         console.error("Error fetching accurate dashboard metrics:", err);
@@ -91,15 +79,6 @@ export default function Dashboard() {
     }
 
     fetchAccurateDashboardData();
-
-    // Live ESP32 Sensor Telemetry listener
-    const unsub = onSnapshot(doc(db, "sensor_devices", "VINLAND-ESP32-01"), (snap) => {
-      if (snap.exists()) {
-        setTelemetryStatus(snap.data());
-      }
-    });
-
-    return () => unsub();
   }, []);
 
   if (loading) {
@@ -116,7 +95,7 @@ export default function Dashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Admin Module Live Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Accurate operational metrics calculated directly from Firestore collections (`users`, `crops`, `sensor_devices`, `soil_logs`).
+          Accurate operational metrics calculated directly from Firestore collections (`users`, `crops`).
         </p>
       </div>
 
@@ -167,114 +146,51 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* LIVE TELEMETRY BANNER (VINLAND-ESP32-01) */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-md border border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="space-y-1 max-w-2xl">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="text-green-400" size={20} />
-            <h3 className="font-bold text-lg text-white">Live ESP32 Hardware Telemetry Node</h3>
+      {/* Registered gardener accounts */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 space-y-4">
+        <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+          <div>
+            <h3 className="font-bold text-gray-900">Registered Gardener Accounts</h3>
+            <p className="text-xs text-gray-500">Live records from Firestore `users` collection</p>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            Real-time sensor telemetry stream from Firestore document <code className="bg-slate-800 text-green-300 px-1.5 py-0.5 rounded">sensor_devices/VINLAND-ESP32-01</code>.
-          </p>
+          <Link to="/accounts" className="text-xs font-semibold text-green-700 hover:text-green-800 flex items-center gap-1">
+            View All <ArrowRight size={14} />
+          </Link>
         </div>
-        <div className="flex flex-wrap gap-3 shrink-0">
-          <div className="bg-slate-800/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
-            <p className="text-[10px] uppercase font-semibold text-slate-400">Soil pH</p>
-            <p className="text-base font-bold text-purple-400">{telemetryStatus?.ph != null ? telemetryStatus.ph : "N/A"}</p>
-          </div>
-          <div className="bg-slate-800/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
-            <p className="text-[10px] uppercase font-semibold text-slate-400">Moisture</p>
-            <p className="text-base font-bold text-blue-400">{telemetryStatus?.moisture != null ? `${telemetryStatus.moisture}%` : "N/A"}</p>
-          </div>
-          <div className="bg-slate-800/80 border border-slate-700 px-4 py-2.5 rounded-xl text-center">
-            <p className="text-[10px] uppercase font-semibold text-slate-400">NPK (ppm)</p>
-            <p className="text-base font-bold text-amber-400">
-              {telemetryStatus?.nitrogen ?? 0} - {telemetryStatus?.phosphorus ?? 0} - {telemetryStatus?.potassium ?? 0}
-            </p>
-          </div>
-        </div>
-      </div>
 
-      {/* TABLES: RECENT GARDENERS & RECENT SOIL LOGS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recently Registered Gardeners */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-xs p-6 space-y-4">
-          <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-            <div>
-              <h3 className="font-bold text-gray-900">Registered Gardener Accounts</h3>
-              <p className="text-xs text-gray-500">Live records from Firestore `users` collection</p>
-            </div>
-            <Link to="/accounts" className="text-xs font-semibold text-green-700 hover:text-green-800 flex items-center gap-1">
-              View All <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm">
-              <thead className="text-xs text-gray-400 uppercase font-semibold">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-100 text-sm">
+            <thead className="text-xs text-gray-400 uppercase font-semibold">
+              <tr>
+                <th className="py-2 text-left">Gardener Name</th>
+                <th className="py-2 text-left">Barangay</th>
+                <th className="py-2 text-left">Garden Type</th>
+                <th className="py-2 text-left">Crops Selected</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {recentGardeners.length === 0 ? (
                 <tr>
-                  <th className="py-2 text-left">Gardener Name</th>
-                  <th className="py-2 text-left">Barangay</th>
-                  <th className="py-2 text-left">Garden Type</th>
-                  <th className="py-2 text-left">Crops Selected</th>
+                  <td colSpan="4" className="py-4 text-center text-gray-400 text-xs">No registered gardeners found in Firestore.</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {recentGardeners.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="py-4 text-center text-gray-400 text-xs">No registered gardeners found in Firestore.</td>
+              ) : (
+                recentGardeners.map((g) => (
+                  <tr key={g.id} className="hover:bg-gray-50/50">
+                    <td className="py-3 font-semibold text-gray-800">
+                      {g.fullName || `${g.firstName || ''} ${g.lastName || ''}`.trim() || "Gardener"}
+                    </td>
+                    <td className="py-3 text-gray-600">{g.barangay || "Quezon City"}</td>
+                    <td className="py-3 text-gray-600">{g.gardenType || "Backyard"}</td>
+                    <td className="py-3">
+                      <span className="text-xs bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full font-medium">
+                        {Array.isArray(g.crops) ? g.crops.length : 0} Crops
+                      </span>
+                    </td>
                   </tr>
-                ) : (
-                  recentGardeners.map((g) => (
-                    <tr key={g.id} className="hover:bg-gray-50/50">
-                      <td className="py-3 font-semibold text-gray-800">
-                        {g.fullName || `${g.firstName || ''} ${g.lastName || ''}`.trim() || "Gardener"}
-                      </td>
-                      <td className="py-3 text-gray-600">{g.barangay || "Quezon City"}</td>
-                      <td className="py-3 text-gray-600">{g.gardenType || "Backyard"}</td>
-                      <td className="py-3">
-                        <span className="text-xs bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full font-medium">
-                          {Array.isArray(g.crops) ? g.crops.length : 0} Crops
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Live Soil Logs Feed */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 space-y-4">
-          <div className="flex justify-between items-center pb-3 border-b border-gray-100">
-            <div>
-              <h3 className="font-bold text-gray-900">Recent Soil Logs</h3>
-              <p className="text-xs text-gray-500">Live test entries from gardeners</p>
-            </div>
-            <Link to="/reports" className="text-xs font-semibold text-green-700 hover:text-green-800 flex items-center gap-1">
-              Reports <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {recentSoilLogs.length === 0 ? (
-              <p className="text-xs text-gray-400 py-4 text-center">No soil test logs recorded yet.</p>
-            ) : (
-              recentSoilLogs.map((log) => (
-                <div key={log.id} className="p-3 rounded-xl border border-gray-100 bg-gray-50/60 space-y-1 text-xs">
-                  <div className="flex justify-between font-bold text-gray-900">
-                    <span>🌱 {log.cropName || "Soil Analysis"}</span>
-                    <span className="text-[10px] text-green-700 font-semibold">{log.overallStatus || "Recorded"}</span>
-                  </div>
-                  <p className="text-gray-600">
-                    pH: <span className="font-semibold">{log.ph}</span> | Moisture: <span className="font-semibold">{log.moisture}%</span> | NPK: <span className="font-semibold">{log.nitrogen}-{log.phosphorus}-{log.potassium}</span>
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
