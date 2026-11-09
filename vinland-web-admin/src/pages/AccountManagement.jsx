@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { useAuth } from "../context/AuthContext";
-import { Search, UserPlus, Edit3, Trash2, Eye, ShieldCheck, Crown, UserCheck, X, Check, Lock, CheckCircle2, Sprout, EyeOff } from "lucide-react";
+import { Search, UserPlus, Cpu, Edit3, Trash2, Eye, ShieldCheck, Crown, UserCheck, X, Check, Lock, CheckCircle2, Sprout, EyeOff } from "lucide-react";
 import { notify, confirmAction } from "../components/common/Notifier";
 import { QC_BARANGAYS } from "../data/qcBarangays";
 import { createAuthAccount, authErrorMessage } from "../config/createAuthAccount";
+import AddSensorDeviceModal from "../components/AddSensorDeviceModal";
 
 // Dropdown of every Quezon City barangay. An old value that is not on the list
 // (e.g. typed in before) is still shown so editing doesn't silently change it.
@@ -29,6 +30,7 @@ export default function AccountManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isSensorModalOpen, setIsSensorModalOpen] = useState(false);
   const [selectedGardener, setSelectedGardener] = useState(null);
   const [userSoilLogs, setUserSoilLogs] = useState([]);
   const [userHarvestLogs, setUserHarvestLogs] = useState([]);
@@ -249,12 +251,20 @@ export default function AccountManagement() {
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-2 text-sm shrink-0"
-        >
-          <UserPlus size={18} /> Add User Account
-        </button>
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <button
+            onClick={() => setIsSensorModalOpen(true)}
+            className="bg-white hover:bg-gray-50 text-gray-800 font-semibold px-4 py-2.5 rounded-xl border border-gray-200 shadow-xs transition-colors flex items-center gap-2 text-sm"
+          >
+            <Cpu size={18} className="text-green-700" /> Add Sensor Device
+          </button>
+          <button
+            onClick={openAddModal}
+            className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-2 text-sm"
+          >
+            <UserPlus size={18} /> Add User Account
+          </button>
+        </div>
       </div>
 
       {/* Search Bar & Filters */}
@@ -526,6 +536,15 @@ export default function AccountManagement() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Add Sensor Device Modal */}
+      {isSensorModalOpen && (
+        <AddSensorDeviceModal
+          gardeners={gardeners}
+          onClose={() => setIsSensorModalOpen(false)}
+          onSaved={fetchGardeners}
+        />
       )}
     </div>
   );
