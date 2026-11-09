@@ -1,7 +1,9 @@
 package com.vinland.app.weather;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -18,12 +20,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 import java.util.Locale;
 
 public class WeatherActivity extends AppCompatActivity {
 
     private TextView tvBack, tvLocation, tvTemp, tvDescription, tvHumidity, tvWind, tvFeelsLike, tvAdvisory, tvError;
-    private MaterialCardView cardCurrentWeather, cardAdvisory;
+    private TextView tvForecastTip, tvForecastError;
+    private LinearLayout forecastList;
+    private MaterialCardView cardCurrentWeather, cardAdvisory, cardForecast;
     private ProgressBar progressBar;
     private RequestQueue requestQueue;
 
@@ -46,10 +53,69 @@ public class WeatherActivity extends AppCompatActivity {
         cardCurrentWeather = findViewById(R.id.cardCurrentWeather);
         cardAdvisory = findViewById(R.id.cardAdvisory);
         progressBar = findViewById(R.id.progressBar);
+        cardForecast = findViewById(R.id.cardForecast);
+        tvForecastTip = findViewById(R.id.tvForecastTip);
+        tvForecastError = findViewById(R.id.tvForecastError);
+        forecastList = findViewById(R.id.forecastList);
 
         tvBack.setOnClickListener(v -> finish());
 
         fetchWeather();
+        fetchForecast();
+    }
+
+    private void fetchForecast() {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                WeatherForecast.URL,
+                null,
+                response -> {
+                    try {
+                        showForecast(WeatherForecast.parse(response));
+                    } catch (JSONException | RuntimeException e) {
+                        tvForecastError.setVisibility(View.VISIBLE);
+                    }
+                },
+                error -> tvForecastError.setVisibility(View.VISIBLE)
+        );
+        requestQueue.add(request);
+    }
+
+    private void showForecast(List<WeatherForecast.Day> days) {
+        if (days.isEmpty()) {
+            tvForecastError.setVisibility(View.VISIBLE);
+            return;
+        }
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Manila"));
+        LayoutInflater inflater = LayoutInflater.from(this);
+        forecastList.removeAllViews();
+
+        for (int i = 0; i < days.size(); i++) {
+            WeatherForecast.Day day = days.get(i);
+            if (i > 0) {
+                View line = new View(this);
+                line.setBackgroundColor(0xFFE2E7DC);
+                forecastList.addView(line, new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        Math.max(1, Math.round(getResources().getDisplayMetrics().density))));
+            }
+            View row = inflater.inflate(R.layout.item_forecast_day, forecastList, false);
+            ((TextView) row.findViewById(R.id.tvDay)).setText(WeatherForecast.dayLabel(day.date, today));
+            ((TextView) row.findViewById(R.id.tvDayDesc)).setText(WeatherForecast.describe(day.weatherCode));
+            ((TextView) row.findViewById(R.id.tvDayIcon)).setText(WeatherForecast.emoji(day.weatherCode));
+            ((TextView) row.findViewById(R.id.tvDayRain)).setText("💧" + day.rainChance + "%");
+            ((TextView) row.findViewById(R.id.tvDayTemp)).setText(String.format(Locale.getDefault(),
+                    "%d° / %d°", Math.round(day.maxTemp), Math.round(day.minTemp)));
+            row.setContentDescription(WeatherForecast.dayLabel(day.date, today) + ", "
+                    + WeatherForecast.describe(day.weatherCode) + ", " + day.rainChance
+                    + " percent chance of rain, high " + Math.round(day.maxTemp)
+                    + ", low " + Math.round(day.minTemp) + " degrees");
+            forecastList.addView(row);
+        }
+
+        tvForecastTip.setText(WeatherForecast.gardenTip(days, today));
+        tvForecastError.setVisibility(View.GONE);
+        cardForecast.setVisibility(View.VISIBLE);
     }
 
     private void fetchWeather() {

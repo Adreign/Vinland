@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One row of the 7-day forecast on the Weather screen. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:minHeight="56dp"
+    android:orientation="horizontal"
+    android:paddingVertical="8dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvDay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="#1C2A20"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/tvDayDesc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#5C6B5F"
+            android:textSize="12.5sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvDayIcon"
+        android:layout_width="36dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:importantForAccessibility="no"
+        android:textSize="22sp" />
+
+    <TextView
+        android:id="@+id/tvDayRain"
+        android:layout_width="56dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textColor="#2F6E9A"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvDayTemp"
+        android:layout_width="76dp"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="#1C2A20"
+        android:textSize="14sp" />
+</LinearLayout>
