@@ -22,7 +22,7 @@ export const NAV_ITEMS = [
   { name: "Crops", path: "/crops", icon: Sprout },
   { name: "Recommendations", path: "/recommendations", icon: Sliders },
   { name: "Soil Conditions", path: "/soil-condition", icon: Layers },
-  { name: "Analytics & Reports", path: "/reports", icon: BarChart3 },
+  { name: "Reports", path: "/reports", icon: BarChart3 },
   { name: "Settings", path: "/settings", icon: Settings },
 ];
 

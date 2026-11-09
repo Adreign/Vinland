@@ -254,7 +254,7 @@ export default function Dashboard() {
               <p className="text-xs text-gray-500">Live test entries from gardeners</p>
             </div>
             <Link to="/reports" className="text-xs font-semibold text-green-700 hover:text-green-800 flex items-center gap-1">
-              Analytics <ArrowRight size={14} />
+              Reports <ArrowRight size={14} />
             </Link>
           </div>
 
