@@ -102,6 +102,7 @@ public class RegisterActivity extends AppCompatActivity {
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         tilPassword = findViewById(R.id.tilPassword);
         tilConfirmPassword = findViewById(R.id.tilConfirmPassword);
+        setupPasswordHint();
         actvBarangay = findViewById(R.id.actvBarangay);
         rgGardenType = findViewById(R.id.rgGardenType);
         layoutCropsContainer = findViewById(R.id.layoutCropsContainer);
@@ -160,7 +161,8 @@ public class RegisterActivity extends AppCompatActivity {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         String accountName = result.getData().getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                         if (!TextUtils.isEmpty(accountName)) {
-                            applyAutoFilledEmail(accountName);
+                            // Only the email was picked; the user is not signed in, so they still need a password.
+                            applyAutoFilledEmail(accountName, false);
                         }
                     }
                 }
@@ -275,10 +277,10 @@ public class RegisterActivity extends AppCompatActivity {
                             saveGardenerProfile(firebaseUser.getUid(), "Gardener", "", mail, "Quezon City", "Backyard Garden", Arrays.asList("Tomato", "Green Pepper"), false);
                         }
 
-                        applyAutoFilledEmail(mail);
+                        applyAutoFilledEmail(mail, true);
                     } else {
                         if (account != null && !TextUtils.isEmpty(account.getEmail())) {
-                            applyAutoFilledEmail(account.getEmail());
+                            applyAutoFilledEmail(account.getEmail(), false);
                         } else {
                             showError("Google authentication failed: " + (task.getException() != null ? task.getException().getMessage() : "Error"));
                         }
@@ -286,20 +288,28 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
-    private void applyAutoFilledEmail(String mail) {
+    /**
+     * Fills in the Gmail address. If the user is signed in with Google, they don't need a
+     * password, so the password boxes are hidden. If only the email was picked, they still
+     * have to create a password.
+     */
+    private void applyAutoFilledEmail(String mail, boolean signedInWithGoogle) {
         if (TextUtils.isEmpty(mail)) return;
 
-        isGoogleAuthenticated = true;
+        isGoogleAuthenticated = signedInWithGoogle;
         runOnUiThread(() -> {
             etEmail.setText(mail);
-            etEmail.setEnabled(false); // Lock verified Gmail address
+            etEmail.setEnabled(!signedInWithGoogle); // Lock the verified Gmail address
 
-            // Keep Password and Confirm Password text boxes ALWAYS visible
-            if (tilPassword != null) tilPassword.setVisibility(View.VISIBLE);
-            if (tilConfirmPassword != null) tilConfirmPassword.setVisibility(View.VISIBLE);
+            int passwordVisibility = signedInWithGoogle ? View.GONE : View.VISIBLE;
+            if (tilPassword != null) tilPassword.setVisibility(passwordVisibility);
+            if (tilConfirmPassword != null) tilConfirmPassword.setVisibility(passwordVisibility);
 
             showStep(1);
-            Toast.makeText(RegisterActivity.this, "✅ Gmail address " + mail + " autofilled! Enter First Name, Last Name, and Password below.", Toast.LENGTH_LONG).show();
+            String message = signedInWithGoogle
+                    ? "✅ Signed in as " + mail + ". Enter your first and last name below."
+                    : "✅ " + mail + " filled in. Enter your name and create a password below.";
+            Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
 
             if (TextUtils.isEmpty(getText(etFirstName))) {
                 etFirstName.requestFocus();
@@ -311,6 +321,7 @@ public class RegisterActivity extends AppCompatActivity {
         String firstName = getText(etFirstName);
         String lastName = getText(etLastName);
         String email = getText(etEmail);
+        String rawPassword = etPassword.getText() != null ? etPassword.getText().toString() : "";
         String password = getText(etPassword);
         String confirmPassword = getText(etConfirmPassword);
 
@@ -328,8 +339,9 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         if (!isGoogleAuthenticated) {
-            if (TextUtils.isEmpty(password) || password.length() < 6) {
-                showError("Password must be at least 6 characters.");
+            String passwordProblem = getPasswordProblem(rawPassword);
+            if (passwordProblem != null) {
+                showError(passwordProblem);
                 return;
             }
             if (!password.equals(confirmPassword)) {
@@ -339,6 +351,49 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         showStep(2);
+    }
+
+    private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final String PASSWORD_RULES_HINT = "At least 8 characters, with a letter and a number";
+
+    /** Returns what's wrong with the password, or null if it's fine. */
+    private static String getPasswordProblem(String password) {
+        if (TextUtils.isEmpty(password)) {
+            return "Please create a password.";
+        }
+        if (!password.equals(password.trim())) {
+            return "Password can't start or end with a space.";
+        }
+        if (password.length() < MIN_PASSWORD_LENGTH) {
+            return "Password must be at least " + MIN_PASSWORD_LENGTH + " characters.";
+        }
+        if (!password.matches(".*[A-Za-z].*")) {
+            return "Password must include at least one letter.";
+        }
+        if (!password.matches(".*[0-9].*")) {
+            return "Password must include at least one number.";
+        }
+        return null;
+    }
+
+    /** Shows the password rules under the box and updates them as the user types. */
+    private void setupPasswordHint() {
+        tilPassword.setHelperText(PASSWORD_RULES_HINT);
+        etPassword.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                String text = s.toString();
+                if (text.isEmpty()) {
+                    tilPassword.setHelperText(PASSWORD_RULES_HINT);
+                    return;
+                }
+                String problem = getPasswordProblem(text);
+                tilPassword.setHelperText(problem == null ? "✅ Password looks good" : "⚠️ " + problem);
+            }
+        });
     }
 
     private void validateAndProceedStep2() {
