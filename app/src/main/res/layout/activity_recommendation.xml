@@ -521,6 +521,20 @@
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
 
+                    <!-- Clears the moisture, pH and NPK boxes -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnResetReadings"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
+                        android:text="Reset readings"
+                        android:textAllCaps="false"
+                        android:textColor="#2E7D32"
+                        android:textSize="14sp"
+                        app:cornerRadius="14dp"
+                        app:strokeColor="#2E7D32" />
+
                     <TextView
                         android:id="@+id/tvInputError"
                         android:layout_width="match_parent"

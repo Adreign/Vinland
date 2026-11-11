@@ -114,6 +114,7 @@ public class RecommendationActivity extends AppCompatActivity {
 
         tvBack.setOnClickListener(v -> finish());
         btnAnalyze.setOnClickListener(v -> analyzeSoil());
+        findViewById(R.id.btnResetReadings).setOnClickListener(v -> resetReadings());
         btnSaveToHistory.setOnClickListener(v -> saveReadingToHistory());
         View btnOpenAi = findViewById(R.id.btnOpenAiRecommendations);
         btnOpenAi.setOnClickListener(v ->
@@ -264,6 +265,19 @@ public class RecommendationActivity extends AppCompatActivity {
             }
         }
         return selected;
+    }
+
+    /** Empties the moisture, pH and NPK boxes. The next sensor update fills them again. */
+    private void resetReadings() {
+        etMoisture.setText("");
+        etPh.setText("");
+        etNitrogen.setText("");
+        etPhosphorus.setText("");
+        etPotassium.setText("");
+        layoutResults.setVisibility(View.GONE);
+        hideInputError();
+        tvLiveLastUpdated.setText("Readings cleared. Waiting for the next sensor reading...");
+        Toast.makeText(this, "Readings reset", Toast.LENGTH_SHORT).show();
     }
 
     private void setFieldsEditable(boolean editable) {
