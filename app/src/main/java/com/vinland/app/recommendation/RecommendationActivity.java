@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -18,8 +20,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -73,7 +73,9 @@ public class RecommendationActivity extends AppCompatActivity {
     private MaterialCardView cardModeNewSoil, cardModeMonitorCrops, cardCropPicker, cardSensorInput;
     private TextView tvModeNewSoilCheck, tvModeMonitorCheck, tvCropPickerStatus;
     private TextView tvInputHeader, tvInputSubheader, tvCropsSectionTitle, tvSummaryCropLabel;
-    private ChipGroup chipGroupCrops;
+    private AutoCompleteTextView actvCropDropdown;
+    // Lowercase name of the one crop picked from the dropdown (null until picked)
+    private String selectedCropKey;
 
     // Monitor Crops: crops checked last time (saved on the user's profile), and the latest results
     private final List<String> preselectedCrops = new ArrayList<>();
@@ -132,7 +134,7 @@ public class RecommendationActivity extends AppCompatActivity {
         tvInputSubheader = findViewById(R.id.tvInputSubheader);
         tvCropsSectionTitle = findViewById(R.id.tvCropsSectionTitle);
         tvSummaryCropLabel = findViewById(R.id.tvSummaryCropLabel);
-        chipGroupCrops = findViewById(R.id.chipGroupCrops);
+        actvCropDropdown = findViewById(R.id.actvCropDropdown);
 
         cardModeNewSoil.setOnClickListener(v -> setMode(MODE_NEW_SOIL));
         cardModeMonitorCrops.setOnClickListener(v -> setMode(MODE_MONITOR_CROPS));
@@ -161,11 +163,11 @@ public class RecommendationActivity extends AppCompatActivity {
             tvCropsSectionTitle.setText("Recommended crops for your soil");
             tvSummaryCropLabel.setText("Best crop match");
         } else {
-            tvInputHeader.setText("Check your crops' soil");
-            tvInputSubheader.setText("Insert the NPK sensor into the soil near your plants and wait for the live reading, then tap the button.");
-            btnAnalyze.setText("Check my crops");
-            tvCropsSectionTitle.setText("Your crops' soil health");
-            tvSummaryCropLabel.setText("Needs most attention");
+            tvInputHeader.setText("Check your crop's soil");
+            tvInputSubheader.setText("Insert the NPK sensor into the soil near your plant and wait for the live reading, then tap the button.");
+            btnAnalyze.setText("Check my crop");
+            tvCropsSectionTitle.setText("Your crop's soil health");
+            tvSummaryCropLabel.setText("Your crop");
         }
 
         // Old results belong to the other option, so hide them.
@@ -217,34 +219,38 @@ public class RecommendationActivity extends AppCompatActivity {
                 });
     }
 
-    /** Fills the crop picker once both the crop list and the user's profile have loaded. */
+    /** Fills the crop dropdown once both the crop list and the user's profile have loaded. */
     private void buildCropChips() {
         if (!cropsLoaded || !userLoaded) return;
-        chipGroupCrops.removeAllViews();
 
         List<Crop> crops = new ArrayList<>(cropMap.values());
         crops.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
-        ColorStateList chipBg = new ColorStateList(
-                new int[][]{{android.R.attr.state_checked}, {}},
-                new int[]{Color.parseColor("#DCEED6"), Color.parseColor("#F6F8F3")});
-        ColorStateList chipStroke = new ColorStateList(
-                new int[][]{{android.R.attr.state_checked}, {}},
-                new int[]{Color.parseColor("#2E7D32"), Color.parseColor("#E2E7DC")});
+        ArrayAdapter<Crop> adapter = new ArrayAdapter<Crop>(this,
+                android.R.layout.simple_list_item_1, crops) {
+            @Override
+            public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView tv = (TextView) super.getView(position, convertView, parent);
+                tv.setText(cropLabel(getItem(position)));
+                return tv;
+            }
+        };
+        actvCropDropdown.setAdapter(adapter);
 
-        for (Crop crop : crops) {
-            Chip chip = new Chip(this);
-            String emoji = crop.getEmoji() != null ? crop.getEmoji() + " " : "";
-            chip.setText(emoji + crop.getName());
-            chip.setTag(crop.getName().toLowerCase(Locale.ROOT));
-            chip.setCheckable(true);
-            chip.setChipBackgroundColor(chipBg);
-            chip.setChipStrokeColor(chipStroke);
-            chip.setChipStrokeWidth(dpToPx(1));
-            chip.setCheckedIconTint(ColorStateList.valueOf(Color.parseColor("#2E7D32")));
-            chip.setTextColor(Color.parseColor("#1C2A20"));
-            chip.setChecked(preselectedCrops.contains(crop.getName().toLowerCase(Locale.ROOT)));
-            chipGroupCrops.addView(chip);
+        // Only one crop per check: picking a new one replaces the old one.
+        actvCropDropdown.setOnItemClickListener((parent, view, position, id) -> {
+            Crop crop = (Crop) parent.getItemAtPosition(position);
+            selectCrop(crop.getName().toLowerCase(Locale.ROOT));
+            hideInputError();
+        });
+
+        // Start with the crop monitored last time, if it still exists.
+        selectedCropKey = null;
+        for (String key : preselectedCrops) {
+            if (cropMap.containsKey(key)) {
+                selectCrop(key);
+                break;
+            }
         }
 
         if (crops.isEmpty()) {
@@ -255,15 +261,23 @@ public class RecommendationActivity extends AppCompatActivity {
         }
     }
 
+    /** Remembers the picked crop and shows its name in the dropdown box. */
+    private void selectCrop(String key) {
+        selectedCropKey = key;
+        Crop crop = cropMap.get(key);
+        actvCropDropdown.setText(crop != null ? cropLabel(crop) : "", false);
+    }
+
+    private String cropLabel(Crop crop) {
+        String emoji = crop.getEmoji() != null ? crop.getEmoji() + " " : "";
+        return emoji + crop.getName();
+    }
+
+    /** The picked crop as a one-item list (empty if nothing is picked yet). */
     private List<Crop> getSelectedCrops() {
         List<Crop> selected = new ArrayList<>();
-        for (int i = 0; i < chipGroupCrops.getChildCount(); i++) {
-            View child = chipGroupCrops.getChildAt(i);
-            if (child instanceof Chip && ((Chip) child).isChecked()) {
-                Crop crop = cropMap.get((String) child.getTag());
-                if (crop != null) selected.add(crop);
-            }
-        }
+        Crop crop = selectedCropKey != null ? cropMap.get(selectedCropKey) : null;
+        if (crop != null) selected.add(crop);
         return selected;
     }
 
@@ -448,7 +462,7 @@ public class RecommendationActivity extends AppCompatActivity {
         if (mode == MODE_MONITOR_CROPS) {
             List<Crop> selected = getSelectedCrops();
             if (selected.isEmpty()) {
-                showInputError("Choose at least one crop or plant to monitor.");
+                showInputError("Choose a crop or plant to monitor.");
                 return;
             }
             hideInputError();
@@ -485,10 +499,10 @@ public class RecommendationActivity extends AppCompatActivity {
         CropHealthChecker.Result worst = lastHealthResults.get(0);
         if (worst.score >= 80) {
             tvSummaryCropLabel.setText("Crop status");
-            tvSummaryTopCropName.setText("✅ All crops healthy");
+            tvSummaryTopCropName.setText("✅ " + worst.crop.getName() + " is healthy");
             tvSummaryActionNeeded.setText("Maintain Current Care");
         } else {
-            tvSummaryCropLabel.setText("Needs most attention");
+            tvSummaryCropLabel.setText("Your crop");
             tvSummaryTopCropName.setText(emojiOf(worst.crop) + " " + worst.crop.getName());
             tvSummaryActionNeeded.setText(firstProblemAction(worst));
         }

@@ -257,7 +257,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-medium"
-                        android:text="Choose crops / plants to monitor"
+                        android:text="Choose a crop / plant to monitor"
                         android:textColor="#1C2A20"
                         android:textSize="17sp" />
 
@@ -266,14 +266,31 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:layout_marginBottom="12dp"
-                        android:text="Tap to select one or more."
+                        android:text="Pick one from the list."
                         android:textColor="#5C6B5F"
                         android:textSize="13sp" />
 
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/chipGroupCrops"
+                    <!-- Dropdown of crops; only one can be picked -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutCropDropdown"
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:hint="Select a crop / plant"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="#2E7D32"
+                        app:hintTextColor="#2E7D32">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/actvCropDropdown"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:textColor="#1C2A20" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
                     <TextView
                         android:id="@+id/tvCropPickerStatus"
