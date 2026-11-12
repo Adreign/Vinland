@@ -107,6 +107,12 @@ public class CropDatabaseSeeder {
                 PEPPER_TIPS
         );
 
+        // Planting months (1 = Jan) and days from transplanting to first harvest.
+        tomato.setPlantingMonths(Arrays.asList(10, 11, 12, 1));
+        tomato.setDaysToHarvest(70);
+        pepper.setPlantingMonths(Arrays.asList(10, 11, 12, 1));
+        pepper.setDaysToHarvest(75);
+
         batch.set(db.collection("crops").document(tomato.getId()), tomato);
         batch.set(db.collection("crops").document(pepper.getId()), pepper);
 

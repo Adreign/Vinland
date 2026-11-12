@@ -48,6 +48,9 @@ public class PlantingCalendarActivity extends AppCompatActivity {
     private HorizontalScrollView scrollForecast;
     private MaterialCardView cardAdjustedAdvice;
     private TextView tvAdjustedAdvice;
+    private MaterialCardView cardPlantingStatus;
+    private TextView tvPlantingHeadline, tvPlantingDetail, tvYearLegend;
+    private LinearLayout layoutYearStrip;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -82,6 +85,11 @@ public class PlantingCalendarActivity extends AppCompatActivity {
         scrollForecast = findViewById(R.id.scrollForecast);
         cardAdjustedAdvice = findViewById(R.id.cardAdjustedAdvice);
         tvAdjustedAdvice = findViewById(R.id.tvAdjustedAdvice);
+        cardPlantingStatus = findViewById(R.id.cardPlantingStatus);
+        tvPlantingHeadline = findViewById(R.id.tvPlantingHeadline);
+        tvPlantingDetail = findViewById(R.id.tvPlantingDetail);
+        tvYearLegend = findViewById(R.id.tvYearLegend);
+        layoutYearStrip = findViewById(R.id.layoutYearStrip);
 
         tvBack.setOnClickListener(v -> finish());
 
@@ -164,19 +172,121 @@ public class PlantingCalendarActivity extends AppCompatActivity {
 
     private void renderMonths() {
         layoutMonths.removeAllViews();
-        if (selectedCrop == null) return;
+        if (selectedCrop == null) {
+            cardPlantingStatus.setVisibility(View.GONE);
+            return;
+        }
+
+        PlantingSchedule schedule = new PlantingSchedule(selectedCrop);
+        renderPlantingStatus(schedule);
 
         List<String> tips = selectedCrop.getMonthlyTips();
         int currentMonth = Calendar.getInstance().get(Calendar.MONTH);
 
         for (int i = 0; i < 12; i++) {
             boolean isCurrent = (i == currentMonth);
-            String tip = (tips != null && i < tips.size()) ? tips.get(i) : "Regular care and monitoring month for " + selectedCrop.getName() + ".";
-            layoutMonths.addView(buildMonthCard(MONTH_NAMES[i], tip, isCurrent));
+            String tip = (tips != null && i < tips.size() && tips.get(i) != null && !tips.get(i).trim().isEmpty())
+                    ? tips.get(i)
+                    : "Regular care and monitoring month for " + selectedCrop.getName() + ".";
+            layoutMonths.addView(buildMonthCard(MONTH_NAMES[i], tip, isCurrent, stageTags(schedule, i + 1)));
         }
     }
 
-    private MaterialCardView buildMonthCard(String monthName, String tip, boolean isCurrent) {
+    /** "🌱 Plant · 🧺 Harvest" style label for a month (1-12), or "" if nothing happens that month. */
+    private String stageTags(PlantingSchedule schedule, int month) {
+        List<String> tags = new ArrayList<>();
+        if (schedule.isPlantMonth(month)) tags.add("🌱 Plant");
+        if (schedule.isGrowingMonth(month)) tags.add("🌿 Growing");
+        if (schedule.isHarvestMonth(month)) tags.add("🧺 Harvest");
+        return android.text.TextUtils.join("  ·  ", tags);
+    }
+
+    /** Fills the "plant now?" banner and the 12-month strip for the picked crop. */
+    private void renderPlantingStatus(PlantingSchedule schedule) {
+        cardPlantingStatus.setVisibility(View.VISIBLE);
+        layoutYearStrip.removeAllViews();
+        String name = selectedCrop.getName();
+        String emoji = selectedCrop.getEmoji() != null ? selectedCrop.getEmoji() + " " : "";
+
+        if (!schedule.hasData()) {
+            tvPlantingHeadline.setText(emoji + "No planting schedule yet");
+            tvPlantingDetail.setText("Planting months and days to harvest haven't been set for " + name
+                    + ". An admin can add them in the Vinland web admin under Crop Management.");
+            layoutYearStrip.setVisibility(View.GONE);
+            tvYearLegend.setVisibility(View.GONE);
+            return;
+        }
+        layoutYearStrip.setVisibility(View.VISIBLE);
+        tvYearLegend.setVisibility(View.VISIBLE);
+
+        int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
+        int days = schedule.getDaysToHarvest();
+        if (schedule.isPlantMonth(month)) {
+            tvPlantingHeadline.setText(emoji + "Good time to plant " + name + " 🌱");
+            tvPlantingDetail.setText("If you plant this month, expect your first harvest around "
+                    + MONTH_NAMES[schedule.harvestMonthFor(month) - 1]
+                    + " (about " + days + " days).");
+        } else {
+            int next = schedule.nextPlantMonthAfter(month);
+            tvPlantingHeadline.setText(emoji + "Not the best month to plant " + name);
+            tvPlantingDetail.setText("Next planting window starts in " + MONTH_NAMES[next - 1]
+                    + ". " + name + " takes about " + days + " days to reach harvest.");
+        }
+
+        for (int m = 1; m <= 12; m++) {
+            layoutYearStrip.addView(buildYearCell(m, schedule, m == month));
+        }
+    }
+
+    /** One small month cell in the year strip: first letter + stage icon, coloured by stage. */
+    private View buildYearCell(int month, PlantingSchedule schedule, boolean isCurrent) {
+        LinearLayout cell = new LinearLayout(this);
+        cell.setOrientation(LinearLayout.VERTICAL);
+        cell.setGravity(Gravity.CENTER_HORIZONTAL);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        lp.setMargins(dpToPx(1), 0, dpToPx(1), 0);
+        cell.setLayoutParams(lp);
+        cell.setPadding(0, dpToPx(4), 0, dpToPx(4));
+
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setCornerRadius(dpToPx(8));
+        String icon;
+        if (schedule.isPlantMonth(month)) {
+            bg.setColor(Color.parseColor("#C8E6C9"));
+            icon = "🌱";
+        } else if (schedule.isHarvestMonth(month)) {
+            bg.setColor(Color.parseColor("#FFE0B2"));
+            icon = "🧺";
+        } else if (schedule.isGrowingMonth(month)) {
+            bg.setColor(Color.parseColor("#EEF5EA"));
+            icon = "🌿";
+        } else {
+            bg.setColor(Color.parseColor("#F3F5EF"));
+            icon = " ";
+        }
+        if (isCurrent) bg.setStroke(dpToPx(2), Color.parseColor("#1F4D32"));
+        cell.setBackground(bg);
+
+        TextView tvLetter = new TextView(this);
+        tvLetter.setText(MONTH_NAMES[month - 1].substring(0, 1));
+        tvLetter.setTextSize(11);
+        tvLetter.setTypeface(null, Typeface.BOLD);
+        tvLetter.setTextColor(Color.parseColor("#1C2A20"));
+        tvLetter.setGravity(Gravity.CENTER);
+
+        TextView tvIcon = new TextView(this);
+        tvIcon.setText(icon);
+        tvIcon.setTextSize(10);
+        tvIcon.setGravity(Gravity.CENTER);
+
+        cell.addView(tvLetter);
+        cell.addView(tvIcon);
+        String tags = stageTags(schedule, month);
+        cell.setContentDescription(MONTH_NAMES[month - 1] + (tags.isEmpty() ? "" : ": " + tags));
+        return cell;
+    }
+
+    private MaterialCardView buildMonthCard(String monthName, String tip, boolean isCurrent, String stages) {
         MaterialCardView card = new MaterialCardView(this);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -219,6 +329,15 @@ public class PlantingCalendarActivity extends AppCompatActivity {
         tvTip.setPadding(0, dpToPx(4), 0, 0);
 
         row.addView(labelRow);
+        if (!stages.isEmpty()) {
+            TextView tvStages = new TextView(this);
+            tvStages.setText(stages);
+            tvStages.setTextSize(12f);
+            tvStages.setTypeface(null, Typeface.BOLD);
+            tvStages.setTextColor(isCurrent ? Color.parseColor("#CDE8D0") : Color.parseColor("#2E7D32"));
+            tvStages.setPadding(0, dpToPx(4), 0, 0);
+            row.addView(tvStages);
+        }
         row.addView(tvTip);
         card.addView(row);
 

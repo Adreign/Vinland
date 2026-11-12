@@ -22,10 +22,15 @@ public class Crop {
     private double potassiumMin;
     private double potassiumMax;
     private List<String> monthlyTips;
+    /** Good months to plant, 1 = January ... 12 = December. Empty if not set yet. */
+    private List<Integer> plantingMonths;
+    /** Days from planting/transplanting to first harvest. 0 if not set yet. */
+    private int daysToHarvest;
 
     // Required empty constructor for Firestore deserialization
     public Crop() {
         this.monthlyTips = new ArrayList<>();
+        this.plantingMonths = new ArrayList<>();
     }
 
     public Crop(String id, String name, String scientificName, String category, String emoji,
@@ -185,5 +190,21 @@ public class Crop {
 
     public void setMonthlyTips(List<String> monthlyTips) {
         this.monthlyTips = monthlyTips;
+    }
+
+    public List<Integer> getPlantingMonths() {
+        return plantingMonths;
+    }
+
+    public void setPlantingMonths(List<Integer> plantingMonths) {
+        this.plantingMonths = plantingMonths;
+    }
+
+    public int getDaysToHarvest() {
+        return daysToHarvest;
+    }
+
+    public void setDaysToHarvest(int daysToHarvest) {
+        this.daysToHarvest = daysToHarvest;
     }
 }

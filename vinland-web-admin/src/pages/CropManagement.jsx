@@ -35,7 +35,10 @@ export default function CropManagement() {
     phosphorusMax: 30.0,
     potassiumMin: 100.0,
     potassiumMax: 200.0,
-    monthlyTips: toTwelveTips([])
+    monthlyTips: toTwelveTips([]),
+    // Planting Calendar: good planting months (1 = January) and days to first harvest.
+    plantingMonths: [],
+    daysToHarvest: 0
   };
 
   const [formData, setFormData] = useState(emptyCrop);
@@ -67,7 +70,9 @@ export default function CropManagement() {
     setFormData({
       ...emptyCrop,
       ...crop,
-      monthlyTips: toTwelveTips(crop.monthlyTips)
+      monthlyTips: toTwelveTips(crop.monthlyTips),
+      plantingMonths: Array.isArray(crop.plantingMonths) ? crop.plantingMonths : [],
+      daysToHarvest: Number(crop.daysToHarvest) || 0
     });
     setIsModalOpen(true);
   }
@@ -81,7 +86,9 @@ export default function CropManagement() {
       const name = formData.name.trim();
       const monthlyTips = formData.monthlyTips.map(t =>
         t.trim() || `Regular care and monitoring month for ${name}.`);
-      await setDoc(docRef, { ...formData, name, monthlyTips, id: cropId }, { merge: true });
+      const plantingMonths = [...new Set(formData.plantingMonths)].sort((a, b) => a - b);
+      const daysToHarvest = Math.max(0, Math.round(Number(formData.daysToHarvest) || 0));
+      await setDoc(docRef, { ...formData, name, monthlyTips, plantingMonths, daysToHarvest, id: cropId }, { merge: true });
       setIsModalOpen(false);
       notify(editingCrop ? "Crop profile updated." : "Crop profile added.");
       fetchCrops();
@@ -173,6 +180,12 @@ export default function CropManagement() {
                     return filled === 12 ? "Monthly tips: all 12 months set" : `Monthly tips: ${filled} of 12 months set`;
                   })()}
                 </p>
+                <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                  <Sprout size={12} className="text-green-700" />
+                  {Array.isArray(crop.plantingMonths) && crop.plantingMonths.length > 0 && crop.daysToHarvest > 0
+                    ? `Plant: ${crop.plantingMonths.map(m => MONTHS[m - 1]?.slice(0, 3)).join(", ")} · Harvest in ~${crop.daysToHarvest} days`
+                    : "Planting schedule: not set"}
+                </p>
               </div>
             </div>
           ))}
@@ -250,6 +263,49 @@ export default function CropManagement() {
                       <input type="number" value={formData.potassiumMax} onChange={e => setFormData({...formData, potassiumMax: parseFloat(e.target.value)})} className="w-1/2 border rounded-xl px-3 py-1.5" />
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Planting schedule used by the app's Planting Calendar (Plant / Growing / Harvest) */}
+              <div className="pt-2 border-t">
+                <p className="text-xs font-bold text-green-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <Sprout size={14} /> Planting Schedule
+                </p>
+                <p className="text-xs text-gray-500 mb-3">
+                  Pick the months that are good for planting. The app uses these with the days to harvest to mark each month as Plant, Growing or Harvest.
+                </p>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {MONTHS.map((month, i) => {
+                    const m = i + 1;
+                    const on = formData.plantingMonths.includes(m);
+                    return (
+                      <button
+                        key={month}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => setFormData({
+                          ...formData,
+                          plantingMonths: on
+                            ? formData.plantingMonths.filter(x => x !== m)
+                            : [...formData.plantingMonths, m]
+                        })}
+                        className={`px-2 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${on ? "bg-green-700 border-green-700 text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
+                      >
+                        {month.slice(0, 3)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 max-w-xs">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Days from planting to first harvest</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.daysToHarvest}
+                    onChange={e => setFormData({ ...formData, daysToHarvest: parseInt(e.target.value, 10) || 0 })}
+                    className="w-full border rounded-xl px-3 py-1.5"
+                    placeholder="70"
+                  />
                 </div>
               </div>
 
