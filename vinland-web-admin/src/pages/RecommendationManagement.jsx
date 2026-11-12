@@ -101,31 +101,45 @@ export default function RecommendationManagement() {
 
   async function fetchInitialData() {
     setLoading(true);
-    try {
-      const [cropsSnap, recsSnap, devicesSnap] = await Promise.all([
-        getDocs(collection(db, "crops")),
-        getDocs(collection(db, "recommendations")),
-        getDocs(collection(db, "sensor_devices")),
-      ]);
-      const cropList = cropsSnap.docs
+    // Load each list on its own, so one blocked read doesn't break the whole page.
+    const [cropsRes, recsRes, devicesRes] = await Promise.allSettled([
+      getDocs(collection(db, "crops")),
+      getDocs(collection(db, "recommendations")),
+      getDocs(collection(db, "sensor_devices")),
+    ]);
+
+    if (cropsRes.status === "fulfilled") {
+      const cropList = cropsRes.value.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
       setCrops(cropList);
       setSelectedCrop(prev => (prev && cropList.find(c => c.id === prev.id)) || cropList[0] || null);
+    } else {
+      console.error("Could not load crops:", cropsRes.reason);
+      notify("Could not load crops: " + cropsRes.reason?.message, "error");
+    }
 
-      setRecommendations(recsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+    if (recsRes.status === "fulfilled") {
+      setRecommendations(recsRes.value.docs.map(d => ({ id: d.id, ...d.data() })));
+    } else {
+      console.error("Could not load recommendation rules:", recsRes.reason);
+      notify("Could not load recommendation rules: " + recsRes.reason?.message, "error");
+    }
 
-      const deviceList = devicesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // The sensor list only fills the "Sensor" dropdown; without it the page
+    // still shows the default device, so fail quietly.
+    if (devicesRes.status === "fulfilled") {
+      const deviceList = devicesRes.value.docs.map(d => ({ id: d.id, ...d.data() }));
       setDevices(deviceList);
       if (deviceList.length > 0 && !deviceList.some(d => d.id === deviceId)) {
         setDeviceId(deviceList[0].id);
       }
-    } catch (e) {
-      console.error("Error loading recommendation data:", e);
-      notify("Could not load recommendation data: " + e.message, "error");
-    } finally {
-      setLoading(false);
+    } else {
+      console.warn("Could not list sensor devices:", devicesRes.reason);
+      setDevices([]);
     }
+
+    setLoading(false);
   }
 
   const dynamicAnalysis = selectedCrop ? analyze(selectedCrop, liveSensor) : [];
