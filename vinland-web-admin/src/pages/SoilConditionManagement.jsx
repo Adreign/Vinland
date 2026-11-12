@@ -75,6 +75,8 @@ export default function SoilConditionManagement() {
   // Which of the npk / ph / moisture documents are not in Firestore yet
   const [missingDocs, setMissingDocs] = useState([]);
   const [creating, setCreating] = useState(false);
+  // True when the page couldn't read soil_condition_config (e.g. blocked by security rules)
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // Values are kept as typed (strings allowed) and checked on save.
   const [ranges, setRanges] = useState({ npk: DEFAULT_NPK, ph: DEFAULT_PH, moisture: DEFAULT_MOISTURE });
@@ -85,6 +87,7 @@ export default function SoilConditionManagement() {
 
   async function fetchSoilConfigurations() {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const snap = await getDocs(collection(db, "soil_condition_config"));
       const found = {};
@@ -97,6 +100,7 @@ export default function SoilConditionManagement() {
       });
     } catch (e) {
       console.error("Error loading soil configs:", e);
+      setLoadFailed(true);
       notify("Could not load saved soil ranges (showing defaults): " + e.message, "error");
     } finally {
       setLoading(false);
@@ -150,19 +154,37 @@ export default function SoilConditionManagement() {
     }
   }
 
-  // Creates only the missing documents with the default ranges, so saved values are never overwritten.
+  // Writes the whole soil_condition_config collection (npk, ph, moisture) with the
+  // default ranges. Documents that already exist are left alone, so saved values
+  // are never overwritten.
   async function handleCreateCollection() {
-    if (missingDocs.length === 0) return;
+    if (!loadFailed && missingDocs.length === 0) {
+      notify("Soil settings already exist in Firestore (soil_condition_config). Edit the ranges below and click Save Soil Parameters.");
+      return;
+    }
+    const toCreate = loadFailed ? ["npk", "ph", "moisture"] : missingDocs;
+    const ok = await confirmAction(
+      `Create the soil_condition_config collection in Firestore with the default ranges (${toCreate.join(", ")})?`,
+      { confirmLabel: "Create" }
+    );
+    if (!ok) return;
+
     setCreating(true);
     try {
       const defaults = { npk: DEFAULT_NPK, ph: DEFAULT_PH, moisture: DEFAULT_MOISTURE };
       const batch = writeBatch(db);
-      missingDocs.forEach(id => batch.set(doc(db, "soil_condition_config", id), defaults[id]));
+      toCreate.forEach(id => batch.set(doc(db, "soil_condition_config", id), defaults[id]));
       await batch.commit();
       notify("Soil settings created in Firestore (soil_condition_config) with the default ranges.");
       await fetchSoilConfigurations();
     } catch (e) {
-      notify("Could not create soil settings: " + e.message, "error");
+      const blocked = e.code === "permission-denied";
+      notify(
+        blocked
+          ? "Firebase blocked this. Add the soil_condition_config rule in Firebase (Firestore Database → Rules), click Publish, then try again."
+          : "Could not create soil settings: " + e.message,
+        "error"
+      );
     } finally {
       setCreating(false);
     }
@@ -198,7 +220,14 @@ export default function SoilConditionManagement() {
           </p>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <button
+            onClick={handleCreateCollection}
+            disabled={creating || loading}
+            className="border border-amber-500 text-amber-800 hover:bg-amber-50 disabled:opacity-60 font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 text-sm"
+          >
+            {creating ? <RefreshCw size={16} className="animate-spin" /> : <Layers size={16} />} Create Soil Settings
+          </button>
           <button
             onClick={handleResetDefaults}
             disabled={saving || loading}
