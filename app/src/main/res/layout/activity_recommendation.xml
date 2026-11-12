@@ -378,7 +378,7 @@
                                     android:layout_width="0dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
-                                    android:text="Listening to VINLAND-ESP32-01..."
+                                    android:text="Checking paired sensor..."
                                     android:textColor="#1F4D32"
                                     android:textSize="14sp"
                                     android:textStyle="bold" />
@@ -390,7 +390,7 @@
                                     android:minHeight="36dp"
                                     android:gravity="center_vertical"
                                     android:paddingHorizontal="8dp"
-                                    android:text="Change ID"
+                                    android:text="Pair"
                                     android:textColor="#1B5E20"
                                     android:textSize="13sp"
                                     android:textStyle="bold" />

@@ -97,7 +97,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void testHardwareConnection() {
-        String deviceId = etSensorDeviceId.getText() != null ? etSensorDeviceId.getText().toString().trim() : "VINLAND-ESP32-01";
+        String deviceId = etSensorDeviceId.getText() != null ? etSensorDeviceId.getText().toString().trim() : "";
         if (TextUtils.isEmpty(deviceId)) {
             Toast.makeText(this, "Please enter a valid ESP32 Hardware Device ID first.", Toast.LENGTH_SHORT).show();
             return;
@@ -163,7 +163,7 @@ public class SettingsActivity extends AppCompatActivity {
             return;
         }
 
-        String sensorDeviceId = etSensorDeviceId.getText() != null ? etSensorDeviceId.getText().toString().trim() : "VINLAND-ESP32-01";
+        String sensorDeviceId = etSensorDeviceId.getText() != null ? etSensorDeviceId.getText().toString().trim() : "";
         String barangay = actvBarangay.getText().toString().trim();
         boolean soilAlerts = switchSoilAlerts.isChecked();
         boolean weatherAlerts = switchWeatherAlerts.isChecked();

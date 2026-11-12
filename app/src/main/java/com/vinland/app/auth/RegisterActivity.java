@@ -563,7 +563,6 @@ public class RegisterActivity extends AppCompatActivity {
         profile.put("crops", crops);
         profile.put("role", "gardener");
         profile.put("status", "Active");
-        profile.put("sensorDeviceId", "VINLAND-ESP32-01");
         profile.put("createdAt", System.currentTimeMillis());
 
         db.collection("users").document(uid)

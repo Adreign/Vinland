@@ -55,7 +55,8 @@ public class RecommendationActivity extends AppCompatActivity {
     private FirebaseFirestore db;
 
     private ListenerRegistration sensorListenerRegistration;
-    private String activeSensorDeviceId = "VINLAND-ESP32-01";
+    /** The sensor the user paired by hand. Null until they pair one. */
+    private String activeSensorDeviceId = null;
 
     private final Map<String, Crop> cropMap = new HashMap<>();
     private Crop topRecommendedCrop = null;
@@ -351,8 +352,22 @@ public class RecommendationActivity extends AppCompatActivity {
         etPotassium.setFocusableInTouchMode(editable);
     }
 
+    /** Shows the "no sensor paired" state. Nothing is read until the user pairs a sensor by hand. */
+    private void showUnpairedState() {
+        detachSensorListener();
+        tvLiveStatusDot.setText("⚪");
+        tvLiveStatusText.setText("No sensor paired");
+        tvLiveLastUpdated.setText("Tap \"Pair\" and enter your ESP32 sensor ID to start receiving readings.");
+        tvChangeDevice.setText("Pair");
+    }
+
     private void listenToLiveSensorData() {
         detachSensorListener();
+        if (TextUtils.isEmpty(activeSensorDeviceId)) {
+            showUnpairedState();
+            return;
+        }
+        tvChangeDevice.setText("Change");
         tvLiveStatusDot.setText("🟡");
         tvLiveStatusText.setText("Connecting to " + activeSensorDeviceId + "...");
         tvLiveLastUpdated.setText("Waiting for sensor telemetry...");
@@ -395,30 +410,11 @@ public class RecommendationActivity extends AppCompatActivity {
                             tvLiveLastUpdated.setText("Sensor record missing NPK/pH payload values");
                         }
                     } else {
+                        // No data from this ID yet. Wait for the real sensor instead of inventing readings.
                         tvLiveStatusDot.setText("🟡");
-                        tvLiveStatusText.setText("Initializing " + activeSensorDeviceId + "...");
-                        tvLiveLastUpdated.setText("Creating default sensor document in Firestore...");
-                        seedDefaultSensorDevice(activeSensorDeviceId);
+                        tvLiveStatusText.setText("Paired: " + activeSensorDeviceId);
+                        tvLiveLastUpdated.setText("Waiting for the first reading. Make sure the sensor is powered on and online, and that the ID is correct.");
                     }
-                });
-    }
-
-    private void seedDefaultSensorDevice(String deviceId) {
-        Map<String, Object> initialReading = new HashMap<>();
-        initialReading.put("moisture", 52.0);
-        initialReading.put("ph", 6.6);
-        initialReading.put("nitrogen", 35.0);
-        initialReading.put("phosphorus", 22.0);
-        initialReading.put("potassium", 145.0);
-        initialReading.put("timestamp", System.currentTimeMillis());
-
-        db.collection("sensor_devices").document(deviceId)
-                .set(initialReading)
-                .addOnSuccessListener(unused -> Toast.makeText(this, "Created initial sensor record for " + deviceId, Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> {
-                    tvLiveStatusDot.setText("🔴");
-                    tvLiveStatusText.setText("Could not initialize " + deviceId);
-                    tvLiveLastUpdated.setText("Error: " + e.getMessage());
                 });
     }
 
@@ -432,23 +428,50 @@ public class RecommendationActivity extends AppCompatActivity {
     private void showChangeDeviceDialog() {
         final EditText input = new EditText(this);
         input.setHint("e.g. VINLAND-ESP32-01");
-        input.setText(activeSensorDeviceId);
+        input.setText(activeSensorDeviceId != null ? activeSensorDeviceId : "");
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        input.setSingleLine(true);
         input.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
 
-        new AlertDialog.Builder(this)
-                .setTitle("Pair ESP32 Device ID")
-                .setMessage("Enter the device ID programmed into your ESP32 microcontroller:")
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle("Pair ESP32 Sensor")
+                .setMessage("Enter the device ID programmed into your ESP32 sensor:")
                 .setView(input)
-                .setPositiveButton("Pair Device", (dialog, which) -> {
+                .setPositiveButton("Pair", (dialog, which) -> {
                     String newId = input.getText().toString().trim();
-                    if (!TextUtils.isEmpty(newId)) {
-                        activeSensorDeviceId = newId;
-                        Toast.makeText(this, "Paired with device: " + activeSensorDeviceId, Toast.LENGTH_SHORT).show();
-                        listenToLiveSensorData();
+                    if (TextUtils.isEmpty(newId)) {
+                        Toast.makeText(this, "Please enter a sensor ID.", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+                    if (newId.contains("/")) {
+                        Toast.makeText(this, "Sensor ID cannot contain \"/\".", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    pairSensor(newId);
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                .show();
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        if (!TextUtils.isEmpty(activeSensorDeviceId)) {
+            builder.setNeutralButton("Unpair", (dialog, which) -> pairSensor(null));
+        }
+        builder.show();
+    }
+
+    /** Pairs (or, with null, unpairs) a sensor and remembers the choice on the user's account. */
+    private void pairSensor(String deviceId) {
+        activeSensorDeviceId = deviceId;
+        listenToLiveSensorData();
+        Toast.makeText(this, deviceId != null ? "Paired with " + deviceId : "Sensor unpaired",
+                Toast.LENGTH_SHORT).show();
+
+        if (mAuth.getCurrentUser() == null) return;
+        Map<String, Object> update = new HashMap<>();
+        update.put("sensorDeviceId", deviceId != null ? deviceId : "");
+        db.collection("users").document(mAuth.getCurrentUser().getUid())
+                .set(update, SetOptions.merge())
+                .addOnFailureListener(e -> Toast.makeText(this,
+                        "Could not save pairing: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     @Override

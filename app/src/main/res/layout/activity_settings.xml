@@ -115,13 +115,13 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Paired ESP32 Sensor Device ID"
+                        app:helperText="Type the ID printed on your sensor, e.g. VINLAND-ESP32-01. Leave blank to unpair."
                         app:boxStrokeColor="#2E7D32">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etSensorDeviceId"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="VINLAND-ESP32-01"
                             android:inputType="textCapCharacters" />
                     </com.google.android.material.textfield.TextInputLayout>
 
