@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, deleteDoc, onSnapshot, writeBatch, serverTimestamp } from "firebase/firestore";
 import { db } from "../config/firebase";
 import { Sliders, Plus, Edit2, Trash2, X, CheckCircle2, AlertTriangle, Lightbulb, BookOpen, Tag, Cpu, RefreshCw } from "lucide-react";
 import { notify, confirmAction } from "../components/common/Notifier";
@@ -26,6 +26,35 @@ const PARAMETER_OPTIONS = PARAMS.map(p => p.label);
 const SEVERITY_OPTIONS = ["Info", "Caution", "Warning", "Critical"];
 // Same formats the Android app understands: "< 5.5", "<= 30", "> 7", ">= 80", "5.5 - 6.5"
 const CONDITION_PATTERN = /^\s*((<=|>=|<|>|==?)\s*-?\d+(\.\d+)?|-?\d+(\.\d+)?\s*(-|–|to)\s*-?\d+(\.\d+)?)\s*%?\s*(ppm)?\s*$/i;
+
+// Ready-made rules for "Load Starter Rules". Limits match the app's built-in
+// Soil Monitoring checks (moisture 35-80%, pH 5.5-7.5, N 5-80, P 5-60, K 15-150 ppm).
+const STARTER_RULES = [
+  { id: "starter_dry_soil", title: "Dry Soil", parameter: "Soil Moisture", condition: "< 35", status: "Too Dry", severity: "Warning", applicableCrops: [],
+    advice: "Water deeply in the early morning (around 6-7 AM) and late afternoon. Cover the soil with dried leaves or rice straw to keep moisture in." },
+  { id: "starter_waterlogged_soil", title: "Waterlogged Soil", parameter: "Soil Moisture", condition: "> 80", status: "Too Wet", severity: "Warning", applicableCrops: [],
+    advice: "Stop watering until the top 2-3 cm of soil feels dry. Check that pot drainage holes are clear, and raise pots off the ground to prevent root rot." },
+  { id: "starter_acidic_soil", title: "Acidic Soil", parameter: "Soil pH", condition: "< 5.5", status: "Too Acidic", severity: "Warning", applicableCrops: [],
+    advice: "Mix 1 tablespoon of agricultural lime or crushed eggshells per pot into the topsoil, then water well. Re-check pH after 2 weeks." },
+  { id: "starter_very_acidic_soil", title: "Very Acidic Soil", parameter: "Soil pH", condition: "< 4.5", status: "Very Acidic", severity: "Critical", applicableCrops: [],
+    advice: "Most vegetables will struggle in this soil. Replace part of the soil with fresh garden soil mixed with compost, then add agricultural lime." },
+  { id: "starter_alkaline_soil", title: "Alkaline Soil", parameter: "Soil pH", condition: "> 7.5", status: "Too Alkaline", severity: "Warning", applicableCrops: [],
+    advice: "Mix in well-rotted compost or vermicast, and add rice hull or pine bark mulch. Avoid adding wood ash or lime." },
+  { id: "starter_low_nitrogen", title: "Low Nitrogen", parameter: "Nitrogen (N)", condition: "< 5", status: "Deficient", severity: "Caution", applicableCrops: [],
+    advice: "Leaves may turn pale or yellow. Apply vermicompost or fermented plant juice (FPJ), 2 tablespoons per liter of water, once a week." },
+  { id: "starter_high_nitrogen", title: "High Nitrogen", parameter: "Nitrogen (N)", condition: "> 80", status: "Excessive", severity: "Caution", applicableCrops: [],
+    advice: "Too much nitrogen gives lots of leaves but few fruits. Stop nitrogen fertilizers for 2-3 weeks and water normally." },
+  { id: "starter_low_phosphorus", title: "Low Phosphorus", parameter: "Phosphorus (P)", condition: "< 5", status: "Deficient", severity: "Caution", applicableCrops: [],
+    advice: "Roots and flowers may grow poorly. Mix bone meal into the soil, or spray fermented fruit juice (FFJ), 2 tablespoons per liter, once a week." },
+  { id: "starter_low_potassium", title: "Low Potassium", parameter: "Potassium (K)", condition: "< 15", status: "Deficient", severity: "Caution", applicableCrops: [],
+    advice: "Leaf edges may turn brown. Water with banana peel tea (soak peels in water for 3 days), or sprinkle a little wood ash around the plant." },
+  { id: "starter_high_potassium", title: "High Potassium", parameter: "Potassium (K)", condition: "> 150", status: "Excessive", severity: "Info", applicableCrops: [],
+    advice: "Skip potassium fertilizers (banana peel tea, wood ash) until the next soil reading drops." },
+  { id: "starter_tomato_calcium", title: "Tomato Calcium Boost", parameter: "Soil pH", condition: "< 6", status: "Slightly Acidic", severity: "Caution", applicableCrops: ["Tomato"],
+    advice: "Tomatoes in acidic soil can get blossom-end rot (black bottoms on fruits). Add crushed eggshells or agricultural lime and water evenly every day." },
+  { id: "starter_pepper_water", title: "Pepper Needs Steady Water", parameter: "Soil Moisture", condition: "< 40", status: "Getting Dry", severity: "Caution", applicableCrops: ["Green Pepper"],
+    advice: "Peppers drop their flowers when the soil dries out. Water a little every morning and keep the soil mulched." },
+];
 
 function toNumber(v) {
   const n = typeof v === "number" ? v : parseFloat(v);
@@ -60,6 +89,7 @@ export default function RecommendationManagement() {
   const [sensorMissing, setSensorMissing] = useState(false);
   const [selectedCrop, setSelectedCrop] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingStarters, setLoadingStarters] = useState(false);
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -175,6 +205,37 @@ export default function RecommendationManagement() {
     }
   }
 
+  // Adds the ready-made rules. Each has a fixed ID, so clicking again only adds
+  // the ones that are missing and never overwrites a rule the admin edited.
+  async function handleLoadStarterRules() {
+    const existing = new Set(recommendations.map(r => r.id));
+    const missing = STARTER_RULES.filter(r => !existing.has(r.id));
+    if (missing.length === 0) {
+      notify("All starter rules are already in your list.");
+      return;
+    }
+    const ok = await confirmAction(
+      `Add ${missing.length} ready-made soil advice rule${missing.length === 1 ? "" : "s"}? You can edit or delete them afterwards.`,
+      { confirmLabel: "Add Rules" }
+    );
+    if (!ok) return;
+
+    setLoadingStarters(true);
+    try {
+      const batch = writeBatch(db);
+      missing.forEach(rule => {
+        batch.set(doc(db, "recommendations", rule.id), { ...rule, category: "Treatment Advice", createdAt: serverTimestamp() });
+      });
+      await batch.commit();
+      notify(`Added ${missing.length} starter rule${missing.length === 1 ? "" : "s"}.`);
+      fetchInitialData();
+    } catch (e) {
+      notify("Could not add starter rules: " + e.message, "error");
+    } finally {
+      setLoadingStarters(false);
+    }
+  }
+
   async function handleDeleteRule(ruleId) {
     if (await confirmAction("Are you sure you want to delete this recommendation rule?", { confirmLabel: "Delete", danger: true })) {
       try {
@@ -197,12 +258,21 @@ export default function RecommendationManagement() {
             Write soil advice rules for gardeners. The app shows a rule on the Soil Monitoring screen and uses it in AI Recommendations when the gardener's reading meets the rule's condition.
           </p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors flex items-center gap-2 text-sm shrink-0"
-        >
-          <Plus size={18} /> Add Custom Recommendation Rule
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          <button
+            onClick={handleLoadStarterRules}
+            disabled={loadingStarters}
+            className="border border-green-700 text-green-800 hover:bg-green-50 disabled:opacity-60 font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+          >
+            <BookOpen size={18} /> {loadingStarters ? "Loading..." : "Load Starter Rules"}
+          </button>
+          <button
+            onClick={openAddModal}
+            className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 text-sm"
+          >
+            <Plus size={18} /> Add Custom Recommendation Rule
+          </button>
+        </div>
       </div>
 
       {/* DYNAMIC ACCURATE SOIL ANALYSIS EVALUATOR */}
