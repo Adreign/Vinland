@@ -5,6 +5,8 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -17,8 +19,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -42,7 +42,7 @@ import java.util.Map;
 
 public class PlantingCalendarActivity extends AppCompatActivity {
 
-    private ChipGroup chipGroupCrop;
+    private AutoCompleteTextView actvCrop;
     private LinearLayout layoutMonths, layoutForecastDays;
     private ProgressBar progressForecast;
     private HorizontalScrollView scrollForecast;
@@ -75,7 +75,7 @@ public class PlantingCalendarActivity extends AppCompatActivity {
         requestQueue = Volley.newRequestQueue(this);
 
         TextView tvBack = findViewById(R.id.tvBack);
-        chipGroupCrop = findViewById(R.id.chipGroupCrop);
+        actvCrop = findViewById(R.id.actvCrop);
         layoutMonths = findViewById(R.id.layoutMonths);
         layoutForecastDays = findViewById(R.id.layoutForecastDays);
         progressForecast = findViewById(R.id.progressForecast);
@@ -127,7 +127,6 @@ public class PlantingCalendarActivity extends AppCompatActivity {
     }
 
     private void setupCropChips(List<String> cropNames) {
-        chipGroupCrop.removeAllViews();
         List<Crop> availableCrops = new ArrayList<>();
 
         for (String cName : cropNames) {
@@ -141,31 +140,23 @@ public class PlantingCalendarActivity extends AppCompatActivity {
             availableCrops.addAll(cropMap.values());
         }
 
+        List<String> labels = new ArrayList<>();
         for (Crop crop : availableCrops) {
-            Chip chip = new Chip(this);
-            String displayName = crop.getEmoji() != null ? crop.getEmoji() + " " + crop.getName() : crop.getName();
-            chip.setText(displayName);
-            chip.setTag(crop);
-            chip.setCheckable(true);
-            chip.setCheckedIconVisible(false);
-            chipGroupCrop.addView(chip);
+            labels.add(crop.getEmoji() != null ? crop.getEmoji() + " " + crop.getName() : crop.getName());
         }
 
-        if (chipGroupCrop.getChildCount() > 0) {
-            Chip firstChip = (Chip) chipGroupCrop.getChildAt(0);
-            firstChip.setChecked(true);
-            selectedCrop = (Crop) firstChip.getTag();
+        actvCrop.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, labels));
+
+        if (!availableCrops.isEmpty()) {
+            selectedCrop = availableCrops.get(0);
+            actvCrop.setText(labels.get(0), false); // false = don't filter the list
         }
 
-        chipGroupCrop.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (!checkedIds.isEmpty()) {
-                Chip checked = group.findViewById(checkedIds.get(0));
-                if (checked != null && checked.getTag() instanceof Crop) {
-                    selectedCrop = (Crop) checked.getTag();
-                    renderMonths();
-                    updateAdjustedAdvice();
-                }
-            }
+        actvCrop.setOnItemClickListener((parent, view, position, id) -> {
+            selectedCrop = availableCrops.get(position);
+            renderMonths();
+            updateAdjustedAdvice();
         });
 
         renderMonths();
