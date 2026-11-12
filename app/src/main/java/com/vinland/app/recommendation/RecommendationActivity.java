@@ -85,6 +85,9 @@ public class RecommendationActivity extends AppCompatActivity {
     // Advice rules written by the admin on the web admin "Recommendation Management" page
     private final List<AdminSoilRules.Rule> adminRules = new ArrayList<>();
 
+    // General good soil ranges, set by the admin on the web admin "Soil Conditions" page
+    private SoilRanges soilRanges = SoilRanges.defaults();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -146,6 +149,20 @@ public class RecommendationActivity extends AppCompatActivity {
         loadUserSavedDeviceId();
         CropDatabaseSeeder.seedIfEmpty(db, this::loadCropsFromFirestore);
         loadAdminRules();
+        loadSoilRanges();
+    }
+
+    /** Loads the admin's general soil ranges. If this fails, the built-in defaults are used. */
+    private void loadSoilRanges() {
+        db.collection("soil_condition_config").get().addOnSuccessListener(snap -> {
+            Map<String, Object> npk = null, ph = null, moisture = null;
+            for (DocumentSnapshot doc : snap.getDocuments()) {
+                if ("npk".equals(doc.getId())) npk = doc.getData();
+                else if ("ph".equals(doc.getId())) ph = doc.getData();
+                else if ("moisture".equals(doc.getId())) moisture = doc.getData();
+            }
+            soilRanges = SoilRanges.from(npk, ph, moisture);
+        });
     }
 
     /** Loads the admin's advice rules. If this fails, the screen still works with its built-in tips. */
@@ -772,20 +789,20 @@ public class RecommendationActivity extends AppCompatActivity {
 
         addResultRow("💧 Moisture", moisture + "%", classifyGeneralMoisture(moisture));
         addResultRow("⚗️ pH Level", String.valueOf(ph), classifyGeneralPh(ph));
-        addResultRow("🌿 Nitrogen (N)", n + " ppm", classifyGeneralNutrient(n, 5.0, 80.0, "Nitrogen"));
-        addResultRow("🌿 Phosphorus (P)", p + " ppm", classifyGeneralNutrient(p, 5.0, 60.0, "Phosphorus"));
-        addResultRow("🌿 Potassium (K)", k + " ppm", classifyGeneralNutrient(k, 15.0, 150.0, "Potassium"));
+        addResultRow("🌿 Nitrogen (N)", n + " ppm", classifyGeneralNutrient(n, soilRanges.nMin, soilRanges.nMax, "Nitrogen"));
+        addResultRow("🌿 Phosphorus (P)", p + " ppm", classifyGeneralNutrient(p, soilRanges.pMin, soilRanges.pMax, "Phosphorus"));
+        addResultRow("🌿 Potassium (K)", k + " ppm", classifyGeneralNutrient(k, soilRanges.kMin, soilRanges.kMax, "Potassium"));
     }
 
     private String[] classifyGeneralMoisture(double m) {
-        if (m < 35) return new String[]{"Too Dry", "Moisture is low. Water soil thoroughly.", "#D32F2F"};
-        if (m > 80) return new String[]{"Too Wet", "Moisture is very high. Ensure drainage.", "#F9A825"};
+        if (m < soilRanges.moistureMin) return new String[]{"Too Dry", "Moisture is low. Water soil thoroughly.", "#D32F2F"};
+        if (m > soilRanges.moistureMax) return new String[]{"Too Wet", "Moisture is very high. Ensure drainage.", "#F9A825"};
         return new String[]{"Optimal", "Moisture is in a healthy growing range.", "#2E7D32"};
     }
 
     private String[] classifyGeneralPh(double ph) {
-        if (ph < 5.5) return new String[]{"Too Acidic", "Consider adding garden lime to raise pH.", "#D32F2F"};
-        if (ph > 7.5) return new String[]{"Too Alkaline", "Consider adding organic compost to lower pH.", "#F9A825"};
+        if (ph < soilRanges.phMin) return new String[]{"Too Acidic", "Consider adding garden lime to raise pH.", "#D32F2F"};
+        if (ph > soilRanges.phMax) return new String[]{"Too Alkaline", "Consider adding organic compost to lower pH.", "#F9A825"};
         return new String[]{"Optimal", "pH is neutral and ideal for most vegetables.", "#2E7D32"};
     }
 
@@ -813,27 +830,27 @@ public class RecommendationActivity extends AppCompatActivity {
         // 1. Soil Health Breakdown
         report.append("<b>1. Soil Health Breakdown:</b><br/>");
         report.append("• <b>Soil Moisture (").append(moisture).append("%):</b> ");
-        if (moisture < 35) {
+        if (moisture < soilRanges.moistureMin) {
             report.append("Low moisture level. Your soil is dry and requires immediate deep watering.<br/>");
-        } else if (moisture > 80) {
+        } else if (moisture > soilRanges.moistureMax) {
             report.append("High moisture level. Ensure pot drainage holes are clear to prevent root rot.<br/>");
         } else {
             report.append("Optimal soil moisture level for tropical urban gardening.<br/>");
         }
 
         report.append("• <b>Soil pH (").append(ph).append("):</b> ");
-        if (ph < 5.5) {
+        if (ph < soilRanges.phMin) {
             report.append("Acidic soil. Apply agricultural lime (calcium carbonate) to balance pH.<br/>");
-        } else if (ph > 7.5) {
+        } else if (ph > soilRanges.phMax) {
             report.append("Alkaline soil. Add organic vermicompost to lower pH.<br/>");
         } else {
             report.append("Ideal neutral pH for Quezon City vegetable crops.<br/>");
         }
 
         report.append("• <b>NPK Nutrients:</b> ");
-        report.append("Nitrogen ").append(n < 5.0 ? "Deficient" : n > 80.0 ? "High" : "Optimal").append(" (").append(n).append(" ppm), ");
-        report.append("Phosphorus ").append(p < 5.0 ? "Deficient" : p > 60.0 ? "High" : "Optimal").append(" (").append(p).append(" ppm), ");
-        report.append("Potassium ").append(k < 15.0 ? "Deficient" : k > 150.0 ? "High" : "Optimal").append(" (").append(k).append(" ppm).<br/><br/>");
+        report.append("Nitrogen ").append(n < soilRanges.nMin ? "Deficient" : n > soilRanges.nMax ? "High" : "Optimal").append(" (").append(n).append(" ppm), ");
+        report.append("Phosphorus ").append(p < soilRanges.pMin ? "Deficient" : p > soilRanges.pMax ? "High" : "Optimal").append(" (").append(p).append(" ppm), ");
+        report.append("Potassium ").append(k < soilRanges.kMin ? "Deficient" : k > soilRanges.kMax ? "High" : "Optimal").append(" (").append(k).append(" ppm).<br/><br/>");
 
         // 2. Crop Match
         report.append("<b>2. Top Recommended Crops:</b><br/>");
@@ -842,20 +859,20 @@ public class RecommendationActivity extends AppCompatActivity {
 
         // 3. Soil Amendments
         report.append("<b>3. Actionable Soil Care Steps:</b><br/>");
-        if (n < 5.0) {
+        if (n < soilRanges.nMin) {
             report.append("• Apply organic vermicompost or fermented plant juice (FPJ) to boost Nitrogen.<br/>");
         }
-        if (p < 5.0) {
+        if (p < soilRanges.pMin) {
             report.append("• Apply steamed bone meal or fermented fruit juice (FFJ) for root development.<br/>");
         }
-        if (k < 15.0) {
+        if (k < soilRanges.kMin) {
             report.append("• Apply banana peel liquid tea or wood ash to supply Potassium.<br/>");
         }
-        if (ph < 5.5) {
+        if (ph < soilRanges.phMin) {
             report.append("• Top-dress 1 tablespoon of agricultural lime per pot.<br/>");
-        } else if (ph > 7.5) {
+        } else if (ph > soilRanges.phMax) {
             report.append("• Mix in rich organic compost to lower alkaline pH.<br/>");
-        } else if (n >= 5.0 && p >= 5.0 && k >= 15.0) {
+        } else if (n >= soilRanges.nMin && p >= soilRanges.pMin && k >= soilRanges.kMin) {
             report.append("• Your soil nutrient levels are well-balanced! Maintain regular organic top-dressing.<br/>");
         }
 
@@ -865,9 +882,9 @@ public class RecommendationActivity extends AppCompatActivity {
         }
 
         report.append("<br/><b>4. Watering Guidance:</b><br/>");
-        if (moisture < 35) {
+        if (moisture < soilRanges.moistureMin) {
             report.append("• Water twice daily in early morning (6:30 AM) and late afternoon (5:00 PM).");
-        } else if (moisture > 80) {
+        } else if (moisture > soilRanges.moistureMax) {
             report.append("• Pause irrigation until the top 1-2 inches of soil feel dry to the touch.");
         } else {
             report.append("• Maintain regular morning watering schedules.");
@@ -878,11 +895,11 @@ public class RecommendationActivity extends AppCompatActivity {
 
     private void updateExecutiveSummary(double moisture, double ph, double n, double p, double k) {
         int optimalCount = 0;
-        if (moisture >= 30 && moisture <= 80) optimalCount++;
-        if (ph >= 5.5 && ph <= 7.5) optimalCount++;
-        if (n >= 5.0 && n <= 80.0) optimalCount++;
-        if (p >= 5.0 && p <= 60.0) optimalCount++;
-        if (k >= 15.0 && k <= 150.0) optimalCount++;
+        if (soilRanges.moistureOk(moisture)) optimalCount++;
+        if (soilRanges.phOk(ph)) optimalCount++;
+        if (soilRanges.nOk(n)) optimalCount++;
+        if (soilRanges.pOk(p)) optimalCount++;
+        if (soilRanges.kOk(k)) optimalCount++;
 
         if (tvSummaryBadge != null) {
             if (optimalCount >= 4) {
@@ -898,12 +915,12 @@ public class RecommendationActivity extends AppCompatActivity {
         }
 
         StringBuilder findings = new StringBuilder();
-        findings.append("• Moisture: ").append(moisture < 35 ? "Low (" + moisture + "%). Needs thorough watering." : moisture > 80 ? "High (" + moisture + "%). Ensure soil drainage." : "Optimal (" + moisture + "%). Healthy range.").append("\n");
-        findings.append("• Soil pH: ").append(ph < 5.5 ? "Acidic (" + ph + "). Add agricultural lime." : ph > 7.5 ? "Alkaline (" + ph + "). Add organic compost." : "Optimal neutral (" + ph + "). Ideal for crops.").append("\n");
+        findings.append("• Moisture: ").append(moisture < soilRanges.moistureMin ? "Low (" + moisture + "%). Needs thorough watering." : moisture > soilRanges.moistureMax ? "High (" + moisture + "%). Ensure soil drainage." : "Optimal (" + moisture + "%). Healthy range.").append("\n");
+        findings.append("• Soil pH: ").append(ph < soilRanges.phMin ? "Acidic (" + ph + "). Add agricultural lime." : ph > soilRanges.phMax ? "Alkaline (" + ph + "). Add organic compost." : "Optimal neutral (" + ph + "). Ideal for crops.").append("\n");
         findings.append("• NPK Status: ")
-                .append(n < 5.0 ? "N Deficient, " : n > 80.0 ? "N High, " : "N Optimal, ")
-                .append(p < 5.0 ? "P Deficient, " : p > 60.0 ? "P High, " : "P Optimal, ")
-                .append(k < 15.0 ? "K Deficient." : k > 150.0 ? "K High." : "K Optimal.");
+                .append(n < soilRanges.nMin ? "N Deficient, " : n > soilRanges.nMax ? "N High, " : "N Optimal, ")
+                .append(p < soilRanges.pMin ? "P Deficient, " : p > soilRanges.pMax ? "P High, " : "P Optimal, ")
+                .append(k < soilRanges.kMin ? "K Deficient." : k > soilRanges.kMax ? "K High." : "K Optimal.");
 
         if (tvSummaryKeyFindings != null) {
             tvSummaryKeyFindings.setText(findings.toString());
@@ -915,15 +932,15 @@ public class RecommendationActivity extends AppCompatActivity {
         }
 
         if (tvSummaryActionNeeded != null) {
-            if (ph < 5.5) {
+            if (ph < soilRanges.phMin) {
                 tvSummaryActionNeeded.setText("Add Agricultural Lime");
-            } else if (ph > 7.5) {
+            } else if (ph > soilRanges.phMax) {
                 tvSummaryActionNeeded.setText("Add Organic Compost");
-            } else if (n < 5.0) {
+            } else if (n < soilRanges.nMin) {
                 tvSummaryActionNeeded.setText("Apply Organic Nitrogen");
-            } else if (moisture < 35) {
+            } else if (moisture < soilRanges.moistureMin) {
                 tvSummaryActionNeeded.setText("Increase Irrigation");
-            } else if (moisture > 80) {
+            } else if (moisture > soilRanges.moistureMax) {
                 tvSummaryActionNeeded.setText("Improve Soil Drainage");
             } else {
                 tvSummaryActionNeeded.setText("Maintain Current Care");
