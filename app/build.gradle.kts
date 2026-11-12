@@ -32,10 +32,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "ANTHROPIC_API_KEY", secret("ANTHROPIC_API_KEY"))
-        buildConfigField("String", "GEMINI_API_KEY", secret("GEMINI_API_KEY"))
-        buildConfigField("String", "GROQ_API_KEY", secret("GROQ_API_KEY"))
-        buildConfigField("String", "OPENAI_API_KEY", secret("OPENAI_API_KEY"))
-        buildConfigField("String", "OPENAI_FINE_TUNED_MODEL_ID", secret("OPENAI_FINE_TUNED_MODEL_ID"))
+        buildConfigField("String", "OPENWEATHER_API_KEY", secret("OPENWEATHER_API_KEY"))
     }
 
     buildFeatures {
