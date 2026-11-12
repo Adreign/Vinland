@@ -82,6 +82,9 @@ public class RecommendationActivity extends AppCompatActivity {
     private boolean cropsLoaded = false, userLoaded = false;
     private List<CropHealthChecker.Result> lastHealthResults = new ArrayList<>();
 
+    // Advice rules written by the admin on the web admin "Recommendation Management" page
+    private final List<AdminSoilRules.Rule> adminRules = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -142,6 +145,30 @@ public class RecommendationActivity extends AppCompatActivity {
         setFieldsEditable(false);
         loadUserSavedDeviceId();
         CropDatabaseSeeder.seedIfEmpty(db, this::loadCropsFromFirestore);
+        loadAdminRules();
+    }
+
+    /** Loads the admin's advice rules. If this fails, the screen still works with its built-in tips. */
+    private void loadAdminRules() {
+        db.collection("recommendations").get().addOnSuccessListener(snap -> {
+            adminRules.clear();
+            for (DocumentSnapshot doc : snap.getDocuments()) {
+                AdminSoilRules.Rule rule = AdminSoilRules.fromMap(doc.getData());
+                if (rule != null) adminRules.add(rule);
+            }
+        });
+    }
+
+    /** HTML list of the admin rules that fire, or "" if none. */
+    private String adminAdviceHtml(List<AdminSoilRules.Rule> rules) {
+        if (rules.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("<b>📋 Advice from your agriculture office:</b><br/>");
+        for (AdminSoilRules.Rule r : rules) {
+            sb.append("• <b>").append(TextUtils.htmlEncode(r.status.isEmpty() ? r.triggerText() : r.status))
+                    .append("</b> (").append(TextUtils.htmlEncode(r.triggerText())).append("): ")
+                    .append(TextUtils.htmlEncode(r.advice)).append("<br/>");
+        }
+        return sb.toString();
     }
 
     /** Switches between "New Soil" and "Monitor Crops / Plants". */
@@ -537,6 +564,8 @@ public class RecommendationActivity extends AppCompatActivity {
                         .append("</b> (").append(c.valueText()).append(", ideal ").append(c.rangeText()).append("): ")
                         .append(c.tip).append("<br/>");
             }
+            sb.append(adminAdviceHtml(AdminSoilRules.matching(adminRules, r.crop.getName(),
+                    currentMoisture, currentPh, currentN, currentP, currentK)));
         }
         return sb.toString();
     }
@@ -626,6 +655,18 @@ public class RecommendationActivity extends AppCompatActivity {
                 tvTip.setPadding(0, dpToPx(2), 0, 0);
                 col.addView(tvTip);
             }
+        }
+
+        // Admin advice rules that fire for this crop
+        for (AdminSoilRules.Rule rule : AdminSoilRules.matching(adminRules, r.crop.getName(),
+                currentMoisture, currentPh, currentN, currentP, currentK)) {
+            TextView tvRule = new TextView(this);
+            String head = rule.status.isEmpty() ? rule.triggerText() : rule.status;
+            tvRule.setText("📋 " + head + ": " + rule.advice);
+            tvRule.setTextSize(12);
+            tvRule.setTextColor(Color.parseColor("#2E5E3A"));
+            tvRule.setPadding(0, dpToPx(8), 0, 0);
+            col.addView(tvRule);
         }
 
         card.addView(col);
@@ -816,6 +857,11 @@ public class RecommendationActivity extends AppCompatActivity {
             report.append("• Mix in rich organic compost to lower alkaline pH.<br/>");
         } else if (n >= 5.0 && p >= 5.0 && k >= 15.0) {
             report.append("• Your soil nutrient levels are well-balanced! Maintain regular organic top-dressing.<br/>");
+        }
+
+        String adminHtml = adminAdviceHtml(AdminSoilRules.matching(adminRules, null, moisture, ph, n, p, k));
+        if (!adminHtml.isEmpty()) {
+            report.append("<br/>").append(adminHtml);
         }
 
         report.append("<br/><b>4. Watering Guidance:</b><br/>");
