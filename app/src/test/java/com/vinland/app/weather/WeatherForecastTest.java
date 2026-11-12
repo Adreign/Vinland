@@ -33,6 +33,31 @@ public class WeatherForecastTest {
     }
 
     @Test
+    public void findsTomorrow() throws Exception {
+        List<WeatherForecast.Day> days = WeatherForecast.parse(sample("[0,2,3]", "[5,10,20]"));
+        assertEquals(LocalDate.of(2026, 11, 10), WeatherForecast.tomorrow(days, TODAY).date);
+        org.junit.Assert.assertNull(WeatherForecast.tomorrow(days, TODAY.plusDays(5)));
+    }
+
+    @Test
+    public void tomorrowNoticeMatchesWeather() {
+        LocalDate d = TODAY.plusDays(1);
+        String[] rain = WeatherForecast.tomorrowNotice(new WeatherForecast.Day(d, 63, 30, 24, 80, 12));
+        assertTrue(rain[0].contains("Rain"));
+        assertTrue(rain[1].contains("80% chance of rain"));
+        assertTrue(rain[1].contains("24–30°C"));
+
+        String[] storm = WeatherForecast.tomorrowNotice(new WeatherForecast.Day(d, 95, 31, 25, 90, 20));
+        assertTrue(storm[0].contains("Thunderstorms"));
+
+        String[] hot = WeatherForecast.tomorrowNotice(new WeatherForecast.Day(d, 1, 34, 26, 10, 0));
+        assertTrue(hot[0].contains("Hot"));
+
+        String[] fine = WeatherForecast.tomorrowNotice(new WeatherForecast.Day(d, 2, 31, 25, 10, 0));
+        assertTrue(fine[0].contains("Tomorrow's Weather"));
+    }
+
+    @Test
     public void labelsDays() {
         assertEquals("Today", WeatherForecast.dayLabel(TODAY, TODAY));
         assertEquals("Tomorrow", WeatherForecast.dayLabel(TODAY.plusDays(1), TODAY));

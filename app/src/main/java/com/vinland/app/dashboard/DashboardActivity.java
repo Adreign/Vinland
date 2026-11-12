@@ -113,6 +113,9 @@ public class DashboardActivity extends AppCompatActivity {
         // Immediate sync on launch to issue daily garden care notification
         OneTimeWorkRequest immediateWorkRequest = new OneTimeWorkRequest.Builder(WeatherAlertWorker.class).build();
         WorkManager.getInstance(this).enqueue(immediateWorkRequest);
+
+        // Every evening: tomorrow's forecast
+        com.vinland.app.weather.TomorrowForecastWorker.schedule(this);
     }
 
     private void syncFcmToken() {

@@ -103,6 +103,42 @@ public final class WeatherForecast {
         return "Thunderstorm";
     }
 
+    /** Finds tomorrow in the forecast, or null if it isn't there. */
+    public static Day tomorrow(List<Day> days, LocalDate today) {
+        LocalDate t = today.plusDays(1);
+        for (Day d : days) {
+            if (d.date.equals(t)) return d;
+        }
+        return null;
+    }
+
+    /**
+     * Title and text for the evening "tomorrow's weather" notification:
+     * {title, message}.
+     */
+    public static String[] tomorrowNotice(Day d) {
+        String temps = Math.round(d.minTemp) + "–" + Math.round(d.maxTemp) + "°C";
+        String summary = emoji(d.weatherCode) + " " + describe(d.weatherCode) + ", " + temps
+                + ", " + d.rainChance + "% chance of rain";
+
+        String title;
+        String tip;
+        if (d.weatherCode >= 95) {
+            title = "⛈️ Thunderstorms Tomorrow in QC";
+            tip = "Move pots under shelter, tie up tall plants, and skip watering.";
+        } else if (d.isRainy()) {
+            title = "🌧️ Rain Expected Tomorrow in QC";
+            tip = "Skip watering tomorrow, clear pot drainage holes, and harvest ripe crops today.";
+        } else if (d.maxTemp >= 33) {
+            title = "🌡️ Hot Day Tomorrow in QC";
+            tip = "Water early in the morning, add mulch, and shade young seedlings at noon.";
+        } else {
+            title = "🌤️ Tomorrow's Weather in QC";
+            tip = "Good gardening weather. Keep to your regular watering schedule.";
+        }
+        return new String[]{title, summary + ". " + tip};
+    }
+
     /** One-line garden tip for the coming days. */
     public static String gardenTip(List<Day> days, LocalDate today) {
         if (days.isEmpty()) return "";
