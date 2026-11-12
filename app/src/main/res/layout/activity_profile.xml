@@ -246,30 +246,14 @@
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
-                    <LinearLayout
+                    <!-- Wraps crops onto new lines so none get cut off -->
+                    <com.google.android.material.chip.ChipGroup
                         android:id="@+id/layoutCropsContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:orientation="horizontal">
-
-                        <CheckBox
-                            android:id="@+id/cbTomato"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:buttonTint="#2E7D32"
-                            android:enabled="false"
-                            android:text="Tomato" />
-
-                        <CheckBox
-                            android:id="@+id/cbGreenPepper"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="20dp"
-                            android:buttonTint="#2E7D32"
-                            android:enabled="false"
-                            android:text="Green Pepper" />
-                    </LinearLayout>
+                        app:chipSpacingHorizontal="12dp"
+                        app:chipSpacingVertical="0dp" />
 
                     <TextView
                         android:id="@+id/tvError"

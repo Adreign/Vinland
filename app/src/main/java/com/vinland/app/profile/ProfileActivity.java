@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
@@ -18,6 +19,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -37,7 +39,8 @@ public class ProfileActivity extends AppCompatActivity {
     private TextInputEditText etFirstName, etLastName, etSensorDeviceId;
     private AutoCompleteTextView actvBarangay;
     private RadioGroup rgGardenType;
-    private LinearLayout layoutCropsContainer, layoutEditButtons;
+    private LinearLayout layoutEditButtons;
+    private ChipGroup layoutCropsContainer;
     private MaterialButton btnEditProfile, btnCancel, btnSave;
     private ProgressBar progressBar;
 
@@ -133,9 +136,8 @@ public class ProfileActivity extends AppCompatActivity {
                     cb.setButtonTintList(greenTint);
                     cb.setEnabled(isEditMode);
 
-                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                    params.rightMargin = dpToPx(16);
+                    ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     cb.setLayoutParams(params);
 
                     layoutCropsContainer.addView(cb);
