@@ -116,6 +116,27 @@ public class WeatherActivity extends AppCompatActivity {
         tvForecastTip.setText(WeatherForecast.gardenTip(days, today));
         tvForecastError.setVisibility(View.GONE);
         cardForecast.setVisibility(View.VISIBLE);
+
+        showTomorrow(WeatherForecast.tomorrow(days, today));
+    }
+
+    /** Fills the "Tomorrow" card with the same text as the evening notification. */
+    private void showTomorrow(WeatherForecast.Day tomorrow) {
+        MaterialCardView card = findViewById(R.id.cardTomorrow);
+        if (tomorrow == null) {
+            card.setVisibility(View.GONE);
+            return;
+        }
+        String[] notice = WeatherForecast.tomorrowNotice(tomorrow);
+        // The title starts with an emoji; the card shows the weather emoji in its own box.
+        String title = notice[0];
+        int space = title.indexOf(' ');
+        if (space > 0) title = title.substring(space + 1);
+
+        ((TextView) findViewById(R.id.tvTomorrowIcon)).setText(WeatherForecast.emoji(tomorrow.weatherCode));
+        ((TextView) findViewById(R.id.tvTomorrowTitle)).setText(title);
+        ((TextView) findViewById(R.id.tvTomorrowText)).setText(notice[1]);
+        card.setVisibility(View.VISIBLE);
     }
 
     private void fetchWeather() {
