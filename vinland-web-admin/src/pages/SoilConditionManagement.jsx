@@ -72,11 +72,6 @@ export default function SoilConditionManagement() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  // Which of the npk / ph / moisture documents are not in Firestore yet
-  const [missingDocs, setMissingDocs] = useState([]);
-  const [creating, setCreating] = useState(false);
-  // True when the page couldn't read soil_condition_config (e.g. blocked by security rules)
-  const [loadFailed, setLoadFailed] = useState(false);
 
   // Values are kept as typed (strings allowed) and checked on save.
   const [ranges, setRanges] = useState({ npk: DEFAULT_NPK, ph: DEFAULT_PH, moisture: DEFAULT_MOISTURE });
@@ -87,12 +82,10 @@ export default function SoilConditionManagement() {
 
   async function fetchSoilConfigurations() {
     setLoading(true);
-    setLoadFailed(false);
     try {
       const snap = await getDocs(collection(db, "soil_condition_config"));
       const found = {};
       snap.forEach(d => { found[d.id] = d.data(); });
-      setMissingDocs(["npk", "ph", "moisture"].filter(id => !found[id]));
       setRanges({
         npk: pick(found.npk, DEFAULT_NPK),
         ph: pick(found.ph, DEFAULT_PH),
@@ -100,7 +93,6 @@ export default function SoilConditionManagement() {
       });
     } catch (e) {
       console.error("Error loading soil configs:", e);
-      setLoadFailed(true);
       notify("Could not load saved soil ranges (showing defaults): " + e.message, "error");
     } finally {
       setLoading(false);
@@ -144,49 +136,12 @@ export default function SoilConditionManagement() {
       batch.set(doc(db, "soil_condition_config", "moisture"), clean.moisture);
       await batch.commit();
       setRanges(clean);
-      setMissingDocs([]);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (e) {
       notify("Failed to save soil condition parameters: " + e.message, "error");
     } finally {
       setSaving(false);
-    }
-  }
-
-  // Writes the whole soil_condition_config collection (npk, ph, moisture) with the
-  // default ranges. Documents that already exist are left alone, so saved values
-  // are never overwritten.
-  async function handleCreateCollection() {
-    if (!loadFailed && missingDocs.length === 0) {
-      notify("Soil settings already exist in Firestore (soil_condition_config). Edit the ranges below and click Save Soil Parameters.");
-      return;
-    }
-    const toCreate = loadFailed ? ["npk", "ph", "moisture"] : missingDocs;
-    const ok = await confirmAction(
-      `Create the soil_condition_config collection in Firestore with the default ranges (${toCreate.join(", ")})?`,
-      { confirmLabel: "Create" }
-    );
-    if (!ok) return;
-
-    setCreating(true);
-    try {
-      const defaults = { npk: DEFAULT_NPK, ph: DEFAULT_PH, moisture: DEFAULT_MOISTURE };
-      const batch = writeBatch(db);
-      toCreate.forEach(id => batch.set(doc(db, "soil_condition_config", id), defaults[id]));
-      await batch.commit();
-      notify("Soil settings created in Firestore (soil_condition_config) with the default ranges.");
-      await fetchSoilConfigurations();
-    } catch (e) {
-      const blocked = e.code === "permission-denied";
-      notify(
-        blocked
-          ? "Firebase blocked this. Add the soil_condition_config rule in Firebase (Firestore Database → Rules), click Publish, then try again."
-          : "Could not create soil settings: " + e.message,
-        "error"
-      );
-    } finally {
-      setCreating(false);
     }
   }
 
@@ -220,14 +175,7 @@ export default function SoilConditionManagement() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2 shrink-0">
-          <button
-            onClick={handleCreateCollection}
-            disabled={creating || loading}
-            className="border border-amber-500 text-amber-800 hover:bg-amber-50 disabled:opacity-60 font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 text-sm"
-          >
-            {creating ? <RefreshCw size={16} className="animate-spin" /> : <Layers size={16} />} Create Soil Settings
-          </button>
+        <div className="flex gap-2 shrink-0">
           <button
             onClick={handleResetDefaults}
             disabled={saving || loading}
@@ -250,27 +198,6 @@ export default function SoilConditionManagement() {
         <div className="p-4 bg-green-50 border border-green-200 text-green-800 rounded-xl text-xs font-semibold flex items-center gap-2">
           <CheckCircle2 size={18} className="text-green-600" />
           Soil ranges saved. Gardeners will see them the next time they open Soil Monitoring.
-        </div>
-      )}
-
-      {!loading && missingDocs.length > 0 && (
-        <div className="p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-2">
-            <AlertTriangle size={18} className="shrink-0 mt-0.5 text-amber-600" />
-            <span>
-              {missingDocs.length === 3
-                ? <>The <b>soil_condition_config</b> collection isn't in your database yet. The app is using the default ranges.</>
-                : <>Some soil settings are missing from your database ({missingDocs.join(", ")}). The app is using defaults for those.</>}
-            </span>
-          </div>
-          <button
-            onClick={handleCreateCollection}
-            disabled={creating}
-            className="bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white font-semibold px-4 py-2 rounded-xl text-sm flex items-center justify-center gap-2 shrink-0"
-          >
-            {creating ? <RefreshCw size={16} className="animate-spin" /> : <Layers size={16} />}
-            Create Soil Settings
-          </button>
         </div>
       )}
 
