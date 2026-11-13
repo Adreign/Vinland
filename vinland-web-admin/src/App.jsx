@@ -10,6 +10,7 @@ import RecommendationManagement from "./pages/RecommendationManagement";
 import SoilConditionManagement from "./pages/SoilConditionManagement";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Download from "./pages/Download";
 import Notifier from "./components/common/Notifier";
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/download" element={<Download />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />

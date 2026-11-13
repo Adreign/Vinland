@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Lock, Mail, AlertCircle, CheckCircle2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { LeafLogo } from "../components/common/Sidebar";
@@ -187,6 +187,11 @@ export default function Login() {
             </button>
           )}
         </div>
+
+        <p className="max-w-md mx-auto mt-5 text-center text-sm text-gray-600">
+          Looking for the mobile app?{" "}
+          <Link to="/download" className="text-green-700 font-semibold hover:underline">Download Vinland for Android</Link>
+        </p>
       </div>
     </div>
   );
