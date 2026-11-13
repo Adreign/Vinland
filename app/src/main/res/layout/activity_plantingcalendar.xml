@@ -172,6 +172,18 @@
                         android:text="🌱 Plant   🌿 Growing   🧺 Harvest"
                         android:textColor="#5C6B5F"
                         android:textSize="11.5sp" />
+
+                    <!-- Starts a planting: daily tips until harvest (My Plantings) -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStartPlanting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:backgroundTint="#1F4D32"
+                        android:text="🌱 Start Planting"
+                        android:textColor="#FFFFFF"
+                        android:visibility="gone"
+                        app:cornerRadius="14dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

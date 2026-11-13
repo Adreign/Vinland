@@ -82,6 +82,8 @@ public class DashboardActivity extends AppCompatActivity {
                 startActivity(new Intent(this, com.vinland.app.ai.AiRecommendationActivity.class)));
         findViewById(R.id.navSavedRecommendations).setOnClickListener(v ->
                 startActivity(new Intent(this, com.vinland.app.ai.SavedRecommendationsActivity.class)));
+        findViewById(R.id.navMyPlantings).setOnClickListener(v ->
+                startActivity(new Intent(this, com.vinland.app.planting.MyPlantingsActivity.class)));
         if (navSettings != null) {
             navSettings.setOnClickListener(v -> startActivity(new Intent(this, SettingsActivity.class)));
         }
@@ -116,6 +118,47 @@ public class DashboardActivity extends AppCompatActivity {
 
         // Every evening: tomorrow's forecast
         com.vinland.app.weather.TomorrowForecastWorker.schedule(this);
+
+        // Every morning: today's tasks for active plantings
+        com.vinland.app.planting.DailyPlantingWorker.schedule(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadPlantingsSummary();
+    }
+
+    /** "2 active · Pechay day 5" on the My Plantings card. */
+    private void loadPlantingsSummary() {
+        if (mAuth.getCurrentUser() == null) return;
+        TextView tvSummary = findViewById(R.id.tvPlantingsSummary);
+        com.vinland.app.planting.PlantingRepository.plantings(mAuth.getCurrentUser().getUid())
+                .whereEqualTo("status", com.vinland.app.planting.Planting.ACTIVE)
+                .get()
+                .addOnSuccessListener(snap -> {
+                    if (snap.isEmpty()) {
+                        tvSummary.setText("Start one from the Planting Calendar");
+                        return;
+                    }
+                    // Show the most recently started one.
+                    String latestName = null, latestStart = null;
+                    for (DocumentSnapshot d : snap.getDocuments()) {
+                        String start = d.getString("startDate");
+                        if (start != null && (latestStart == null || start.compareTo(latestStart) > 0)) {
+                            latestStart = start;
+                            latestName = d.getString("cropName");
+                        }
+                    }
+                    String text = snap.size() + " active";
+                    if (latestName != null) {
+                        long day = java.time.temporal.ChronoUnit.DAYS.between(
+                                java.time.LocalDate.parse(latestStart),
+                                com.vinland.app.planting.PlantingRepository.today()) + 1;
+                        text += " · " + latestName + " day " + Math.max(1, day);
+                    }
+                    tvSummary.setText(text + " · tap for today's tasks");
+                });
     }
 
     private void syncFcmToken() {

@@ -47,13 +47,18 @@ public class NotificationHelper {
     }
 
     public static void saveNotificationToFirestore(String title, String message) {
+        saveNotificationToFirestore(title, message, null);
+    }
+
+    /** @param category fixed category for the history filter, or null to guess it from the text */
+    public static void saveNotificationToFirestore(String title, String message, String category) {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
             String uid = auth.getCurrentUser().getUid();
             FirebaseFirestore db = FirebaseFirestore.getInstance();
             String id = db.collection("users").document(uid).collection("notifications").document().getId();
 
-            String category = resolveCategory(title, message);
+            if (category == null) category = resolveCategory(title, message);
 
             Map<String, Object> notif = new HashMap<>();
             notif.put("id", id);
@@ -82,8 +87,17 @@ public class NotificationHelper {
     }
 
     public static void sendNotification(Context context, String title, String message) {
+        sendNotification(context, title, message, WeatherActivity.class, null);
+    }
+
+    /**
+     * @param openOnTap screen opened when the notification is tapped
+     * @param category  fixed history category, or null to guess it from the text
+     */
+    public static void sendNotification(Context context, String title, String message,
+                                        Class<?> openOnTap, String category) {
         createNotificationChannel(context);
-        saveNotificationToFirestore(title, message);
+        saveNotificationToFirestore(title, message, category);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -92,7 +106,7 @@ public class NotificationHelper {
             }
         }
 
-        Intent intent = new Intent(context, WeatherActivity.class);
+        Intent intent = new Intent(context, openOnTap);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(

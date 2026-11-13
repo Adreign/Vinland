@@ -47,6 +47,8 @@
 
         <activity android:name=".ai.SavedRecommendationsActivity" android:exported="false" />
 
+        <activity android:name=".planting.MyPlantingsActivity" android:exported="false" />
+
         <activity android:name=".profile.ProfileActivity" android:exported="false" />
 
         <activity android:name=".calendar.PlantingCalendarActivity" android:exported="false" />

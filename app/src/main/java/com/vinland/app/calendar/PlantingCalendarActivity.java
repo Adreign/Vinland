@@ -51,6 +51,7 @@ public class PlantingCalendarActivity extends AppCompatActivity {
     private MaterialCardView cardPlantingStatus;
     private TextView tvPlantingHeadline, tvPlantingDetail, tvYearLegend;
     private LinearLayout layoutYearStrip;
+    private com.google.android.material.button.MaterialButton btnStartPlanting;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -90,8 +91,10 @@ public class PlantingCalendarActivity extends AppCompatActivity {
         tvPlantingDetail = findViewById(R.id.tvPlantingDetail);
         tvYearLegend = findViewById(R.id.tvYearLegend);
         layoutYearStrip = findViewById(R.id.layoutYearStrip);
+        btnStartPlanting = findViewById(R.id.btnStartPlanting);
 
         tvBack.setOnClickListener(v -> finish());
+        btnStartPlanting.setOnClickListener(v -> confirmStartPlanting());
 
         CropDatabaseSeeder.seedIfEmpty(db, () -> {
             loadCropsFromFirestore();
@@ -214,10 +217,13 @@ public class PlantingCalendarActivity extends AppCompatActivity {
                     + ". An admin can add them in the Vinland web admin under Crop Management.");
             layoutYearStrip.setVisibility(View.GONE);
             tvYearLegend.setVisibility(View.GONE);
+            btnStartPlanting.setVisibility(View.GONE); // no days to harvest = no daily plan
             return;
         }
         layoutYearStrip.setVisibility(View.VISIBLE);
         tvYearLegend.setVisibility(View.VISIBLE);
+        btnStartPlanting.setText("🌱 Start Planting " + name);
+        btnStartPlanting.setVisibility(View.VISIBLE);
 
         int month = Calendar.getInstance().get(Calendar.MONTH) + 1;
         int days = schedule.getDaysToHarvest();
@@ -523,6 +529,71 @@ public class PlantingCalendarActivity extends AppCompatActivity {
 
         tvAdjustedAdvice.setText(advice);
         cardAdjustedAdvice.setVisibility(View.VISIBLE);
+    }
+
+    // ------------------------------------------------------------ Start Planting
+
+    /** Asks to start today (or another day, for crops planted earlier), then saves the planting. */
+    private void confirmStartPlanting() {
+        if (selectedCrop == null || mAuth.getCurrentUser() == null) return;
+        PlantingSchedule schedule = new PlantingSchedule(selectedCrop);
+        if (!schedule.hasData()) return;
+
+        java.time.LocalDate today = com.vinland.app.planting.PlantingRepository.today();
+        int days = schedule.getDaysToHarvest();
+        String name = selectedCrop.getName();
+
+        StringBuilder msg = new StringBuilder("You'll get daily tips for " + name + " for about " + days
+                + " days, until harvest around "
+                + today.plusDays(days).format(java.time.format.DateTimeFormatter.ofPattern("MMMM d", Locale.US)) + ".");
+        if (!schedule.isPlantMonth(today.getMonthValue())) {
+            msg.append("\n\n⚠️ This isn't the best month to plant ").append(name)
+                    .append(", so growth may be slower or the harvest smaller.");
+        }
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Start planting " + name + " today?")
+                .setMessage(msg.toString())
+                .setNegativeButton("Cancel", null)
+                .setNeutralButton("Planted earlier", (d, w) -> pickEarlierDate(today))
+                .setPositiveButton("Start today", (d, w) -> savePlanting(today))
+                .show();
+    }
+
+    private void pickEarlierDate(java.time.LocalDate today) {
+        android.app.DatePickerDialog dialog = new android.app.DatePickerDialog(this,
+                (view, y, m, d) -> savePlanting(java.time.LocalDate.of(y, m + 1, d)),
+                today.getYear(), today.getMonthValue() - 1, today.getDayOfMonth());
+        // Only past dates, up to a year back.
+        java.time.ZoneId zone = com.vinland.app.planting.PlantingRepository.MANILA;
+        dialog.getDatePicker().setMaxDate(today.atStartOfDay(zone).toInstant().toEpochMilli());
+        dialog.getDatePicker().setMinDate(today.minusYears(1).atStartOfDay(zone).toInstant().toEpochMilli());
+        dialog.show();
+    }
+
+    private void savePlanting(java.time.LocalDate start) {
+        if (selectedCrop == null || mAuth.getCurrentUser() == null) return;
+        PlantingSchedule schedule = new PlantingSchedule(selectedCrop);
+        com.vinland.app.planting.Planting planting = new com.vinland.app.planting.Planting(
+                selectedCrop.getName(), selectedCrop.getEmoji(), schedule.getDaysToHarvest(), start.toString());
+
+        btnStartPlanting.setEnabled(false);
+        com.vinland.app.planting.PlantingRepository.plantings(mAuth.getCurrentUser().getUid())
+                .add(planting)
+                .addOnSuccessListener(ref -> {
+                    btnStartPlanting.setEnabled(true);
+                    com.google.android.material.snackbar.Snackbar.make(btnStartPlanting,
+                                    "🌱 " + selectedCrop.getName() + " added to My Plantings",
+                                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG)
+                            .setAction("View", v -> startActivity(new android.content.Intent(this,
+                                    com.vinland.app.planting.MyPlantingsActivity.class)))
+                            .show();
+                })
+                .addOnFailureListener(e -> {
+                    btnStartPlanting.setEnabled(true);
+                    android.widget.Toast.makeText(this, "Could not start planting: " + e.getMessage(),
+                            android.widget.Toast.LENGTH_LONG).show();
+                });
     }
 
     private int dpToPx(int dp) {

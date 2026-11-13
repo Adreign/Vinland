@@ -27,7 +27,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private TextInputEditText etSensorDeviceId;
     private AutoCompleteTextView actvBarangay;
-    private MaterialSwitch switchSoilAlerts, switchWeatherAlerts;
+    private MaterialSwitch switchSoilAlerts, switchWeatherAlerts, switchPlantingTips;
     private TextView btnBack;
     private MaterialButton btnTestSensor, btnResetPassword, btnSaveSettings;
 
@@ -47,6 +47,7 @@ public class SettingsActivity extends AppCompatActivity {
         actvBarangay = findViewById(R.id.actvBarangay);
         switchSoilAlerts = findViewById(R.id.switchSoilAlerts);
         switchWeatherAlerts = findViewById(R.id.switchWeatherAlerts);
+        switchPlantingTips = findViewById(R.id.switchPlantingTips);
         btnTestSensor = findViewById(R.id.btnTestSensor);
         btnResetPassword = findViewById(R.id.btnResetPassword);
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
@@ -91,6 +92,10 @@ public class SettingsActivity extends AppCompatActivity {
                         }
                         if (weatherAlerts != null) {
                             switchWeatherAlerts.setChecked(weatherAlerts);
+                        }
+                        Boolean plantingTips = doc.getBoolean("plantingTipsEnabled");
+                        if (plantingTips != null) {
+                            switchPlantingTips.setChecked(plantingTips);
                         }
                     }
                 });
@@ -175,6 +180,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
         updates.put("soilAlertsEnabled", soilAlerts);
         updates.put("weatherAlertsEnabled", weatherAlerts);
+        updates.put("plantingTipsEnabled", switchPlantingTips.isChecked());
 
         db.collection("users").document(user.getUid())
                 .set(updates, SetOptions.merge())
