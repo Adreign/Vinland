@@ -1,6 +1,5 @@
 package com.vinland.app.auth;
 
-import android.accounts.AccountManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
@@ -12,26 +11,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.AccountPicker;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.vinland.app.R;
@@ -40,15 +28,12 @@ import com.vinland.app.dashboard.DashboardActivity;
 public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText etEmail, etPassword;
-    private MaterialButton btnLogin, btnGoogleSignIn;
+    private MaterialButton btnLogin;
     private ProgressBar progressBar;
     private TextView tvError, tvGoToRegister, tvForgotPassword;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private GoogleSignInClient mGoogleSignInClient;
-    private ActivityResultLauncher<Intent> googleSignInLauncher;
-    private ActivityResultLauncher<Intent> nativeAccountPickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,60 +46,12 @@ public class LoginActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
-        btnGoogleSignIn = findViewById(R.id.btnGoogleSignIn);
         progressBar = findViewById(R.id.progressBar);
         tvError = findViewById(R.id.tvError);
         tvGoToRegister = findViewById(R.id.tvGoToRegister);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
 
-        // Configure Google Sign-In
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-
-        // 1. Google OAuth Launcher
-        googleSignInLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
-                        try {
-                            GoogleSignInAccount account = task.getResult(ApiException.class);
-                            if (account != null && account.getIdToken() != null) {
-                                firebaseAuthWithGoogle(account.getIdToken());
-                            } else {
-                                launchNativeDeviceAccountPicker();
-                            }
-                        } catch (ApiException e) {
-                            setLoading(false);
-                            launchNativeDeviceAccountPicker();
-                        }
-                    } else {
-                        setLoading(false);
-                        launchNativeDeviceAccountPicker();
-                    }
-                }
-        );
-
-        // 2. Native Account Picker Launcher (Fallback)
-        nativeAccountPickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    setLoading(false);
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        String accountName = result.getData().getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                        if (!TextUtils.isEmpty(accountName)) {
-                            etEmail.setText(accountName);
-                            Toast.makeText(this, "Gmail address " + accountName + " filled! Please enter your password or tap Register.", Toast.LENGTH_LONG).show();
-                        }
-                    }
-                }
-        );
-
         btnLogin.setOnClickListener(v -> attemptLogin());
-        btnGoogleSignIn.setOnClickListener(v -> attemptGoogleSignIn());
 
         tvGoToRegister.setOnClickListener(v ->
                 startActivity(new Intent(this, RegisterActivity.class)));
@@ -224,60 +161,6 @@ public class LoginActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void attemptGoogleSignIn() {
-        hideError();
-        setLoading(true);
-        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
-            try {
-                Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-                googleSignInLauncher.launch(signInIntent);
-            } catch (Exception e) {
-                launchNativeDeviceAccountPicker();
-            }
-        });
-    }
-
-    private void launchNativeDeviceAccountPicker() {
-        try {
-            Intent intent = AccountPicker.newChooseAccountIntent(
-                    new AccountPicker.AccountChooserOptions.Builder()
-                            .setAllowableAccountsTypes(java.util.Collections.singletonList("com.google"))
-                            .build()
-            );
-            nativeAccountPickerLauncher.launch(intent);
-        } catch (Exception e) {
-            try {
-                Intent intent = AccountManager.newChooseAccountIntent(
-                        null, null, new String[]{"com.google"}, false, null, null, null, null
-                );
-                nativeAccountPickerLauncher.launch(intent);
-            } catch (Exception ex) {
-                setLoading(false);
-                showError("Please enter your email and password above.");
-            }
-        }
-    }
-
-    private void firebaseAuthWithGoogle(String idToken) {
-        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        if (user != null) {
-                            Toast.makeText(this, "Signed in as " + user.getEmail() + "!", Toast.LENGTH_SHORT).show();
-                            checkUserStatusAndNavigate(user);
-                        } else {
-                            setLoading(false);
-                            goToDashboard();
-                        }
-                    } else {
-                        setLoading(false);
-                        showError("Google Sign-In failed: " + (task.getException() != null ? task.getException().getMessage() : "Authentication error"));
-                    }
-                });
-    }
-
     private void checkUserStatusAndNavigate(FirebaseUser user) {
         db.collection("users").document(user.getUid())
                 .get()
@@ -381,6 +264,5 @@ public class LoginActivity extends AppCompatActivity {
     private void setLoading(boolean loading) {
         progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
         btnLogin.setEnabled(!loading);
-        btnGoogleSignIn.setEnabled(!loading);
     }
 }

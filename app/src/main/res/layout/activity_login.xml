@@ -199,51 +199,6 @@
                     app:backgroundTint="#2E7D32"
                     app:cornerRadius="14dp" />
 
-                <!-- Divider -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginBottom="20dp"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="#E2E7DC" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingHorizontal="12dp"
-                        android:text="or"
-                        android:textColor="#5C6B5F"
-                        android:textSize="13sp" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1"
-                        android:background="#E2E7DC" />
-                </LinearLayout>
-
-                <!-- Google / Gmail Sign In Button -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnGoogleSignIn"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:text="Continue with Google"
-                    android:textAllCaps="false"
-                    android:textColor="#1C2A20"
-                    android:textSize="15sp"
-                    app:backgroundTint="@android:color/transparent"
-                    app:cornerRadius="14dp"
-                    app:strokeColor="#CFD6C9"
-                    app:strokeWidth="1.5dp" />
-
                 <ProgressBar
                     android:id="@+id/progressBar"
                     android:layout_width="wrap_content"
