@@ -1,6 +1,5 @@
 package com.vinland.app.auth;
 
-import android.accounts.AccountManager;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -19,27 +18,16 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.AccountPicker;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
@@ -49,7 +37,6 @@ import com.vinland.app.data.Crop;
 import com.vinland.app.data.CropDatabaseSeeder;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +51,7 @@ public class RegisterActivity extends AppCompatActivity {
     private RadioGroup rgGardenType;
     private LinearLayout layoutCropsContainer;
     private LinearLayout layoutStep1, layoutStep2, layoutStep3, layoutStep4;
-    private MaterialButton btnGoogleRegister, btnNextStep1, btnNextStep2, btnNextStep3, btnRegister;
+    private MaterialButton btnNextStep1, btnNextStep2, btnNextStep3, btnRegister;
     private MaterialButton btnBackStep2, btnBackStep3, btnBackStep4;
     private TextView tvStepIndicator;
     private LinearProgressIndicator progressStep;
@@ -73,10 +60,6 @@ public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private GoogleSignInClient mGoogleSignInClient;
-    private ActivityResultLauncher<Intent> googleSignInLauncher;
-    private ActivityResultLauncher<Intent> nativeAccountPickerLauncher;
-    private boolean isGoogleAuthenticated = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +91,6 @@ public class RegisterActivity extends AppCompatActivity {
         layoutCropsContainer = findViewById(R.id.layoutCropsContainer);
 
         // Bind action buttons
-        btnGoogleRegister = findViewById(R.id.btnGoogleRegister);
         btnNextStep1 = findViewById(R.id.btnNextStep1);
         btnNextStep2 = findViewById(R.id.btnNextStep2);
         btnNextStep3 = findViewById(R.id.btnNextStep3);
@@ -122,52 +104,6 @@ public class RegisterActivity extends AppCompatActivity {
         tvError = findViewById(R.id.tvError);
         tvGoToLogin = findViewById(R.id.tvGoToLogin);
 
-        // Configure Google Sign-In
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-
-        // 1. Google OAuth Launcher
-        googleSignInLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
-                        try {
-                            GoogleSignInAccount account = task.getResult(ApiException.class);
-                            if (account != null && account.getIdToken() != null) {
-                                firebaseAuthWithGoogle(account.getIdToken(), account);
-                            } else {
-                                launchNativeDeviceAccountPicker();
-                            }
-                        } catch (ApiException e) {
-                            setLoading(false);
-                            launchNativeDeviceAccountPicker();
-                        }
-                    } else {
-                        setLoading(false);
-                        launchNativeDeviceAccountPicker();
-                    }
-                }
-        );
-
-        // 2. Native Account Picker Launcher (Fallback)
-        nativeAccountPickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    setLoading(false);
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        String accountName = result.getData().getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-                        if (!TextUtils.isEmpty(accountName)) {
-                            // Only the email was picked; the user is not signed in, so they still need a password.
-                            applyAutoFilledEmail(accountName, false);
-                        }
-                    }
-                }
-        );
-
         // Barangay type-ahead suggestions
         ArrayAdapter<String> barangayAdapter = new ArrayAdapter<>(
                 this,
@@ -177,7 +113,6 @@ public class RegisterActivity extends AppCompatActivity {
         actvBarangay.setAdapter(barangayAdapter);
 
         // Navigation click listeners
-        btnGoogleRegister.setOnClickListener(v -> attemptGoogleRegister());
         btnNextStep1.setOnClickListener(v -> validateAndProceedStep1());
 
         btnNextStep2.setOnClickListener(v -> validateAndProceedStep2());
@@ -225,98 +160,6 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
 
-    private void attemptGoogleRegister() {
-        hideError();
-        setLoading(true);
-        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
-            try {
-                Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-                googleSignInLauncher.launch(signInIntent);
-            } catch (Exception e) {
-                launchNativeDeviceAccountPicker();
-            }
-        });
-    }
-
-    private void launchNativeDeviceAccountPicker() {
-        try {
-            Intent intent = AccountPicker.newChooseAccountIntent(
-                    new AccountPicker.AccountChooserOptions.Builder()
-                            .setAllowableAccountsTypes(java.util.Collections.singletonList("com.google"))
-                            .build()
-            );
-            nativeAccountPickerLauncher.launch(intent);
-        } catch (Exception e) {
-            try {
-                Intent intent = AccountManager.newChooseAccountIntent(
-                        null, null, new String[]{"com.google"}, false, null, null, null, null
-                );
-                nativeAccountPickerLauncher.launch(intent);
-            } catch (Exception ex) {
-                setLoading(false);
-                showError("Please enter your email address in the box below.");
-            }
-        }
-    }
-
-    private void firebaseAuthWithGoogle(String idToken, GoogleSignInAccount account) {
-        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, task -> {
-                    setLoading(false);
-                    if (task.isSuccessful()) {
-                        isGoogleAuthenticated = true;
-                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-
-                        String mail = firebaseUser != null && firebaseUser.getEmail() != null
-                                ? firebaseUser.getEmail()
-                                : (account != null ? account.getEmail() : "");
-
-                        // Stage 1: Instantly write initial profile document to Firestore
-                        if (firebaseUser != null) {
-                            saveGardenerProfile(firebaseUser.getUid(), "Gardener", "", mail, "Quezon City", "Backyard Garden", Arrays.asList("Tomato", "Green Pepper"), false);
-                        }
-
-                        applyAutoFilledEmail(mail, true);
-                    } else {
-                        if (account != null && !TextUtils.isEmpty(account.getEmail())) {
-                            applyAutoFilledEmail(account.getEmail(), false);
-                        } else {
-                            showError("Google authentication failed: " + (task.getException() != null ? task.getException().getMessage() : "Error"));
-                        }
-                    }
-                });
-    }
-
-    /**
-     * Fills in the Gmail address. If the user is signed in with Google, they don't need a
-     * password, so the password boxes are hidden. If only the email was picked, they still
-     * have to create a password.
-     */
-    private void applyAutoFilledEmail(String mail, boolean signedInWithGoogle) {
-        if (TextUtils.isEmpty(mail)) return;
-
-        isGoogleAuthenticated = signedInWithGoogle;
-        runOnUiThread(() -> {
-            etEmail.setText(mail);
-            etEmail.setEnabled(!signedInWithGoogle); // Lock the verified Gmail address
-
-            int passwordVisibility = signedInWithGoogle ? View.GONE : View.VISIBLE;
-            if (tilPassword != null) tilPassword.setVisibility(passwordVisibility);
-            if (tilConfirmPassword != null) tilConfirmPassword.setVisibility(passwordVisibility);
-
-            showStep(1);
-            String message = signedInWithGoogle
-                    ? "✅ Signed in as " + mail + ". Enter your first and last name below."
-                    : "✅ " + mail + " filled in. Enter your name and create a password below.";
-            Toast.makeText(RegisterActivity.this, message, Toast.LENGTH_LONG).show();
-
-            if (TextUtils.isEmpty(getText(etFirstName))) {
-                etFirstName.requestFocus();
-            }
-        });
-    }
-
     private void validateAndProceedStep1() {
         String firstName = getText(etFirstName);
         String lastName = getText(etLastName);
@@ -338,16 +181,14 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        if (!isGoogleAuthenticated) {
-            String passwordProblem = getPasswordProblem(rawPassword);
-            if (passwordProblem != null) {
-                showError(passwordProblem);
-                return;
-            }
-            if (!password.equals(confirmPassword)) {
-                showError("Passwords do not match.");
-                return;
-            }
+        String passwordProblem = getPasswordProblem(rawPassword);
+        if (passwordProblem != null) {
+            showError(passwordProblem);
+            return;
+        }
+        if (!password.equals(confirmPassword)) {
+            showError("Passwords do not match.");
+            return;
         }
 
         showStep(2);
@@ -448,8 +289,8 @@ public class RegisterActivity extends AppCompatActivity {
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
-        if (currentUser != null && (isGoogleAuthenticated || (currentUser.getEmail() != null && currentUser.getEmail().equalsIgnoreCase(email)))) {
-            // Already authenticated via Google or active user session -> Save/update profile directly in Firestore
+        if (currentUser != null && currentUser.getEmail() != null && currentUser.getEmail().equalsIgnoreCase(email)) {
+            // Already signed in with this email -> Save/update profile directly in Firestore
             saveGardenerProfile(currentUser.getUid(), firstName, lastName, email, barangay, gardenType, selectedCrops, true);
         } else {
             // Attempt Firebase Email/Password creation
@@ -573,7 +414,7 @@ public class RegisterActivity extends AppCompatActivity {
                         setLoading(false);
                         FirebaseUser firebaseUser = mAuth.getCurrentUser();
 
-                        if (!isGoogleAuthenticated && firebaseUser != null && !firebaseUser.isEmailVerified()) {
+                        if (firebaseUser != null && !firebaseUser.isEmailVerified()) {
                             // Send Email Verification Link for Email/Password registration
                             firebaseUser.sendEmailVerification();
 
@@ -590,7 +431,7 @@ public class RegisterActivity extends AppCompatActivity {
                                     .setCancelable(false)
                                     .show();
                         } else {
-                            // Google authenticated or already verified -> Go to dashboard
+                            // Already verified -> Go to dashboard
                             Toast.makeText(this, "Account registered! Welcome to Vinland.", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(this, DashboardActivity.class));
                             finish();
@@ -625,7 +466,6 @@ public class RegisterActivity extends AppCompatActivity {
         if (btnNextStep1 != null) btnNextStep1.setEnabled(!loading);
         if (btnNextStep2 != null) btnNextStep2.setEnabled(!loading);
         if (btnNextStep3 != null) btnNextStep3.setEnabled(!loading);
-        if (btnGoogleRegister != null) btnGoogleRegister.setEnabled(!loading);
     }
 
     private int dpToPx(int dp) {

@@ -124,7 +124,7 @@
                         app:trackThickness="6dp" />
                 </LinearLayout>
 
-                <!-- STEP 1: ACCOUNT AUTHENTICATION (Google or Email/Password) -->
+                <!-- STEP 1: ACCOUNT AUTHENTICATION (Email/Password) -->
                 <LinearLayout
                     android:id="@+id/layoutStep1"
                     android:layout_width="match_parent"
@@ -137,56 +137,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
                         android:fontFamily="sans-serif-medium"
-                        android:text="Choose how to register"
+                        android:text="Create your account"
                         android:textColor="#1C2A20"
                         android:textSize="18sp" />
-
-                    <!-- Google / Gmail Button -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnGoogleRegister"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:text="Register with Google"
-                        android:textAllCaps="false"
-                        android:textColor="#1C2A20"
-                        android:textSize="15sp"
-                        app:backgroundTint="@android:color/transparent"
-                        app:cornerRadius="14dp"
-                        app:strokeColor="#CFD6C9"
-                        app:strokeWidth="1.5dp" />
-
-                    <!-- Divider -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:layout_marginBottom="20dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="1dp"
-                            android:layout_weight="1"
-                            android:background="#E2E7DC" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:paddingHorizontal="12dp"
-                            android:text="or register with email"
-                            android:textColor="#5C6B5F"
-                            android:textSize="13sp" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="1dp"
-                            android:layout_weight="1"
-                            android:background="#E2E7DC" />
-                    </LinearLayout>
 
                     <!-- First + last name side by side -->
                     <LinearLayout

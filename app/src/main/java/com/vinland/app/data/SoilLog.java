@@ -11,6 +11,7 @@ public class SoilLog {
     private double potassium;
     private String overallStatus;
     private long timestamp;
+    private String note; // optional, typed by the user when saving
 
     public SoilLog() {
     }
@@ -91,6 +92,14 @@ public class SoilLog {
 
     public void setOverallStatus(String overallStatus) {
         this.overallStatus = overallStatus;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public long getTimestamp() {

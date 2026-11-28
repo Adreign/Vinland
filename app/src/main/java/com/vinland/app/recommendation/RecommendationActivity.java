@@ -124,7 +124,7 @@ public class RecommendationActivity extends AppCompatActivity {
         tvBack.setOnClickListener(v -> finish());
         btnAnalyze.setOnClickListener(v -> analyzeSoil());
         findViewById(R.id.btnResetReadings).setOnClickListener(v -> resetReadings());
-        btnSaveToHistory.setOnClickListener(v -> saveReadingToHistory());
+        btnSaveToHistory.setOnClickListener(v -> askNoteThenSave());
         View btnOpenAi = findViewById(R.id.btnOpenAiRecommendations);
         btnOpenAi.setOnClickListener(v ->
                 startActivity(new Intent(this, com.vinland.app.ai.AiRecommendationActivity.class)));
@@ -978,12 +978,40 @@ public class RecommendationActivity extends AppCompatActivity {
         textView.setText(android.text.Html.fromHtml(htmlText, android.text.Html.FROM_HTML_MODE_LEGACY));
     }
 
-    private void saveReadingToHistory() {
+    /** Shows a box where the user can type an optional note, then saves the reading. */
+    private void askNoteThenSave() {
+        if (mAuth.getCurrentUser() == null) return;
+
+        EditText etNote = new EditText(this);
+        etNote.setHint("e.g. Added compost yesterday, leaves look yellow…");
+        etNote.setMinLines(2);
+        etNote.setMaxLines(5);
+        etNote.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                | android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        etNote.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(500)});
+
+        LinearLayout box = new LinearLayout(this);
+        box.setPadding(dpToPx(20), dpToPx(8), dpToPx(20), 0);
+        box.addView(etNote, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        new AlertDialog.Builder(this)
+                .setTitle("Add a note (optional)")
+                .setView(box)
+                .setPositiveButton("Save", (d, w) -> saveReadingToHistory(etNote.getText().toString().trim()))
+                .setNeutralButton("Skip note", (d, w) -> saveReadingToHistory(""))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void saveReadingToHistory(String note) {
         if (mAuth.getCurrentUser() == null) return;
         String uid = mAuth.getCurrentUser().getUid();
+        String savedNote = TextUtils.isEmpty(note) ? null : note;
 
         if (mode == MODE_MONITOR_CROPS) {
-            saveMonitoringToHistory(uid);
+            saveMonitoringToHistory(uid, savedNote);
             return;
         }
 
@@ -1001,6 +1029,7 @@ public class RecommendationActivity extends AppCompatActivity {
                 "Soil Test & Recommendation Match",
                 System.currentTimeMillis()
         );
+        log.setNote(savedNote);
 
         db.collection("users").document(uid).collection("soil_logs").document(logId)
                 .set(log)
@@ -1009,7 +1038,7 @@ public class RecommendationActivity extends AppCompatActivity {
     }
 
     /** Saves one history entry per monitored crop, all with the same reading. */
-    private void saveMonitoringToHistory(String uid) {
+    private void saveMonitoringToHistory(String uid, String note) {
         if (lastHealthResults.isEmpty()) return;
         long now = System.currentTimeMillis();
         WriteBatch batch = db.batch();
@@ -1018,6 +1047,7 @@ public class RecommendationActivity extends AppCompatActivity {
             SoilLog log = new SoilLog(logId, r.crop.getName(), currentMoisture, currentPh,
                     currentN, currentP, currentK,
                     "Crop Monitoring: " + r.statusLabel() + " (" + r.score + "%)", now);
+            log.setNote(note);
             batch.set(db.collection("users").document(uid).collection("soil_logs").document(logId), log);
         }
         int count = lastHealthResults.size();

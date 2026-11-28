@@ -169,14 +169,22 @@ public final class GardenPrompt {
         JSONObject profile = new JSONObject();
         putIfSet(profile, "barangay", cleanText(user.get("barangay"), 60));
         putIfSet(profile, "gardenType", cleanText(user.get("gardenType"), 60));
-        profile.put("crops", stringList(user.get("crops"), 15, 40));
+        // The crops picked in Soil Monitoring are what the gardener grows now; the
+        // registration list is only a fallback for users who never monitored.
+        JSONArray grownCrops = stringList(user.get("monitoredCrops"), 15, 40);
+        if (grownCrops.length() == 0) grownCrops = stringList(user.get("crops"), 15, 40);
+        profile.put("crops", grownCrops);
 
         JSONArray soilLogs = new JSONArray();
         for (int i = 0; i < Math.min(raw.soilLogs.size(), MAX_SOIL_LOGS); i++) {
             Map<String, Object> d = raw.soilLogs.get(i);
             JSONObject r = reading(d);
-            putIfSet(r, "crop", cleanText(d.get("cropName"), 40));
-            putIfSet(r, "status", cleanText(d.get("overallStatus"), 40));
+            String status = cleanText(d.get("overallStatus"), 40);
+            // Monitoring logs name a crop the gardener grows; recommendation logs only
+            // name the crop the app suggested, which the gardener may not grow.
+            boolean monitored = status != null && status.startsWith("Crop Monitoring");
+            putIfSet(r, monitored ? "crop" : "topSuggestedCrop", cleanText(d.get("cropName"), 40));
+            putIfSet(r, "status", status);
             soilLogs.put(r);
         }
 
@@ -334,7 +342,7 @@ public final class GardenPrompt {
                     + "\n"
                     + "Rules:\n"
                     + "1. Ground every recommendation ONLY in the supplied data. Each \"reason\" must point to the specific data behind it (for example \"pH 5.2 is below pechay's 6.0-7.0 range\"). Do not invent readings, history, weather, or pests that are not in the data.\n"
-                    + "2. When you recommend a crop, use its exact name from <crop_database> in the \"crop\" field. Never recommend a crop that is not in the database. Use null for \"crop\" when the recommendation is not about one specific crop.\n"
+                    + "2. When you recommend a crop, use its exact name from <crop_database> in the \"crop\" field. Never recommend a crop that is not in the database. Use null for \"crop\" when the recommendation is not about one specific crop. When the profile's \"crops\" list is not empty, make crop-specific recommendations ONLY about crops in that list; do not suggest other crops. In saved soil readings, \"topSuggestedCrop\" is only what the app suggested at the time, not a crop the gardener grows.\n"
                     + "3. If the data is not enough to give a grounded recommendation (for example no soil reading at all), set \"status\" to \"insufficient_data\", explain what is missing in \"missing_data\", and only give recommendations the available data supports, possibly none. Saying the data is insufficient is better than guessing.\n"
                     + "4. If a sensor reading is marked stale, say so and suggest taking a new reading before acting on it.\n"
                     + "5. Apply administrator rules from <user_data> when their condition matches the current readings.\n"

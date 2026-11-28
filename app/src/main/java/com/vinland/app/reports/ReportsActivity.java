@@ -170,7 +170,12 @@ public class ReportsActivity extends AppCompatActivity {
         headerRow.setGravity(Gravity.CENTER_VERTICAL);
 
         TextView tvTitle = new TextView(this);
-        tvTitle.setText(log.getCropName() + " Soil Test");
+        String status = log.getOverallStatus() != null ? log.getOverallStatus() : "";
+        boolean isMonitoring = status.startsWith("Crop Monitoring");
+        String cropName = log.getCropName();
+        boolean hasCrop = cropName != null && !cropName.isEmpty() && !cropName.equals("General Soil Test");
+        // Recommendation entries store the #1 suggested crop, not a crop that was tested.
+        tvTitle.setText(isMonitoring && hasCrop ? cropName + " Health Check" : "Soil Test");
         tvTitle.setTextSize(14);
         tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         tvTitle.setTextColor(android.graphics.Color.parseColor("#1C2A20"));
@@ -199,7 +204,36 @@ public class ReportsActivity extends AppCompatActivity {
         tvDate.setTextSize(11);
         tvDate.setTextColor(android.graphics.Color.parseColor("#5C6B5F"));
 
+        String summary = null;
+        if (isMonitoring) {
+            summary = "🩺 " + status.replaceFirst("^Crop Monitoring:\\s*", "");
+        } else if (hasCrop) {
+            summary = "🏆 Top recommended crop: " + cropName;
+        }
+        if (summary != null) {
+            TextView tvSummary = new TextView(this);
+            tvSummary.setText(summary);
+            tvSummary.setTextSize(12.5f);
+            tvSummary.setTextColor(android.graphics.Color.parseColor("#2E7D32"));
+            tvSummary.setPadding(0, dpToPx(4), 0, 0);
+            row.addView(tvSummary);
+        }
+
         row.addView(tvDetails);
+
+        if (log.getNote() != null && !log.getNote().trim().isEmpty()) {
+            TextView tvNote = new TextView(this);
+            tvNote.setText("📝 " + log.getNote().trim());
+            tvNote.setTextSize(12.5f);
+            tvNote.setTextColor(android.graphics.Color.parseColor("#2A3A2E"));
+            tvNote.setBackgroundColor(android.graphics.Color.parseColor("#F4F7F0"));
+            tvNote.setPadding(dpToPx(10), dpToPx(6), dpToPx(10), dpToPx(6));
+            LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            noteParams.bottomMargin = dpToPx(4);
+            row.addView(tvNote, noteParams);
+        }
+
         row.addView(tvDate);
         card.addView(row);
 
@@ -214,7 +248,8 @@ public class ReportsActivity extends AppCompatActivity {
     private void confirmDeleteSoilLog(SoilLog log) {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Soil Log")
-                .setMessage("Are you sure you want to delete this soil log for " + log.getCropName() + "?")
+                .setMessage("Are you sure you want to delete this soil log from "
+                        + dateFormat.format(new Date(log.getTimestamp())) + "?")
                 .setPositiveButton("Delete", (dialog, which) -> deleteSoilLog(log))
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .show();
